@@ -36,10 +36,12 @@ export default function AppShell() {
   const t = translations[lang]
 
   return (
-    <div className="app-shell" data-theme={dark ? 'dark' : 'light'} style={{
-      height: '100vh', background: 'var(--bg-primary)',
+    <div data-theme={dark ? 'dark' : 'light'} style={{
+      height: '100vh', width: '100vw',
+      background: 'var(--bg-primary)',
       display: 'flex', flexDirection: 'column',
-      fontFamily: 'var(--font-family)', overflow: 'hidden',
+      fontFamily: 'var(--font-family)',
+      overflow: 'hidden',
     }}>
       <Navbar dark={dark} setDark={setDark} lang={lang} setLang={setLang} navigate={navigate} t={t} onSOS={() => setShowSOS(true)} />
       <div className="layout-row" style={{ display: 'flex', flex: 1, minHeight: 0 }}>
@@ -69,13 +71,29 @@ export default function AppShell() {
       <MobileDrawer isOpen={showDrawer} onClose={() => setShowDrawer(false)} navigate={navigate} t={t} />
       {showSOS && <EmergencyModal onClose={() => setShowSOS(false)} />}
 
-            <style>{`
+      <style>{`
         @media (max-width: 768px) {
           .desktop-sidebar, .desktop-right { display: none !important; }
           .navbar { display: none !important; }
-          .layout-row { flex-direction: column !important; flex: 1 1 auto !important; min-height: 0 !important; height: 0 !important; }
-          .main-content { flex: 1 !important; min-height: 0 !important; overflow-y: auto !important; -webkit-overflow-scrolling: touch !important; padding: 16px !important; padding-bottom: 80px !important; }
-          .mobile-bottom-nav { position: fixed !important; left: 0 !important; right: 0 !important; bottom: 0 !important; height: 60px !important; z-index: 9999 !important; display: flex !important; }
+          .layout-row { flex: 1 1 auto !important; min-height: 0 !important; }
+          .main-content { 
+            flex: 1 !important; 
+            min-height: 0 !important; 
+            overflow-y: auto !important; 
+            -webkit-overflow-scrolling: touch !important; 
+            padding: 16px !important; 
+            padding-bottom: 80px !important;
+            position: relative !important;
+          }
+          .mobile-bottom-nav { 
+            position: fixed !important; 
+            left: 0 !important; 
+            right: 0 !important; 
+            bottom: 0 !important; 
+            height: 60px !important; 
+            z-index: 9999 !important; 
+            display: flex !important; 
+          }
           .services-grid { grid-template-columns: repeat(2, 1fr) !important; }
           .workers-grid { grid-template-columns: 1fr !important; }
         }
