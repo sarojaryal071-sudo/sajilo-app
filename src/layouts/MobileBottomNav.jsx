@@ -7,12 +7,17 @@ export default function MobileBottomNav({ navigate, t, onMore }) {
 
   return (
     <div className="mobile-bottom-nav" style={{
-      display: 'none',
-      height: 60,
-      background: 'var(--bg-nav)',
-      borderTop: '1px solid var(--border)',
-      flexShrink: 0,
-    }}>
+  display: 'none',
+  height: 60,
+  background: 'var(--bg-nav)',
+  borderTop: '1px solid var(--border)',
+  flexShrink: 0,
+  position: 'fixed',
+  left: 0,
+  right: 0,
+  bottom: 0,
+  zIndex: 9999,
+}}>
       {primaryItems.slice(0, 4).map((item) => (
         <button key={item.id} onClick={() => navigate(item.route)} style={{
           flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',

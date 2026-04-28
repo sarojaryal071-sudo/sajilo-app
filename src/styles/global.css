@@ -54,3 +54,7 @@ body {
 @media (max-width: 768px) {
   .mobile-bottom-nav { display: flex !important; }
 }
+
+.mobile-bottom-nav {
+  display: none;
+}
