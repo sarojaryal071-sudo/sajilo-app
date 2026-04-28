@@ -65,7 +65,7 @@ export default function AppShell() {
           <RightPanel t={t} />
         </div>
       </div>
-      <MobileBottomNav navigate={navigate} t={t} onMore={() => setShowDrawer(true)} />
+      {/* <MobileBottomNav navigate={navigate} t={t} onMore={() => setShowDrawer(true)} /> */}
       <MobileDrawer isOpen={showDrawer} onClose={() => setShowDrawer(false)} navigate={navigate} t={t} />
       {showSOS && <EmergencyModal onClose={() => setShowSOS(false)} />}
 
