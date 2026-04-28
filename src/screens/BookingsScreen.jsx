@@ -33,7 +33,7 @@ export default function BookingsScreen({ navigate, t }) {
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 10, borderTop: '1px solid var(--border)' }}>
           <span style={{ fontSize: 'var(--font-title)', fontWeight: 700, color: 'var(--text-primary)' }}>Rs 1500-4000</span>
-          <button onClick={() => navigate('tracking')} style={{
+          <button onClick={() => navigate(`/tracking/${workers[0]?.id}`)} style={{
             fontSize: 'var(--font-body-sm)', fontWeight: 600, color: 'var(--accent-blue)',
             background: 'none', border: 'none', cursor: 'pointer',
           }}>{t.track}</button>
@@ -60,7 +60,7 @@ export default function BookingsScreen({ navigate, t }) {
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 10, borderTop: '1px solid var(--border)' }}>
           <span style={{ fontSize: 'var(--font-title)', fontWeight: 700, color: 'var(--text-primary)' }}>Rs 2500</span>
-          <button onClick={() => navigate('detail', workers[2]?.id)} style={{
+          <button onClick={() => navigate(`/detail/${workers[2]?.id}`)} style={{
             fontSize: 'var(--font-body-sm)', fontWeight: 600, color: 'var(--accent-blue)',
             background: 'none', border: 'none', cursor: 'pointer',
           }}>{t.manage}</button>

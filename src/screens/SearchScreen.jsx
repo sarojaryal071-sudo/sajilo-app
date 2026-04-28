@@ -89,7 +89,7 @@ export default function SearchScreen({ navigate, t }) {
         {approvedWorkers.map((worker) => (
           <div
             key={worker.id}
-            onClick={() => navigate('detail', worker.id)}
+            onClick={() => navigate(`/detail/${worker.id}`)}
             style={{
               background: 'var(--bg-surface)',
               border: '1px solid var(--border)',

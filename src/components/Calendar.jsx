@@ -37,14 +37,15 @@ export default function Calendar({ value, onChange, onClose }) {
   }
 
   const selectDay = (day) => {
-    const d = new Date(viewYear, viewMonth, day)
-    setTempDate(d.toISOString().split('T')[0])
+    const monthStr = String(viewMonth + 1).padStart(2, '0')
+    const dayStr = String(day).padStart(2, '0')
+    setTempDate(`${viewYear}-${monthStr}-${dayStr}`)
   }
 
   const isSelected = (day) => {
     if (!tempDate) return false
-    const d = new Date(tempDate)
-    return day === d.getDate() && viewMonth === d.getMonth() && viewYear === d.getFullYear()
+    const [y, m, d] = tempDate.split('-').map(Number)
+    return day === d && viewMonth === m - 1 && viewYear === y
   }
 
   const isToday = (day) => {
@@ -134,8 +135,9 @@ export default function Calendar({ value, onChange, onClose }) {
           color: 'var(--text-secondary)', fontSize: 11, fontWeight: 500, cursor: 'pointer',
         }}>Clear</button>
         <button onClick={() => {
-          const t = today.toISOString().split('T')[0]
-          setTempDate(t)
+          const monthStr = String(today.getMonth() + 1).padStart(2, '0')
+          const dayStr = String(today.getDate()).padStart(2, '0')
+          setTempDate(`${today.getFullYear()}-${monthStr}-${dayStr}`)
           setViewYear(today.getFullYear())
           setViewMonth(today.getMonth())
         }} style={{

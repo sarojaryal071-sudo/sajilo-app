@@ -73,7 +73,7 @@ export default function ProfileScreen({ navigate, t }) {
         </div>
       </div>
 
-      <div onClick={() => navigate('pro')} style={{
+      <div onClick={() => navigate('/pro')} style={{
         background: 'var(--bg-surface)', border: '1px solid var(--border)',
         borderRadius: 'var(--radius-md)', padding: '14px 18px',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',

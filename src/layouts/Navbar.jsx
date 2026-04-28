@@ -1,55 +1,51 @@
-export default function Navbar({ dark, setDark, lang, setLang, activeTab, setActiveTab, t }) {
+import { useLocation } from 'react-router-dom'
+
+export default function Navbar({ dark, setDark, lang, setLang, navigate, t, onSOS }) {
+  const location = useLocation()
+  const currentPath = location.pathname
+
   const tabs = [
-    { key: 'home', label: t.navHome },
-    { key: 'search', label: t.navSearch },
-    { key: 'bookings', label: t.navBookings },
-    { key: 'pro', label: t.navPro },
-    { key: 'profile', label: t.navProfile },
+    { key: '/home', label: t.navHome },
+    { key: '/search', label: t.navSearch },
+    { key: '/bookings', label: t.navBookings },
+    { key: '/pro', label: t.navPro },
+    { key: '/profile', label: t.navProfile },
   ]
 
   return (
-    <nav style={{
-      height: 56,
-      background: 'var(--bg-nav)',
-      borderBottom: '1px solid var(--border)',
-      display: 'flex',
-      alignItems: 'center',
-      padding: '0 24px',
-      gap: 8,
-      position: 'sticky',
-      top: 0,
-      zIndex: 100,
-      flexShrink: 0,
+    <nav className="navbar" style={{
+      height: 56, background: 'var(--bg-nav)', borderBottom: '1px solid var(--border)',
+      display: 'flex', alignItems: 'center', padding: '0 24px', gap: 8,
+      position: 'sticky', top: 0, zIndex: 100, flexShrink: 0,
     }}>
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        marginRight: 24,
-        flexShrink: 0,
-      }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginRight: 24, flexShrink: 0 }}>
         <div style={{
-          width: 30, height: 30, background: 'var(--accent-blue)',
-          borderRadius: 8, display: 'flex', alignItems: 'center',
-          justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 14,
+          width: 30, height: 30, background: 'var(--accent-blue)', borderRadius: 8,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: '#fff', fontWeight: 800, fontSize: 14,
         }}>S</div>
-        <span style={{ fontSize: 17, fontWeight: 800, color: 'var(--text-primary)' }}>
-          {t.appName}
-        </span>
+        <span style={{ fontSize: 17, fontWeight: 800, color: 'var(--text-primary)' }}>{t.appName}</span>
       </div>
 
-      <div className="navbar-tabs" style={{ display: 'flex', gap: 2, flex: 1 }}>
+      <div style={{ display: 'flex', gap: 2, flex: 1 }}>
         {tabs.map((tab) => (
-          <button key={tab.key} onClick={() => setActiveTab(tab.key)} style={{
+          <button key={tab.key} onClick={() => navigate(tab.key)} style={{
             padding: '6px 14px', borderRadius: 6, border: 'none', cursor: 'pointer',
             fontSize: 13, fontWeight: 500, whiteSpace: 'nowrap',
-            background: activeTab === tab.key ? 'var(--accent-blue-light)' : 'transparent',
-            color: activeTab === tab.key ? 'var(--accent-blue)' : 'var(--text-secondary)',
-          }}>
-            {tab.label}
-          </button>
+            background: currentPath === tab.key ? 'var(--accent-blue-light)' : 'transparent',
+            color: currentPath === tab.key ? 'var(--accent-blue)' : 'var(--text-secondary)',
+          }}>{tab.label}</button>
         ))}
       </div>
+
+            <button onClick={onSOS} style={{
+        display: 'flex', alignItems: 'center', gap: 6,
+        padding: '7px 14px', background: '#D92B2B', color: '#fff',
+        border: 'none', borderRadius: 7, fontSize: 12, fontWeight: 700,
+        cursor: 'pointer', flexShrink: 0,
+      }}>
+        📞 SOS
+      </button>
 
       <select value={lang} onChange={(e) => setLang(e.target.value)} style={{
         padding: '5px 8px', borderRadius: 6, border: '1px solid var(--border)',
@@ -68,12 +64,6 @@ export default function Navbar({ dark, setDark, lang, setLang, activeTab, setAct
       }}>
         {dark ? '☀️' : '🌙'}
       </button>
-
-      <style>{`
-        @media (max-width: 768px) {
-          .navbar-tabs { display: none !important; }
-        }
-      `}</style>
     </nav>
   )
 }

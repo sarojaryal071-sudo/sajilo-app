@@ -19,7 +19,7 @@ export default function HomeScreen({ navigate, t }) {
       <h3 style={{ fontSize: 'var(--font-title)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 14 }}>
         {t.services}
       </h3>
-      <div className="services-grid" style={{
+      <div style={{
         display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 28,
       }}>
         {services.map(service => (
@@ -30,22 +30,16 @@ export default function HomeScreen({ navigate, t }) {
       <h3 style={{ fontSize: 'var(--font-title)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 14 }}>
         {t.nearbyWorkers}
       </h3>
-      <div className="workers-grid" style={{
+      <div style={{
         display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12,
       }}>
         {approvedWorkers.map(worker => (
-          <div key={worker.id} onClick={() => navigate('detail', worker.id)} style={{ cursor: 'pointer' }}>
+          <div key={worker.id} onClick={() => navigate(`/detail/${worker.id}`)} style={{ cursor: 'pointer' }}>
             <WorkerCard worker={worker} />
           </div>
         ))}
       </div>
 
-      <style>{`
-        @media (max-width: 768px) {
-          .services-grid { grid-template-columns: repeat(2, 1fr) !important; }
-          .workers-grid { grid-template-columns: 1fr !important; }
-        }
-      `}</style>
     </div>
   )
 }

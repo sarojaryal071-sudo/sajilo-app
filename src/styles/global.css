@@ -51,12 +51,6 @@ body {
   overflow: hidden;
 }
 
-/* ── RESPONSIVE FIXES ───────────────────── */
-
-body {
-  overflow-x: hidden;
-}
-
-*, *::before, *::after {
-  box-sizing: border-box;
+@media (max-width: 768px) {
+  .mobile-bottom-nav { display: flex !important; }
 }

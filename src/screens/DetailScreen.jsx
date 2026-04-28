@@ -28,11 +28,19 @@ export default function DetailScreen({ navigate, workerId, previousTab, t }) {
     return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
   }
 
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1)
+    } else {
+      navigate('/search')
+    }
+  }
+
   if (!worker) {
     return (
       <div style={{ textAlign: 'center', padding: 40 }}>
         <p style={{ color: 'var(--text-secondary)' }}>{t.workerNotFound}</p>
-        <button onClick={() => navigate(previousTab)} style={{
+        <button onClick={handleBack} style={{
           marginTop: 16,
           padding: '8px 16px',
           borderRadius: 'var(--radius-sm)',
@@ -50,7 +58,7 @@ export default function DetailScreen({ navigate, workerId, previousTab, t }) {
   return (
     <div>
       <button
-        onClick={() => navigate(previousTab)}
+        onClick={handleBack}
         style={{
           background: 'var(--bg-surface2)',
           border: '1px solid var(--border)',
@@ -250,7 +258,7 @@ export default function DetailScreen({ navigate, workerId, previousTab, t }) {
       </div>
 
       <button
-        onClick={() => navigate('tracking')}
+        onClick={() => navigate(`/tracking/${worker.id}`)}
         style={{
           width: '100%', background: 'var(--accent-orange)', color: '#fff',
           border: 'none', borderRadius: 'var(--radius-md)', padding: 14,
