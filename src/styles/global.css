@@ -1,0 +1,52 @@
+:root {
+  --bg-primary: #f0f2f6;
+  --bg-surface: #ffffff;
+  --bg-surface2: #f7f8fa;
+  --bg-nav: #ffffff;
+  --text-primary: #1a1d23;
+  --text-secondary: #6b7280;
+  --border: #e5e7eb;
+  --accent-blue: #1A6FD4;
+  --accent-blue-light: #EBF3FF;
+  --accent-green: #2D9E6B;
+  --accent-orange: #E8720C;
+  --accent-red: #D92B2B;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --font-family: system-ui, -apple-system, sans-serif;
+}
+
+[data-theme="dark"] {
+  --bg-primary: #0f1117;
+  --bg-surface: #1a1d25;
+  --bg-surface2: #21252f;
+  --bg-nav: #1a1d25;
+  --text-primary: #f0f2f6;
+  --text-secondary: #9ca3af;
+  --border: #2e3340;
+  --accent-blue: #4a9ae8;
+  --accent-blue-light: #1a2e48;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-family);
+  font-size: 13px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  overflow: hidden;
+}
