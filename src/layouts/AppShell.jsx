@@ -42,7 +42,7 @@ export default function AppShell() {
       fontFamily: 'var(--font-family)', overflow: 'hidden',
     }}>
       <Navbar dark={dark} setDark={setDark} lang={lang} setLang={setLang} navigate={navigate} t={t} onSOS={() => setShowSOS(true)} />
-      <div className="layout-row" style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+      <div className="layout-row" style={{ display: 'flex', flex: 1, minHeight: 0 }}>
         <div className="desktop-sidebar" style={{ flexShrink: 0 }}>
           <Sidebar t={t} />
         </div>
@@ -69,11 +69,11 @@ export default function AppShell() {
       <MobileDrawer isOpen={showDrawer} onClose={() => setShowDrawer(false)} navigate={navigate} t={t} />
       {showSOS && <EmergencyModal onClose={() => setShowSOS(false)} />}
 
-        <style>{`
+      <style>{`
         @media (max-width: 768px) {
           .desktop-sidebar, .desktop-right { display: none !important; }
           .navbar { display: none !important; }
-          .layout-row { flex-direction: column !important; flex: 1 !important; min-height: 0 !important; overflow: hidden !important; }
+          .layout-row { flex-direction: column !important; flex: 1 !important; min-height: 0 !important; }
           .main-content { flex: 1 !important; min-height: 0 !important; overflow-y: auto !important; -webkit-overflow-scrolling: touch !important; padding: 16px !important; padding-bottom: 80px !important; }
           .mobile-bottom-nav { position: fixed !important; left: 0 !important; right: 0 !important; bottom: 0 !important; height: 60px !important; z-index: 9999 !important; display: flex !important; }
           .services-grid { grid-template-columns: repeat(2, 1fr) !important; }
