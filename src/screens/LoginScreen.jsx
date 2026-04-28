@@ -1,9 +1,5 @@
 import { useState } from 'react'
-
-const MOCK_USERS = {
-  'admin@sajilo.com': { password: 'admin123', role: 'admin' },
-  'worker@test.com': { password: 'worker123', role: 'worker' },
-}
+import { loginUser } from '../config/auth.js'
 
 export default function LoginScreen({ navigate, t, onLogin }) {
   const [email, setEmail] = useState('')
@@ -12,25 +8,17 @@ export default function LoginScreen({ navigate, t, onLogin }) {
 
   const handleSubmit = (e) => {
     e.preventDefault()
+    const result = loginUser(email, password)
     
-    const user = MOCK_USERS[email]
-    
-    if (!user) {
-      // Customer login (any email/password)
-      onLogin({ email, role: 'customer' })
-      navigate('/home')
+    if (!result.success) {
+      setError(result.error)
       return
     }
     
-    if (user.password !== password) {
-      setError('Invalid password')
-      return
-    }
+    onLogin(result.user)
     
-    onLogin({ email, role: user.role })
-    
-    if (user.role === 'admin') navigate('/admin/dashboard')
-    else if (user.role === 'worker') navigate('/worker/dashboard')
+    if (result.user.role === 'admin') navigate('/admin/dashboard')
+    else if (result.user.role === 'worker') navigate('/worker/dashboard')
     else navigate('/home')
   }
 
@@ -66,8 +54,8 @@ export default function LoginScreen({ navigate, t, onLogin }) {
             style={{
               width: '100%', padding: '10px 12px', borderRadius: 'var(--radius-sm)',
               border: `1px solid ${error ? 'var(--accent-red)' : 'var(--border)'}`,
-              background: 'var(--bg-surface2)',
-              color: 'var(--text-primary)', fontSize: 'var(--font-body)', outline: 'none',
+              background: 'var(--bg-surface2)', color: 'var(--text-primary)',
+              fontSize: 'var(--font-body)', outline: 'none',
             }}
           />
         </div>
@@ -84,17 +72,14 @@ export default function LoginScreen({ navigate, t, onLogin }) {
             style={{
               width: '100%', padding: '10px 12px', borderRadius: 'var(--radius-sm)',
               border: `1px solid ${error ? 'var(--accent-red)' : 'var(--border)'}`,
-              background: 'var(--bg-surface2)',
-              color: 'var(--text-primary)', fontSize: 'var(--font-body)', outline: 'none',
+              background: 'var(--bg-surface2)', color: 'var(--text-primary)',
+              fontSize: 'var(--font-body)', outline: 'none',
             }}
           />
         </div>
 
         {error && (
-          <div style={{
-            fontSize: 'var(--font-body-sm)', color: 'var(--accent-red)',
-            fontWeight: 500,
-          }}>
+          <div style={{ fontSize: 'var(--font-body-sm)', color: 'var(--accent-red)', fontWeight: 500 }}>
             {error}
           </div>
         )}
