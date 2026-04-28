@@ -47,7 +47,6 @@ body {
   font-size: 13px;
   background: var(--bg-primary);
   color: var(--text-primary);
-  overflow: hidden;
 }
 
 @media (max-width: 768px) {

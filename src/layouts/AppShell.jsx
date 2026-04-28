@@ -37,10 +37,11 @@ export default function AppShell() {
 
   return (
     <div className="app-shell" data-theme={dark ? 'dark' : 'light'} style={{
-  minHeight: '100dvh', background: 'var(--bg-primary)',
+  height: '100vh', width: '100vw',
+  background: 'var(--bg-primary)',
   display: 'flex', flexDirection: 'column',
-  fontFamily: 'var(--font-family)', 
-  }}>
+  fontFamily: 'var(--font-family)',
+}}>
       <Navbar dark={dark} setDark={setDark} lang={lang} setLang={setLang} navigate={navigate} t={t} onSOS={() => setShowSOS(true)} />
       <div className="layout-row" style={{ display: 'flex', flex: 1, minHeight: 0 }}>
         <div className="desktop-sidebar" style={{ flexShrink: 0 }}>
@@ -65,14 +66,19 @@ export default function AppShell() {
           <RightPanel t={t} />
         </div>
       </div>
-      {/* <MobileBottomNav navigate={navigate} t={t} onMore={() => setShowDrawer(true)} /> */}
+      <MobileBottomNav navigate={navigate} t={t} onMore={() => setShowDrawer(true)} /> 
       <MobileDrawer isOpen={showDrawer} onClose={() => setShowDrawer(false)} navigate={navigate} t={t} />
       {showSOS && <EmergencyModal onClose={() => setShowSOS(false)} />}
 
-            <style>{`
+        <style>{`
         @media (max-width: 768px) {
           .desktop-sidebar, .desktop-right { display: none !important; }
           .navbar { display: none !important; }
+          .layout-row { flex-direction: column !important; }
+          .main-content { padding: 16px !important; padding-bottom: 80px !important; }
+          .mobile-bottom-nav { position: fixed !important; left: 0 !important; right: 0 !important; bottom: 0 !important; height: 60px !important; z-index: 9999 !important; display: flex !important; }
+          .services-grid { grid-template-columns: repeat(2, 1fr) !important; }
+          .workers-grid { grid-template-columns: 1fr !important; }
         }
       `}</style>
     </div>
