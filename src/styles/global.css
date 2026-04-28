@@ -50,7 +50,15 @@ body {
 }
 
 @media (max-width: 768px) {
-  .mobile-bottom-nav { display: flex !important; }
+  .mobile-bottom-nav {
+    display: flex !important;
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    height: 60px !important;
+    z-index: 9999 !important;
+  }
 }
 
 .mobile-bottom-nav {
