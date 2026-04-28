@@ -4,7 +4,7 @@ const navigation = [
   { id: 'bookings', labelKey: 'navBookings', icon: '📋', route: '/bookings', priority: 'primary' },
   { id: 'tracking', labelKey: 'liveTracking', icon: '📍', route: '/tracking/1', priority: 'primary' },
   { id: 'pro', labelKey: 'navPro', icon: '⭐', route: '/pro', priority: 'secondary' },
-  { id: 'profile', labelKey: 'navProfile', icon: '👤', route: '/profile', priority: 'primary' },
+  { id: 'profile', labelKey: 'navProfile', icon: '👤', route: '/profile', priority: 'secondary' },
 ]
 
 export default navigation
