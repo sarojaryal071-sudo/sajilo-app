@@ -37,10 +37,10 @@ export default function AppShell() {
 
   return (
     <div className="app-shell" data-theme={dark ? 'dark' : 'light'} style={{
-      height: '100vh', background: 'var(--bg-primary)',
-      display: 'flex', flexDirection: 'column',
-      fontFamily: 'var(--font-family)', overflow: 'hidden',
-    }}>
+  minHeight: '100dvh', background: 'var(--bg-primary)',
+  display: 'flex', flexDirection: 'column',
+  fontFamily: 'var(--font-family)', overflow: 'clip',
+}}>
       <Navbar dark={dark} setDark={setDark} lang={lang} setLang={setLang} navigate={navigate} t={t} onSOS={() => setShowSOS(true)} />
       <div className="layout-row" style={{ display: 'flex', flex: 1, minHeight: 0 }}>
         <div className="desktop-sidebar" style={{ flexShrink: 0 }}>
