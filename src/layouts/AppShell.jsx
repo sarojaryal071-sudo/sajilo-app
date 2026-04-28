@@ -69,12 +69,12 @@ export default function AppShell() {
       <MobileDrawer isOpen={showDrawer} onClose={() => setShowDrawer(false)} navigate={navigate} t={t} />
       {showSOS && <EmergencyModal onClose={() => setShowSOS(false)} />}
 
-      <style>{`
+            <style>{`
         @media (max-width: 768px) {
           .desktop-sidebar, .desktop-right { display: none !important; }
           .mobile-bottom-nav { display: flex !important; }
-          .layout-row { flex-direction: column !important; flex: 1 !important; min-height: 0 !important; }
-          .main-content { padding: 16px !important; flex: 1 !important; overflow-y: auto !important; }
+          .layout-row { flex-direction: column !important; flex: 1 1 auto !important; min-height: 0 !important; overflow-y: auto !important; }
+          .main-content { padding: 16px !important; overflow-y: visible !important; }
           .services-grid { grid-template-columns: repeat(2, 1fr) !important; }
           .workers-grid { grid-template-columns: 1fr !important; }
           .navbar { display: none !important; }
