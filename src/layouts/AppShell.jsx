@@ -69,7 +69,7 @@ export default function AppShell() {
       <MobileDrawer isOpen={showDrawer} onClose={() => setShowDrawer(false)} navigate={navigate} t={t} />
       {showSOS && <EmergencyModal onClose={() => setShowSOS(false)} />}
 
-            <style>{`
+        <style>{`
         @media (max-width: 768px) {
           .desktop-sidebar, .desktop-right { display: none !important; }
           .navbar { display: none !important; }
