@@ -69,15 +69,10 @@ export default function AppShell() {
       <MobileDrawer isOpen={showDrawer} onClose={() => setShowDrawer(false)} navigate={navigate} t={t} />
       {showSOS && <EmergencyModal onClose={() => setShowSOS(false)} />}
 
-      <style>{`
+            <style>{`
         @media (max-width: 768px) {
           .desktop-sidebar, .desktop-right { display: none !important; }
           .navbar { display: none !important; }
-          .layout-row { flex-direction: column !important; }
-          .main-content { padding: 16px !important; padding-bottom: 80px !important; }
-          .mobile-bottom-nav { position: fixed !important; left: 0 !important; right: 0 !important; bottom: 0 !important; height: 60px !important; z-index: 9999 !important; display: flex !important; }
-          .services-grid { grid-template-columns: repeat(2, 1fr) !important; }
-          .workers-grid { grid-template-columns: 1fr !important; }
         }
       `}</style>
     </div>
