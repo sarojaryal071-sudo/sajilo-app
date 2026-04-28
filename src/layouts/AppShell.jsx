@@ -73,11 +73,10 @@ export default function AppShell() {
         @media (max-width: 768px) {
           .desktop-sidebar, .desktop-right { display: none !important; }
           .mobile-bottom-nav { display: flex !important; }
-          .layout-row { flex-direction: column !important; }
-          .main-content { padding: 16px !important; }
+          .layout-row { flex-direction: column !important; flex: 1 !important; min-height: 0 !important; }
+          .main-content { padding: 16px !important; flex: 1 !important; overflow-y: auto !important; }
           .services-grid { grid-template-columns: repeat(2, 1fr) !important; }
           .workers-grid { grid-template-columns: 1fr !important; }
-          .navbar-tabs { display: none !important; }
           .navbar { display: none !important; }
         }
       `}</style>
