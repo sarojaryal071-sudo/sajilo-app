@@ -50,3 +50,13 @@ body {
   color: var(--text-primary);
   overflow: hidden;
 }
+
+/* ── RESPONSIVE FIXES ───────────────────── */
+
+body {
+  overflow-x: hidden;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}

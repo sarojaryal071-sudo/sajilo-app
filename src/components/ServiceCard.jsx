@@ -1,4 +1,4 @@
-export default function ServiceCard({ service }) {
+export default function ServiceCard({ service, t }) {
   return (
     <div style={{
       background: 'var(--bg-surface)',
@@ -12,24 +12,13 @@ export default function ServiceCard({ service }) {
       cursor: 'pointer',
     }}>
       <div style={{
-        width: 44,
-        height: 44,
-        borderRadius: 12,
-        background: service.bg,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: 22,
+        width: 44, height: 44, borderRadius: 12, background: service.bg,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22,
       }}>
         {service.icon}
       </div>
-      <span style={{
-        fontSize: 'var(--font-body-sm)',
-        fontWeight: 500,
-        color: 'var(--text-primary)',
-        textAlign: 'center',
-      }}>
-        {service.name}
+      <span style={{ fontSize: 'var(--font-body-sm)', fontWeight: 500, color: 'var(--text-primary)', textAlign: 'center' }}>
+        {t[service.id] || service.name}
       </span>
     </div>
   )

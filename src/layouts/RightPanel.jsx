@@ -1,6 +1,6 @@
 export default function RightPanel() {
   return (
-    <aside style={{
+    <aside className="right-panel" style={{
   width: 280,
   flexShrink: 0,
   background: 'var(--bg-surface)',

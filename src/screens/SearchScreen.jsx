@@ -1,15 +1,15 @@
 import { useState } from 'react'
 import { workers } from '../config/data.js'
 
-export default function SearchScreen({ navigate }) {
+export default function SearchScreen({ navigate, t }) {
   const [activeFilter, setActiveFilter] = useState('all')
 
   const filters = [
-    { key: 'all', label: 'All' },
-    { key: 'topRated', label: 'Top Rated' },
-    { key: 'available', label: 'Available Now' },
-    { key: 'nearby', label: 'Nearby' },
-    { key: 'priceLow', label: 'Price ↑' },
+    { key: 'all', label: t.all },
+    { key: 'topRated', label: t.topRated },
+    { key: 'available', label: t.availableNow },
+    { key: 'nearby', label: t.nearby },
+    { key: 'priceLow', label: t.priceLow },
   ]
 
   const approvedWorkers = workers.filter(w => w.approved)
@@ -22,7 +22,7 @@ export default function SearchScreen({ navigate }) {
         color: 'var(--text-primary)',
         marginBottom: 16,
       }}>
-        Search Workers
+        {t.searchWorkers}
       </h2>
 
       <div style={{
@@ -37,7 +37,7 @@ export default function SearchScreen({ navigate }) {
       }}>
         <span style={{ fontSize: 14 }}>🔍</span>
         <input
-          placeholder="Search electrician, plumber, cleaner..."
+          placeholder={t.searchPlaceholder}
           style={{
             flex: 1,
             background: 'transparent',
@@ -91,13 +91,13 @@ export default function SearchScreen({ navigate }) {
             key={worker.id}
             onClick={() => navigate('detail', worker.id)}
             style={{
-              cursor: 'pointer',  
               background: 'var(--bg-surface)',
               border: '1px solid var(--border)',
               borderRadius: 'var(--radius-lg)',
               padding: 16,
               display: 'flex',
               gap: 14,
+              cursor: 'pointer',
             }}
           >
             <div style={{
@@ -132,25 +132,13 @@ export default function SearchScreen({ navigate }) {
               }}>
                 {worker.role} · {worker.location} · {worker.distance}
               </div>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-              }}>
-                <span style={{
-                  fontSize: 'var(--font-body-sm)',
-                  fontWeight: 600,
-                  color: 'var(--text-primary)',
-                }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 'var(--font-body-sm)', fontWeight: 600, color: 'var(--text-primary)' }}>
                   ★ {worker.rating}
                 </span>
                 {worker.verified && (
-                  <span style={{
-                    fontSize: 'var(--font-caption)',
-                    fontWeight: 600,
-                    color: 'var(--accent-green)',
-                  }}>
-                    ✓ Verified
+                  <span style={{ fontSize: 'var(--font-caption)', fontWeight: 600, color: 'var(--accent-green)' }}>
+                    {t.verified}
                   </span>
                 )}
               </div>

@@ -59,12 +59,14 @@ export default function App() {
         setActiveTab={setActiveTab}
         t={t}
       />
-      <div style={{
+      <div className="layout-row" style={{
         display: 'flex',
         flex: 1,
         minHeight: 0,
       }}>
-        <Sidebar t={t} />
+        <div style={{ flexShrink: 0 }}>
+          <Sidebar t={t} />
+        </div>
         <main style={{
           flex: 1,
           minWidth: 0,
@@ -75,8 +77,31 @@ export default function App() {
         }}>
           {renderScreen()}
         </main>
-        <RightPanel t={t} />
+        <div style={{ flexShrink: 0 }}>
+          <RightPanel t={t} />
+        </div>
       </div>
+
+      <style>{`
+        @media (max-width: 768px) {
+          .layout-row {
+            flex-direction: column !important;
+            overflow-y: auto !important;
+            height: auto !important;
+          }
+            .layout-row > div:first-child,
+            .layout-row > div:last-child {
+            width: 100% !important;
+        }
+            .sidebar-panel {
+            width: 100% !important;
+            height: auto !important;
+          }
+          .right-panel {
+            width: 100% !important;
+            height: auto !important;
+          }
+      `} </style>
     </div>
   )
 }

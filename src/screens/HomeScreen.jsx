@@ -2,69 +2,50 @@ import { services, workers } from '../config/data.js'
 import ServiceCard from '../components/ServiceCard.jsx'
 import WorkerCard from '../components/WorkerCard.jsx'
 
-export default function HomeScreen({ navigate }) {
+export default function HomeScreen({ navigate, t }) {
   const approvedWorkers = workers.filter(w => w.approved)
 
   return (
     <div>
       <h2 style={{
-        fontSize: 'var(--font-heading)',
-        fontWeight: 700,
-        color: 'var(--text-primary)',
-        marginBottom: 6,
+        fontSize: 'var(--font-heading)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6,
       }}>
-        Welcome to Sajilo
+        {t.welcome}
       </h2>
-      <p style={{
-        color: 'var(--text-secondary)',
-        fontSize: 'var(--font-body)',
-        marginBottom: 24,
-      }}>
-        Find trusted workers near you
+      <p style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-body)', marginBottom: 24 }}>
+        {t.welcomeSub}
       </p>
 
-      <h3 style={{
-        fontSize: 'var(--font-title)',
-        fontWeight: 700,
-        color: 'var(--text-primary)',
-        marginBottom: 14,
-      }}>
-        Services
+      <h3 style={{ fontSize: 'var(--font-title)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 14 }}>
+        {t.services}
       </h3>
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(4, 1fr)',
-        gap: 10,
-        marginBottom: 28,
+      <div className="services-grid" style={{
+        display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 28,
       }}>
         {services.map(service => (
-          <ServiceCard key={service.id} service={service} />
+          <ServiceCard key={service.id} service={service} t={t} />
         ))}
       </div>
 
-      <h3 style={{
-        fontSize: 'var(--font-title)',
-        fontWeight: 700,
-        color: 'var(--text-primary)',
-        marginBottom: 14,
-      }}>
-        Nearby Workers
+      <h3 style={{ fontSize: 'var(--font-title)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 14 }}>
+        {t.nearbyWorkers}
       </h3>
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
-        gap: 12,
+      <div className="workers-grid" style={{
+        display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12,
       }}>
         {approvedWorkers.map(worker => (
-          <div
-            key={worker.id}
-            onClick={() => navigate('detail', worker.id)}
-            style={{ cursor: 'pointer' }}
-          >
+          <div key={worker.id} onClick={() => navigate('detail', worker.id)} style={{ cursor: 'pointer' }}>
             <WorkerCard worker={worker} />
           </div>
         ))}
       </div>
+
+      <style>{`
+        @media (max-width: 768px) {
+          .services-grid { grid-template-columns: repeat(2, 1fr) !important; }
+          .workers-grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
     </div>
   )
 }

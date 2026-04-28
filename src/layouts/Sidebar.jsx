@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { locations } from '../config/data.js'
 
-export default function Sidebar() {
+export default function Sidebar({ t }) {
   const [selectedLocation, setSelectedLocation] = useState('Kathmandu')
 
   return (
-    <aside style={{
+    <aside className="sidebar-panel" style={{
       width: 248,
       flexShrink: 0,
       background: 'var(--bg-surface)',
@@ -15,19 +15,16 @@ export default function Sidebar() {
       flexDirection: 'column',
       gap: 18,
       overflowY: 'auto',
-      height: 'calc(100vh - 56px)',
-      position: 'sticky',
-      top: 56,
+      height: '100%',
     }}>
       <div style={{
         fontSize: 13,
         fontWeight: 700,
         color: 'var(--text-primary)',
       }}>
-        Filters
+        {t.filters}
       </div>
 
-      {/* Location Dropdown */}
       <div>
         <div style={{
           fontSize: 10,
@@ -36,7 +33,7 @@ export default function Sidebar() {
           textTransform: 'uppercase',
           marginBottom: 6,
         }}>
-          Location
+          {t.location}
         </div>
         <select
           value={selectedLocation}
@@ -59,8 +56,6 @@ export default function Sidebar() {
         </select>
       </div>
 
-      {/* More filters will be added later */}
-
       <div style={{ marginTop: 'auto', paddingTop: 8 }}>
         <button style={{
           padding: '10px',
@@ -73,7 +68,7 @@ export default function Sidebar() {
           cursor: 'pointer',
           width: '100%',
         }}>
-          Apply Filters
+          {t.applyFilters}
         </button>
       </div>
     </aside>
