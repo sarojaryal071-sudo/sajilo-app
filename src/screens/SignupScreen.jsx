@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { registerUser } from '../config/auth.js'
 
 export default function SignupScreen({ navigate, t }) {
   const [name, setName] = useState('')
@@ -6,9 +7,13 @@ export default function SignupScreen({ navigate, t }) {
   const [password, setPassword] = useState('')
   const [role, setRole] = useState('customer')
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    navigate('/login')
+    const result = await registerUser(email, password, role, name)
+    if (result.success) {
+      localStorage.setItem('sajilo_user', JSON.stringify(result.user))
+      navigate('/home')
+    }
   }
 
   return (

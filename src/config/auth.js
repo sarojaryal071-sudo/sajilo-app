@@ -1,33 +1,27 @@
-const MOCK_USERS = {
-  'admin@sajilo.com': { password: 'admin123', role: 'admin', name: 'Admin' },
-  'worker@test.com': { password: 'worker123', role: 'worker', name: 'Test Worker' },
-}
+import { api, setToken, removeToken, getToken } from '../services/api.js'
 
-const PERMISSIONS = {
-  customer: ['/home', '/search', '/detail', '/tracking', '/bookings', '/pro', '/profile'],
-  worker: ['/worker/dashboard'],
-  admin: ['/admin/dashboard', '/home', '/search', '/detail', '/tracking', '/bookings', '/pro', '/profile'],
-}
-
-export function loginUser(email, password) {
-  const user = MOCK_USERS[email]
-  
-  if (user) {
-    if (user.password !== password) {
-      return { success: false, error: 'Invalid password' }
-    }
-    const session = { id: email, email, role: user.role, name: user.name }
-    localStorage.setItem('sajilo_user', JSON.stringify(session))
-    return { success: true, user: session }
+export async function loginUser(email, password) {
+  try {
+    const result = await api.login({ email, password })
+    setToken(result.data.token)
+    return { success: true, user: result.data.user }
+  } catch (err) {
+    return { success: false, error: err.message }
   }
-  
-  const session = { id: email, email, role: 'customer', name: email.split('@')[0] }
-  localStorage.setItem('sajilo_user', JSON.stringify(session))
-  return { success: true, user: session }
+}
+
+export async function registerUser(email, password, role, name) {
+  try {
+    const result = await api.register({ email, password, role, name })
+    setToken(result.data.token)
+    return { success: true, user: result.data.user }
+  } catch (err) {
+    return { success: false, error: err.message }
+  }
 }
 
 export function logoutUser() {
-  localStorage.removeItem('sajilo_user')
+  removeToken()
 }
 
 export function getCurrentUser() {
@@ -40,7 +34,7 @@ export function restoreSession() {
 }
 
 export function isAuthenticated() {
-  return getCurrentUser() !== null
+  return getToken() !== null
 }
 
 export function hasRole(role) {
@@ -49,6 +43,11 @@ export function hasRole(role) {
 }
 
 export function canAccess(role, path) {
+  const PERMISSIONS = {
+    customer: ['/home', '/search', '/detail', '/tracking', '/bookings', '/pro', '/profile'],
+    worker: ['/worker/dashboard'],
+    admin: ['/admin/dashboard', '/home', '/search', '/detail', '/tracking', '/bookings', '/pro', '/profile'],
+  }
   const allowed = PERMISSIONS[role] || []
   return allowed.some(p => path.startsWith(p))
 }

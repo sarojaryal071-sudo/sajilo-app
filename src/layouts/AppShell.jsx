@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react'
-import { Routes, useNavigate, useLocation } from 'react-router-dom'
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import translations from '../config/translations.js'
 import { getCurrentUser, logoutUser } from '../config/auth.js'
 import routes from '../config/routes.config.js'
-import RouteRenderer from '../components/RouteRenderer.jsx'
+import { RequireAuth, RequireRole } from '../components/RequireAuth.jsx'
 import Navbar from './Navbar.jsx'
 import Sidebar from './Sidebar.jsx'
 import RightPanel from './RightPanel.jsx'
 import EmergencyModal from '../components/EmergencyModal.jsx'
 import MobileBottomNav from './MobileBottomNav.jsx'
 import MobileDrawer from './MobileDrawer.jsx'
+import uiRegistry from '../config/ui/uiRegistry.js'
+import WorkerLayout from './WorkerLayout.jsx'
 
 export default function AppShell() {
   const [dark, setDark] = useState(false)
@@ -29,6 +31,7 @@ export default function AppShell() {
 
   const handleLogin = (userData) => {
     setUser(userData)
+    localStorage.setItem('sajilo_user', JSON.stringify(userData))
   }
 
   const handleLogout = () => {
@@ -37,8 +40,25 @@ export default function AppShell() {
     navigate('/login')
   }
 
-  const isAdminOrWorker = user && (user.role === 'admin' || user.role === 'worker')
-  const showLayout = user && !isAdminOrWorker
+  // Worker gets their own layout
+  if (user && user.role === 'worker') {
+    return (
+      <WorkerLayout>
+        <main style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-primary)', padding: 0 }}>
+          <Routes>
+            {routes.filter(r => r.role === 'worker').map(route => {
+              const Component = route.component
+              const element = <Component navigate={navigate} t={t} onLogin={handleLogin} title={route.label} />
+              return <Route key={route.path} path={route.path} element={<RequireRole role="worker">{element}</RequireRole>} />
+            })}
+          </Routes>
+        </main>
+      </WorkerLayout>
+    )
+  }
+
+  const isAdminOrWorker = user && user.role === 'admin'
+  const showLayout = user && !isAdminOrWorker && location.pathname !== '/login' && location.pathname !== '/signup'
 
   return (
     <div className="app-shell" data-theme={dark ? 'dark' : 'light'} style={{
@@ -61,9 +81,20 @@ export default function AppShell() {
           overflowY: 'auto', background: 'var(--bg-primary)',
         }}>
           <Routes>
-            {routes.map(route => (
-              <RouteRenderer key={route.path} route={route} navigate={navigate} t={t} handleLogin={handleLogin} />
-            ))}
+            {routes.filter(r => r.role !== 'worker').map(route => {
+              const Component = route.component
+              const element = <Component navigate={navigate} t={t} onLogin={handleLogin} title={route.label} />
+
+              if (route.public) {
+                return <Route key={route.path} path={route.path} element={element} />
+              }
+
+              if (route.role === 'admin') {
+                return <Route key={route.path} path={route.path} element={<RequireRole role={route.role}>{element}</RequireRole>} />
+              }
+
+              return <Route key={route.path} path={route.path} element={<RequireAuth>{element}</RequireAuth>} />
+            })}
           </Routes>
         </main>
         {showLayout && (

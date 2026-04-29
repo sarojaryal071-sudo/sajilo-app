@@ -1,4 +1,5 @@
 import { useLocation } from 'react-router-dom'
+import navbar from '../config/ui/navbar.config.js'
 
 export default function Navbar({ dark, setDark, lang, setLang, navigate, t, onSOS }) {
   const location = useLocation()
@@ -14,8 +15,8 @@ export default function Navbar({ dark, setDark, lang, setLang, navigate, t, onSO
 
   return (
     <nav className="navbar" style={{
-      height: 56, background: 'var(--bg-nav)', borderBottom: '1px solid var(--border)',
-      display: 'flex', alignItems: 'center', padding: '0 24px', gap: 8,
+      height: navbar.height, background: 'var(--bg-nav)', borderBottom: '1px solid var(--border)',
+      display: 'flex', alignItems: 'center', padding: navbar.padding, gap: 8,
       position: 'sticky', top: 0, zIndex: 100, flexShrink: 0,
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginRight: 24, flexShrink: 0 }}>
@@ -24,7 +25,7 @@ export default function Navbar({ dark, setDark, lang, setLang, navigate, t, onSO
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           color: '#fff', fontWeight: 800, fontSize: 14,
         }}>S</div>
-        <span style={{ fontSize: 17, fontWeight: 800, color: 'var(--text-primary)' }}>{t.appName}</span>
+        <span style={{ fontSize: navbar.brand.fontSize, fontWeight: navbar.brand.fontWeight, color: 'var(--text-primary)' }}>{t.appName}</span>
       </div>
 
       <div style={{ display: 'flex', gap: 2, flex: 1 }}>

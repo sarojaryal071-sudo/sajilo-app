@@ -1,10 +1,12 @@
+import cards from '../config/ui/cards.config.js'
+
 export default function ServiceCard({ service, t }) {
   return (
     <div style={{
       background: 'var(--bg-surface)',
       border: '1px solid var(--border)',
       borderRadius: 'var(--radius-md)',
-      padding: '14px 8px 12px',
+      padding: cards.serviceCard.padding,
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
@@ -12,12 +14,16 @@ export default function ServiceCard({ service, t }) {
       cursor: 'pointer',
     }}>
       <div style={{
-        width: 44, height: 44, borderRadius: 12, background: service.bg,
-        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22,
+        width: cards.serviceCard.iconContainer.width,
+        height: cards.serviceCard.iconContainer.height,
+        borderRadius: cards.serviceCard.iconContainer.borderRadius, 
+        background: service.bg,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: cards.serviceCard.iconContainer.fontSize,
       }}>
         {service.icon}
       </div>
-      <span style={{ fontSize: 'var(--font-body-sm)', fontWeight: 500, color: 'var(--text-primary)', textAlign: 'center' }}>
+      <span style={{ fontSize: cards.serviceCard.label.fontSize,
+fontWeight: cards.serviceCard.label.fontWeight, color: 'var(--text-primary)', textAlign: 'center' }}>
         {t[service.id] || service.name}
       </span>
     </div>

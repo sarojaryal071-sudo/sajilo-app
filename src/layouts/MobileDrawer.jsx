@@ -1,5 +1,6 @@
 import { useRef, useEffect } from 'react'
 import navigation from '../config/navigation.js'
+import mobile from '../config/ui/mobile.config.js'
 
 export default function MobileDrawer({ isOpen, onClose, navigate, t }) {
   const ref = useRef()
@@ -19,16 +20,16 @@ export default function MobileDrawer({ isOpen, onClose, navigate, t }) {
   return (
     <>
       <div onClick={onClose} style={{
-        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 200,
+        position: 'fixed', inset: 0, background: mobile.drawer.overlayBackground, zIndex: mobile.drawer.overlayZIndex,
       }} />
       <div ref={ref} style={{
-        position: 'fixed', top: 0, right: 0, bottom: 0, width: 260,
-        background: 'var(--bg-surface)', zIndex: 300,
-        padding: '20px 16px', overflowY: 'auto',
+        position: 'fixed', top: 0, right: 0, bottom: 0, width: mobile.drawer.width,
+        background: mobile.drawer.background, zIndex: mobile.drawer.zIndex,
+        padding: mobile.drawer.padding, overflowY: 'auto',
         animation: 'slideIn 0.2s ease',
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>More</span>
+          <span style={{ fontSize: mobile.drawer.titleSize, fontWeight: mobile.drawer.titleWeight, color: 'var(--text-primary)' }}>More</span>
           <button onClick={onClose} style={{
             background: 'none', border: 'none', fontSize: 20, cursor: 'pointer',
             color: 'var(--text-secondary)',
@@ -37,12 +38,12 @@ export default function MobileDrawer({ isOpen, onClose, navigate, t }) {
 
         {secondaryItems.map((item) => (
           <button key={item.id} onClick={() => { navigate(item.route); onClose(); }} style={{
-            display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0',
+            display: 'flex', alignItems: 'center', gap: 12, padding: mobile.drawer.itemPadding,
             border: 'none', background: 'transparent', cursor: 'pointer',
-            width: '100%', fontSize: 14, fontWeight: 500,
-            color: 'var(--text-primary)', borderBottom: '1px solid var(--border)',
+            width: '100%', fontSize: mobile.drawer.itemFontSize, fontWeight: mobile.drawer.itemWeight,
+            color: 'var(--text-primary)', borderBottom: mobile.drawer.itemBorder,
           }}>
-            <span style={{ fontSize: 18 }}>{item.icon}</span>
+            <span style={{ fontSize: mobile.drawer.iconSize }}>{item.icon}</span>
             {t[item.labelKey]}
           </button>
         ))}

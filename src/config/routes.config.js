@@ -8,6 +8,11 @@ import SignupScreen from '../screens/SignupScreen.jsx'
 import PlaceholderScreen from '../screens/PlaceholderScreen.jsx'
 import DetailWrapper from '../components/DetailWrapper.jsx'
 import TrackingWrapper from '../components/TrackingWrapper.jsx'
+import WorkerDashboard from '../screens/worker/WorkerDashboard.jsx'
+import WorkerJobs from '../screens/worker/WorkerJobs.jsx'
+import WorkerEarnings from '../screens/worker/WorkerEarnings.jsx'
+import WorkerSchedule from '../screens/worker/WorkerSchedule.jsx'
+import WorkerProfile from '../screens/worker/WorkerProfile.jsx'
 
 const routes = [
   { path: '/login', component: LoginScreen, public: true },
@@ -22,9 +27,11 @@ const routes = [
   { path: '/pro', component: ProScreen, role: 'customer' },
   { path: '/profile', component: ProfileScreen, role: 'customer' },
 
-  { path: '/worker/dashboard', component: PlaceholderScreen, role: 'worker', label: 'Dashboard' },
-  { path: '/worker/jobs', component: PlaceholderScreen, role: 'worker', label: 'Jobs' },
-  { path: '/worker/earnings', component: PlaceholderScreen, role: 'worker', label: 'Earnings' },
+  { path: '/worker/dashboard', component: WorkerDashboard, role: 'worker' },
+{ path: '/worker/jobs', component: WorkerJobs, role: 'worker' },
+{ path: '/worker/earnings', component: WorkerEarnings, role: 'worker' },
+{ path: '/worker/schedule', component: WorkerSchedule, role: 'worker' },
+{ path: '/worker/profile', component: WorkerProfile, role: 'worker' },
 
   { path: '/admin/dashboard', component: PlaceholderScreen, role: 'admin', label: 'Dashboard' },
   { path: '/admin/users', component: PlaceholderScreen, role: 'admin', label: 'Users' },

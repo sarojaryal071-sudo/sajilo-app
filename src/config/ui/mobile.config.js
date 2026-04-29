@@ -1,0 +1,35 @@
+const mobile = {
+  bottomNav: {
+    height: '60px',
+    background: 'var(--bg-nav)',
+    borderTop: '1px solid var(--border)',
+    iconSize: '18px',
+    labelSize: '10px',
+    labelWeight: 500,
+    activeColor: 'var(--accent-blue)',
+    inactiveColor: 'var(--text-secondary)',
+    sosColor: '#D92B2B',
+    padding: '8px 4px',
+    zIndex: 9999,
+    gap: '2px',
+  },
+  drawer: {
+    width: '260px',
+    padding: '20px 16px',
+    background: 'var(--bg-surface)',
+    zIndex: 300,
+    overlayBackground: 'rgba(0,0,0,0.4)',
+    overlayZIndex: 200,
+    titleSize: '16px',
+    titleWeight: 700,
+    itemFontSize: '14px',
+    itemWeight: 500,
+    itemPadding: '12px 0',
+    itemBorder: '1px solid var(--border)',
+    iconSize: '18px',
+    animation: 'slideIn 0.2s ease',
+  },
+  breakpoint: '768px',
+}
+
+export default mobile

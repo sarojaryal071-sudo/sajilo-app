@@ -1,3 +1,5 @@
+import cards from '../config/ui/cards.config.js'
+
 export default function WorkerCard({ worker }) {
   return (
     <div style={{
@@ -9,7 +11,7 @@ export default function WorkerCard({ worker }) {
     }}>
       {/* Photo / Initials Area */}
       <div style={{
-        height: 80,
+        height: cards.workerCard.iconArea.height,
         background: worker.bg,
         display: 'flex',
         alignItems: 'center',
@@ -20,8 +22,8 @@ export default function WorkerCard({ worker }) {
             src={worker.photo}
             alt={worker.name}
             style={{
-              width: 56,
-              height: 56,
+              width: cards.workerCard.iconArea.photoSize,
+              height: cards.workerCard.iconArea.photoSize,
               borderRadius: '50%',
               objectFit: 'cover',
               border: '2px solid #fff',
@@ -29,14 +31,14 @@ export default function WorkerCard({ worker }) {
           />
         ) : (
           <div style={{
-            width: 56,
-            height: 56,
+            width: cards.workerCard.iconArea.photoSize,
+            height: cards.workerCard.iconArea.photoSize,
             borderRadius: '50%',
             background: 'rgba(255,255,255,0.6)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: 22,
+            fontSize: cards.workerCard.iconArea.fontSize,
             fontWeight: 700,
             color: 'var(--text-primary)',
           }}>
@@ -45,9 +47,9 @@ export default function WorkerCard({ worker }) {
         )}
       </div>
 
-      <div style={{ padding: 12 }}>
+      <div style={{ padding: cards.workerCard.info.padding }}>
         <div style={{
-          fontSize: 'var(--font-body)',
+          fontSize: cards.workerCard.info.nameSize,
           fontWeight: 600,
           color: 'var(--text-primary)',
           marginBottom: 2,
@@ -86,12 +88,12 @@ export default function WorkerCard({ worker }) {
             ★ {worker.rating}
           </span>
           <span style={{
-            fontSize: 'var(--font-caption)',
-            fontWeight: 700,
+            fontSize: cards.workerCard.info.etaBadge.fontSize,
+            fontWeight: cards.workerCard.info.etaBadge.fontWeight,
             color: 'var(--accent-blue)',
             background: 'var(--accent-blue-light)',
-            padding: '2px 8px',
-            borderRadius: 20,
+            padding: cards.workerCard.info.etaBadge.padding,
+            borderRadius: cards.workerCard.info.etaBadge.borderRadius,
           }}>
             {worker.eta}
           </span>
