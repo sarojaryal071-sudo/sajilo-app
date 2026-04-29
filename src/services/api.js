@@ -43,6 +43,19 @@ export const api = {
   createBooking: (body) => request('/bookings', { method: 'POST', body: JSON.stringify(body) }),
   getMyBookings: () => request('/bookings/my'),
   getBooking: (id) => request(`/bookings/${id}`),
+  getWorkerBookings: () => request('/bookings/worker/list'),
+  acceptBooking: (id) => request(`/bookings/${id}/accept`, { method: 'PUT' }),
+  rejectBooking: (id) => request(`/bookings/${id}/reject`, { method: 'PUT' }),
+  updateBookingStatus: (id, status) => request(`/bookings/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
+  getAdminWorkers: () => request('/admin/workers'),
+  approveWorker: (id) => request(`/admin/workers/${id}/approve`, { method: 'PUT' }),
+  rejectWorker: (id) => request(`/admin/workers/${id}/reject`, { method: 'PUT' }),
+  getAdminStats: () => request('/admin/stats'),
+  getWorkerProfile: () => request('/users/worker/me'),
+  updateWorkerProfile: (body) => request('/users/worker/me', { method: 'PUT', body: JSON.stringify(body) }),
+  getWorkerEarnings: () => request('/users/worker/earnings'),
+  getWorkerSchedule: () => request('/users/worker/schedule'),
+  saveWorkerSchedule: (schedule) => request('/users/worker/schedule', { method: 'PUT', body: JSON.stringify({ schedule }) }),
 }
 
 export { setToken, removeToken, getToken }

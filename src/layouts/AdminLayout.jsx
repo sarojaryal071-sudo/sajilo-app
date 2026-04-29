@@ -1,37 +1,11 @@
-import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { io } from 'socket.io-client'
-import { getToken, api } from '../services/api.js'
-import workerNavigation from '../config/workerNavigation.js'
-import OnlineToggle from '../components/worker/OnlineToggle.jsx'
+import adminNavigation from '../config/adminNavigation.js'
 
-export default function WorkerLayout({ children }) {
+export default function AdminLayout({ children }) {
   const navigate = useNavigate()
   const location = useLocation()
-  const [isOnline, setIsOnline] = useState(false)
 
-  useEffect(() => {
-    loadStatus()
-    const token = getToken()
-    if (!token) return
-    const socket = io('http://localhost:5000', { auth: { token } })
-    socket.on('connected', (data) => console.log('Worker socket connected:', data))
-    socket.on('booking.created', (booking) => console.log('New booking received!', booking))
-    return () => socket.disconnect()
-  }, [])
-
-  const loadStatus = async () => {
-    try {
-      const res = await api.getWorkerProfile()
-      setIsOnline(res.data?.is_online || false)
-    } catch (err) { console.error('Failed to load status:', err) }
-  }
-
-  const handleToggle = async () => {
-    const newStatus = !isOnline
-    setIsOnline(newStatus)
-    try { await api.updateWorkerProfile({ is_online: newStatus }) } catch (err) { setIsOnline(!newStatus) }
-  }
+  const mobileItems = adminNavigation.filter(n => n.mobileVisible)
 
   const handleLogout = () => {
     localStorage.removeItem('sajilo_user')
@@ -44,35 +18,36 @@ export default function WorkerLayout({ children }) {
       height: '100vh', display: 'flex', flexDirection: 'column',
       background: 'var(--bg-primary)', fontFamily: 'var(--font-family)',
     }}>
-      {/* Top bar */}
       <div style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         padding: '12px 20px', background: 'var(--bg-surface)',
         borderBottom: '1px solid var(--border)', flexShrink: 0,
       }}>
-        <span style={{ fontSize: 'var(--font-body-lg)', fontWeight: 600, color: 'var(--text-primary)' }}>
-          Worker Panel
+        <span style={{ fontSize: 'var(--font-body-lg)', fontWeight: 700, color: 'var(--accent-red)' }}>
+          Admin Panel
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <OnlineToggle isOnline={isOnline} onToggle={handleToggle} />
+          <span style={{ fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)' }}>
+            Sajilo Control Center
+          </span>
           <button onClick={handleLogout} style={{
             padding: '6px 12px', borderRadius: 'var(--radius-sm)',
             border: '1px solid var(--accent-red)', background: 'transparent',
             color: 'var(--accent-red)', fontSize: 'var(--font-body-sm)',
             fontWeight: 600, cursor: 'pointer',
-          }}>Logout</button>
+          }}>
+            Logout
+          </button>
         </div>
       </div>
 
-      {/* Body: sidebar + content */}
       <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
-        {/* Desktop sidebar */}
-        <div className="worker-sidebar" style={{
-          width: 200, flexShrink: 0, background: 'var(--bg-surface)',
-          borderRight: '1px solid var(--border)', padding: '12px 0',
+        <div className="admin-sidebar" style={{
+          width: 220, flexShrink: 0, background: 'var(--bg-surface)',
+          borderRight: '1px solid var(--border)', padding: '16px 0',
           overflowY: 'auto',
         }}>
-          {workerNavigation.map((item) => (
+          {adminNavigation.map((item) => (
             <button key={item.id} onClick={() => navigate(item.path)} style={{
               display: 'flex', alignItems: 'center', gap: 10,
               width: '100%', padding: '10px 20px', border: 'none',
@@ -87,19 +62,21 @@ export default function WorkerLayout({ children }) {
           ))}
         </div>
 
-        {/* Content */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: 20, paddingBottom: 80 }}>
+        <div style={{
+          flex: 1, overflowY: 'auto', padding: 24, paddingBottom: 80,
+        }}>
           {children}
         </div>
       </div>
 
-      {/* Bottom nav (mobile) */}
-      <div className="worker-bottom-nav" style={{
-        display: 'none', height: 60, background: 'var(--bg-nav)',
-        borderTop: '1px solid var(--border)', flexShrink: 0,
+      <div className="admin-bottom-nav" style={{
+        display: 'none',
+        height: 60, background: 'var(--bg-nav)',
+        borderTop: '1px solid var(--border)',
+        flexShrink: 0,
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9999,
       }}>
-        {workerNavigation.filter(n => n.mobileVisible).map((item) => (
+        {mobileItems.map((item) => (
           <button key={item.id} onClick={() => navigate(item.path)} style={{
             flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
             justifyContent: 'center', gap: 2, border: 'none', background: 'transparent',
@@ -114,8 +91,8 @@ export default function WorkerLayout({ children }) {
 
       <style>{`
         @media (max-width: 768px) {
-          .worker-sidebar { display: none !important; }
-          .worker-bottom-nav { display: flex !important; }
+          .admin-sidebar { display: none !important; }
+          .admin-bottom-nav { display: flex !important; }
         }
       `}</style>
     </div>

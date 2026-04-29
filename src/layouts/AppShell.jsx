@@ -12,6 +12,7 @@ import MobileBottomNav from './MobileBottomNav.jsx'
 import MobileDrawer from './MobileDrawer.jsx'
 import uiRegistry from '../config/ui/uiRegistry.js'
 import WorkerLayout from './WorkerLayout.jsx'
+import AdminMobileBlock from '../screens/admin/AdminMobileBlock.jsx'
 
 export default function AppShell() {
   const [dark, setDark] = useState(false)
@@ -38,6 +39,18 @@ export default function AppShell() {
     logoutUser()
     setUser(null)
     navigate('/login')
+  }
+
+  // Admin on mobile — block access
+  if (user && user.role === 'admin' && window.innerWidth < 768) {
+    return (
+      <div style={{
+        minHeight: '100vh', display: 'flex',
+        background: 'var(--bg-primary)', fontFamily: 'var(--font-family)',
+      }}>
+        <AdminMobileBlock />
+      </div>
+    )
   }
 
   // Worker gets their own layout

@@ -13,6 +13,13 @@ import WorkerJobs from '../screens/worker/WorkerJobs.jsx'
 import WorkerEarnings from '../screens/worker/WorkerEarnings.jsx'
 import WorkerSchedule from '../screens/worker/WorkerSchedule.jsx'
 import WorkerProfile from '../screens/worker/WorkerProfile.jsx'
+import AdminMobileBlock from '../screens/admin/AdminMobileBlock.jsx'
+import AdminDashboard from '../screens/admin/AdminDashboard.jsx'
+import AdminUsers from '../screens/admin/AdminUsers.jsx'
+import AdminWorkers from '../screens/admin/AdminWorkers.jsx'
+import AdminBookings from '../screens/admin/AdminBookings.jsx'
+import AdminAnalytics from '../screens/admin/AdminAnalytics.jsx'
+import AdminSettings from '../screens/admin/AdminSettings.jsx'
 
 const routes = [
   { path: '/login', component: LoginScreen, public: true },
@@ -33,11 +40,12 @@ const routes = [
 { path: '/worker/schedule', component: WorkerSchedule, role: 'worker' },
 { path: '/worker/profile', component: WorkerProfile, role: 'worker' },
 
-  { path: '/admin/dashboard', component: PlaceholderScreen, role: 'admin', label: 'Dashboard' },
-  { path: '/admin/users', component: PlaceholderScreen, role: 'admin', label: 'Users' },
-  { path: '/admin/workers', component: PlaceholderScreen, role: 'admin', label: 'Workers' },
-  { path: '/admin/bookings', component: PlaceholderScreen, role: 'admin', label: 'Bookings' },
-  { path: '/admin/stats', component: PlaceholderScreen, role: 'admin', label: 'Stats' },
+  { path: '/admin/dashboard', component: AdminDashboard, role: 'admin' },
+{ path: '/admin/users', component: AdminUsers, role: 'admin' },
+{ path: '/admin/workers', component: AdminWorkers, role: 'admin' },
+{ path: '/admin/bookings', component: AdminBookings, role: 'admin' },
+{ path: '/admin/analytics', component: AdminAnalytics, role: 'admin' },
+{ path: '/admin/settings', component: AdminSettings, role: 'admin' },
 ]
 
 export default routes
