@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
-import { api } from '../../services/api.js'
+import { useState } from 'react'
+import { useWorker } from '../../contexts/WorkerContext.jsx'
 
 export default function WorkerProfile() {
-  const [profile, setProfile] = useState(null)
+  const { profile, updateProfile } = useWorker()
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
@@ -11,35 +11,24 @@ export default function WorkerProfile() {
   const [hourlyRate, setHourlyRate] = useState('')
   const [saving, setSaving] = useState(false)
 
-  useEffect(() => { loadProfile() }, [])
-
-  const loadProfile = async () => {
-    try {
-      const res = await api.getWorkerProfile()
-      const p = res.data
-      setProfile(p)
-      setName(p.name || '')
-      setPhone(p.phone || '')
-      setBio(p.bio || '')
-      setSkills((p.skills || []).join(', '))
-      setHourlyRate(p.hourly_rate || '')
-    } catch (err) { console.error(err) }
+  const startEdit = () => {
+    setName(profile?.name || '')
+    setPhone(profile?.phone || '')
+    setBio(profile?.bio || '')
+    setSkills((profile?.skills || []).join(', '))
+    setHourlyRate(profile?.hourly_rate || '')
+    setEditing(true)
   }
 
   const handleSave = async () => {
     setSaving(true)
-    try {
-      await api.updateWorkerProfile({
-        name,
-        phone,
-        bio,
-        skills: skills.split(',').map(s => s.trim()).filter(Boolean),
-        hourly_rate: parseInt(hourlyRate) || 500,
-      })
-      setEditing(false)
-      loadProfile()
-    } catch (err) { console.error(err) }
+    await updateProfile({
+      name, phone, bio,
+      skills: skills.split(',').map(s => s.trim()).filter(Boolean),
+      hourly_rate: parseInt(hourlyRate) || 500,
+    })
     setSaving(false)
+    setEditing(false)
   }
 
   if (!profile) {
@@ -49,19 +38,14 @@ export default function WorkerProfile() {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <h2 style={{ fontSize: 'var(--font-heading)', fontWeight: 700, color: 'var(--text-primary)' }}>
-          My Profile
-        </h2>
-        <button onClick={() => editing ? handleSave() : setEditing(true)} style={{
+        <h2 style={{ fontSize: 'var(--font-heading)', fontWeight: 700, color: 'var(--text-primary)' }}>My Profile</h2>
+        <button onClick={() => editing ? handleSave() : startEdit()} style={{
           padding: '8px 16px', borderRadius: 'var(--radius-sm)', border: 'none',
           background: editing ? 'var(--accent-green)' : 'var(--accent-blue)',
           color: '#fff', fontSize: 'var(--font-body-sm)', fontWeight: 600, cursor: 'pointer',
-        }}>
-          {editing ? (saving ? 'Saving...' : 'Save') : 'Edit'}
-        </button>
+        }}>{editing ? (saving ? 'Saving...' : 'Save') : 'Edit'}</button>
       </div>
 
-      {/* Profile card */}
       <div style={{
         background: 'var(--bg-surface)', border: '1px solid var(--border)',
         borderRadius: 'var(--radius-lg)', padding: 20, marginBottom: 16,
@@ -72,9 +56,7 @@ export default function WorkerProfile() {
             background: 'var(--accent-blue-light)', display: 'flex',
             alignItems: 'center', justifyContent: 'center',
             fontSize: 28, fontWeight: 700, color: 'var(--accent-blue)',
-          }}>
-            {profile.name?.charAt(0)?.toUpperCase() || 'W'}
-          </div>
+          }}>{profile.name?.charAt(0)?.toUpperCase() || 'W'}</div>
           <div>
             <div style={{ fontSize: 'var(--font-large)', fontWeight: 700, color: 'var(--text-primary)' }}>
               {editing ? (
@@ -84,9 +66,7 @@ export default function WorkerProfile() {
                 }} />
               ) : profile.name}
             </div>
-            <div style={{ fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)' }}>
-              {profile.email}
-            </div>
+            <div style={{ fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)' }}>{profile.email}</div>
           </div>
         </div>
 
@@ -100,7 +80,6 @@ export default function WorkerProfile() {
               }} />
             ) : <div style={{ color: 'var(--text-primary)' }}>{profile.phone || 'Not set'}</div>}
           </div>
-
           <div>
             <div style={{ fontSize: 'var(--font-body-sm)', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 4 }}>Bio</div>
             {editing ? (
@@ -110,7 +89,6 @@ export default function WorkerProfile() {
               }} />
             ) : <div style={{ color: 'var(--text-primary)' }}>{profile.bio || 'No bio yet'}</div>}
           </div>
-
           <div>
             <div style={{ fontSize: 'var(--font-body-sm)', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 4 }}>Skills</div>
             {editing ? (
@@ -120,19 +98,12 @@ export default function WorkerProfile() {
               }} />
             ) : (
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                {(profile.skills || []).length > 0
-                  ? profile.skills.map((s, i) => (
-                      <span key={i} style={{
-                        padding: '4px 10px', borderRadius: 12, background: 'var(--accent-blue-light)',
-                        color: 'var(--accent-blue)', fontSize: 'var(--font-body-sm)', fontWeight: 500,
-                      }}>{s}</span>
-                    ))
-                  : <span style={{ color: 'var(--text-secondary)' }}>No skills added</span>
-                }
+                {(profile.skills || []).length > 0 ? profile.skills.map((s, i) => (
+                  <span key={i} style={{ padding: '4px 10px', borderRadius: 12, background: 'var(--accent-blue-light)', color: 'var(--accent-blue)', fontSize: 'var(--font-body-sm)', fontWeight: 500 }}>{s}</span>
+                )) : <span style={{ color: 'var(--text-secondary)' }}>No skills added</span>}
               </div>
             )}
           </div>
-
           <div>
             <div style={{ fontSize: 'var(--font-body-sm)', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 4 }}>Hourly Rate (Rs)</div>
             {editing ? (
@@ -145,7 +116,6 @@ export default function WorkerProfile() {
         </div>
       </div>
 
-      {/* Stats */}
       <div style={{ display: 'flex', gap: 10 }}>
         <div style={{ flex: 1, background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: 14, textAlign: 'center' }}>
           <div style={{ fontSize: 'var(--font-large)', fontWeight: 800, color: 'var(--accent-blue)' }}>{profile.completed_jobs || 0}</div>

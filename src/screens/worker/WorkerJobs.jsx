@@ -1,37 +1,16 @@
-import { useState, useEffect } from 'react'
-import { api } from '../../services/api.js'
+import { useWorker } from '../../contexts/WorkerContext.jsx'
 
 export default function WorkerJobs() {
-  const [bookings, setBookings] = useState([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    loadBookings()
-  }, [])
-
-  const loadBookings = async () => {
-    try {
-      const res = await api.getWorkerBookings()
-      setBookings(res.data || [])
-    } catch (err) {
-      console.error('Failed to load bookings:', err)
-    }
-    setLoading(false)
-  }
-
-  const handleAction = async (id, action) => {
-    try {
-      if (action === 'accept') await api.acceptBooking(id)
-      else if (action === 'reject') await api.rejectBooking(id)
-      else await api.updateBookingStatus(id, action)
-      loadBookings()
-    } catch (err) {
-      console.error('Action failed:', err)
-    }
-  }
+  const { bookings, loading, acceptBooking, rejectBooking, updateBookingStatus } = useWorker()
 
   if (loading) {
     return <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-secondary)' }}>Loading...</div>
+  }
+
+  const handleAction = async (id, action) => {
+    if (action === 'accept') await acceptBooking(id)
+    else if (action === 'reject') await rejectBooking(id)
+    else await updateBookingStatus(id, action)
   }
 
   return (

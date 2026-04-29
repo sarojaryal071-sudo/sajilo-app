@@ -1,12 +1,13 @@
 import { useLocation } from 'react-router-dom'
 import getNavigation from '../config/navigation.js'
 import mobile from '../config/ui/mobile.config.js'
-import uiRegistry from '../config/ui/uiRegistry.js'
+import { useFeatureFlag } from '../hooks/useFeatureFlag.js'
 
 export default function MobileBottomNav({ navigate, t, onMore, onSOS }) {
   const location = useLocation()
   const navItems = getNavigation()
   const primaryItems = navItems.filter(item => item.priority === 'primary')
+  const sosEnabled = useFeatureFlag('sosEmergency')
 
   return (
     <div className="mobile-bottom-nav" style={{
@@ -25,7 +26,7 @@ export default function MobileBottomNav({ navigate, t, onMore, onSOS }) {
           <span style={{ fontSize: mobile.bottomNav.labelSize, fontWeight: mobile.bottomNav.labelWeight }}>{t[item.labelKey]}</span>
         </button>
       ))}
-      {uiRegistry.features.sosEmergency.enabled && (
+      {sosEnabled && (
         <button onClick={onSOS} style={{
           flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
           justifyContent: 'center', gap: mobile.bottomNav.gap, border: 'none', background: 'transparent',

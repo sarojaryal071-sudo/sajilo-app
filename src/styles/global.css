@@ -64,3 +64,8 @@ body {
 .mobile-bottom-nav {
   display: none;
 }
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}

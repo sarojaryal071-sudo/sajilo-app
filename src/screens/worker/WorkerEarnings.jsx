@@ -1,28 +1,9 @@
-import { useState, useEffect } from 'react'
-import { api } from '../../services/api.js'
+import { useWorker } from '../../contexts/WorkerContext.jsx'
 
 export default function WorkerEarnings() {
-  const [earnings, setEarnings] = useState(null)
-  const [bookings, setBookings] = useState([])
+  const { earnings, bookings, loading } = useWorker()
 
-  useEffect(() => {
-    loadData()
-  }, [])
-
-  const loadData = async () => {
-    try {
-      const [earnRes, bookRes] = await Promise.all([
-        api.getWorkerEarnings(),
-        api.getWorkerBookings(),
-      ])
-      setEarnings(earnRes.data)
-      setBookings(bookRes.data || [])
-    } catch (err) {
-      console.error('Failed to load earnings:', err)
-    }
-  }
-
-  if (!earnings) {
+  if (loading || !earnings) {
     return <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-secondary)' }}>Loading...</div>
   }
 
@@ -36,8 +17,7 @@ export default function WorkerEarnings() {
 
       <div style={{
         background: 'linear-gradient(135deg, var(--accent-blue), #1A56DB)',
-        borderRadius: 'var(--radius-lg)', padding: 24, marginBottom: 20,
-        color: '#fff',
+        borderRadius: 'var(--radius-lg)', padding: 24, marginBottom: 20, color: '#fff',
       }}>
         <div style={{ fontSize: 'var(--font-body-sm)', opacity: 0.8, marginBottom: 4 }}>Total Earnings</div>
         <div style={{ fontSize: 'var(--font-xxl)', fontWeight: 800 }}>
@@ -53,9 +33,7 @@ export default function WorkerEarnings() {
       </h3>
 
       {completedJobs.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-secondary)' }}>
-          No completed jobs yet.
-        </div>
+        <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-secondary)' }}>No completed jobs yet.</div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {completedJobs.map((job) => (
@@ -72,10 +50,7 @@ export default function WorkerEarnings() {
                   {job.customer_name} · {job.job_size}
                 </div>
               </div>
-              <div style={{
-                fontSize: 'var(--font-body)', fontWeight: 700,
-                color: 'var(--accent-green)',
-              }}>
+              <div style={{ fontSize: 'var(--font-body)', fontWeight: 700, color: 'var(--accent-green)' }}>
                 Rs {job.price || 0}
               </div>
             </div>

@@ -1,37 +1,33 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { io } from 'socket.io-client'
-import { getToken, api } from '../services/api.js'
+import { getToken } from '../services/api.js'
 import workerNavigation from '../config/workerNavigation.js'
 import OnlineToggle from '../components/worker/OnlineToggle.jsx'
+import { WorkerProvider, useWorker } from '../contexts/WorkerContext.jsx'
 
-export default function WorkerLayout({ children }) {
+function WorkerLayoutInner({ children }) {
   const navigate = useNavigate()
   const location = useLocation()
-  const [isOnline, setIsOnline] = useState(false)
+  const { profile, toggleOnline, loadAll } = useWorker()
+  const [dark, setDark] = useState(() => {
+  return localStorage.getItem('sajilo_theme') === 'dark'
+})
+
+const handleSetDark = (val) => {
+  const newVal = typeof val === 'function' ? val(dark) : val
+  setDark(newVal)
+  localStorage.setItem('sajilo_theme', newVal ? 'dark' : 'light')
+}
 
   useEffect(() => {
-    loadStatus()
     const token = getToken()
     if (!token) return
     const socket = io('http://localhost:5000', { auth: { token } })
     socket.on('connected', (data) => console.log('Worker socket connected:', data))
-    socket.on('booking.created', (booking) => console.log('New booking received!', booking))
+    socket.on('booking.created', () => loadAll())
     return () => socket.disconnect()
   }, [])
-
-  const loadStatus = async () => {
-    try {
-      const res = await api.getWorkerProfile()
-      setIsOnline(res.data?.is_online || false)
-    } catch (err) { console.error('Failed to load status:', err) }
-  }
-
-  const handleToggle = async () => {
-    const newStatus = !isOnline
-    setIsOnline(newStatus)
-    try { await api.updateWorkerProfile({ is_online: newStatus }) } catch (err) { setIsOnline(!newStatus) }
-  }
 
   const handleLogout = () => {
     localStorage.removeItem('sajilo_user')
@@ -40,7 +36,7 @@ export default function WorkerLayout({ children }) {
   }
 
   return (
-    <div style={{
+    <div data-theme={dark ? 'dark' : 'light'} style={{
       height: '100vh', display: 'flex', flexDirection: 'column',
       background: 'var(--bg-primary)', fontFamily: 'var(--font-family)',
     }}>
@@ -51,10 +47,16 @@ export default function WorkerLayout({ children }) {
         borderBottom: '1px solid var(--border)', flexShrink: 0,
       }}>
         <span style={{ fontSize: 'var(--font-body-lg)', fontWeight: 600, color: 'var(--text-primary)' }}>
-          Worker Panel
+          {profile?.name || 'Worker'}
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <OnlineToggle isOnline={isOnline} onToggle={handleToggle} />
+          <OnlineToggle isOnline={profile?.is_online || false} onToggle={toggleOnline} />
+          <button onClick={() => handleSetDark(!dark)} style={{
+            width: 30, height: 30, borderRadius: 6, display: 'flex',
+            alignItems: 'center', justifyContent: 'center',
+            background: 'var(--bg-surface2)', border: '1px solid var(--border)',
+            cursor: 'pointer', fontSize: 14,
+          }}>{dark ? '☀️' : '🌙'}</button>
           <button onClick={handleLogout} style={{
             padding: '6px 12px', borderRadius: 'var(--radius-sm)',
             border: '1px solid var(--accent-red)', background: 'transparent',
@@ -64,38 +66,32 @@ export default function WorkerLayout({ children }) {
         </div>
       </div>
 
-      {/* Body: sidebar + content */}
+      {/* Body */}
       <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
-        {/* Desktop sidebar */}
         <div className="worker-sidebar" style={{
           width: 200, flexShrink: 0, background: 'var(--bg-surface)',
-          borderRight: '1px solid var(--border)', padding: '12px 0',
-          overflowY: 'auto',
+          borderRight: '1px solid var(--border)', padding: '12px 0', overflowY: 'auto',
         }}>
           {workerNavigation.map((item) => (
             <button key={item.id} onClick={() => navigate(item.path)} style={{
               display: 'flex', alignItems: 'center', gap: 10,
               width: '100%', padding: '10px 20px', border: 'none',
               background: location.pathname === item.path ? 'var(--accent-blue-light)' : 'transparent',
-              color: location.pathname === item.path ? 'var(--accent-blue)' : 'var(--text-primary)',
-              fontSize: 'var(--font-body)', fontWeight: 500, cursor: 'pointer',
-              textAlign: 'left',
+              color: location.pathname === item.path ? 'var(--accent-blue)' : 'var(--text-secondary)',
+              fontSize: 14, fontWeight: 500, cursor: 'pointer', textAlign: 'left',
             }}>
               <span style={{ fontSize: 16 }}>{item.icon}</span>
               {item.label}
             </button>
           ))}
         </div>
-
-        {/* Content */}
         <div style={{ flex: 1, overflowY: 'auto', padding: 20, paddingBottom: 80 }}>
           {children}
         </div>
       </div>
 
-      {/* Bottom nav (mobile) */}
       <div className="worker-bottom-nav" style={{
-        display: 'none', height: 60, background: 'var(--bg-nav)',
+        display: 'none', height: 60, background: 'var(--bg-surface)',
         borderTop: '1px solid var(--border)', flexShrink: 0,
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9999,
       }}>
@@ -117,7 +113,19 @@ export default function WorkerLayout({ children }) {
           .worker-sidebar { display: none !important; }
           .worker-bottom-nav { display: flex !important; }
         }
+        .worker-card {
+          border-radius: 12px;
+          box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
       `}</style>
     </div>
+  )
+}
+
+export default function WorkerLayout({ children }) {
+  return (
+    <WorkerProvider>
+      <WorkerLayoutInner>{children}</WorkerLayoutInner>
+    </WorkerProvider>
   )
 }

@@ -56,6 +56,8 @@ export const api = {
   getWorkerEarnings: () => request('/users/worker/earnings'),
   getWorkerSchedule: () => request('/users/worker/schedule'),
   saveWorkerSchedule: (schedule) => request('/users/worker/schedule', { method: 'PUT', body: JSON.stringify({ schedule }) }),
+  sendNotification: (body) => request('/notifications', { method: 'POST', body: JSON.stringify(body) }),
+  getNotifications: () => request('/notifications'),
 }
 
 export { setToken, removeToken, getToken }

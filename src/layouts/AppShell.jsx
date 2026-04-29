@@ -13,9 +13,17 @@ import MobileDrawer from './MobileDrawer.jsx'
 import uiRegistry from '../config/ui/uiRegistry.js'
 import WorkerLayout from './WorkerLayout.jsx'
 import AdminMobileBlock from '../screens/admin/AdminMobileBlock.jsx'
+import AdminLayout from './AdminLayout.jsx'
 
 export default function AppShell() {
-  const [dark, setDark] = useState(false)
+  const [dark, setDark] = useState(() => {
+  return localStorage.getItem('sajilo_theme') === 'dark'
+})
+  const handleSetDark = (val) => {
+  const newVal = typeof val === 'function' ? val(dark) : val
+  setDark(newVal)
+  localStorage.setItem('sajilo_theme', newVal ? 'dark' : 'light')
+}
   const [lang, setLang] = useState('en')
   const [showSOS, setShowSOS] = useState(false)
   const [showDrawer, setShowDrawer] = useState(false)
@@ -70,8 +78,24 @@ export default function AppShell() {
     )
   }
 
+  // Admin gets their own layout
+if (user && user.role === 'admin') {
+  return (
+    <AdminLayout>
+      <Routes>
+        {routes.filter(r => r.role === 'admin').map(route => {
+          const Component = route.component
+          const element = <Component navigate={navigate} t={t} title={route.label} />
+          return <Route key={route.path} path={route.path} element={<RequireRole role="admin">{element}</RequireRole>} />
+        })}
+      </Routes>
+    </AdminLayout>
+  )
+}
+
   const isAdminOrWorker = user && user.role === 'admin'
   const showLayout = user && !isAdminOrWorker && location.pathname !== '/login' && location.pathname !== '/signup'
+
 
   return (
     <div className="app-shell" data-theme={dark ? 'dark' : 'light'} style={{
@@ -80,7 +104,7 @@ export default function AppShell() {
       fontFamily: 'var(--font-family)',
     }}>
       {showLayout && (
-        <Navbar dark={dark} setDark={setDark} lang={lang} setLang={setLang} navigate={navigate} t={t} onSOS={() => setShowSOS(true)} />
+        <Navbar dark={dark} setDark={handleSetDark} lang={lang} setLang={setLang} navigate={navigate} t={t} onSOS={() => setShowSOS(true)} />
       )}
       <div className="layout-row" style={{ display: 'flex', flex: 1, minHeight: 0 }}>
         {showLayout && (
@@ -94,7 +118,7 @@ export default function AppShell() {
           overflowY: 'auto', background: 'var(--bg-primary)',
         }}>
           <Routes>
-            {routes.filter(r => r.role !== 'worker').map(route => {
+            {routes.filter(r => r.role !== 'worker' && r.role !== 'admin').map(route => {
               const Component = route.component
               const element = <Component navigate={navigate} t={t} onLogin={handleLogin} title={route.label} />
 

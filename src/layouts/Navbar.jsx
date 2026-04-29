@@ -1,17 +1,30 @@
 import { useLocation } from 'react-router-dom'
 import navbar from '../config/ui/navbar.config.js'
+import { useFeatureFlag } from '../hooks/useFeatureFlag.js'
 
 export default function Navbar({ dark, setDark, lang, setLang, navigate, t, onSOS }) {
   const location = useLocation()
   const currentPath = location.pathname
 
-  const tabs = [
-    { key: '/home', label: t.navHome },
-    { key: '/search', label: t.navSearch },
-    { key: '/bookings', label: t.navBookings },
-    { key: '/pro', label: t.navPro },
-    { key: '/profile', label: t.navProfile },
+  const savedNav = localStorage.getItem('sajilo_nav_config')
+  const navConfig = savedNav ? JSON.parse(savedNav) : null
+
+  const allTabs = [
+    { key: '/home', label: t.navHome, id: 'home' },
+    { key: '/search', label: t.navSearch, id: 'search' },
+    { key: '/bookings', label: t.navBookings, id: 'bookings' },
+    { key: '/pro', label: t.navPro, id: 'pro' },
+    { key: '/profile', label: t.navProfile, id: 'profile' },
   ]
+
+  const tabs = navConfig
+    ? allTabs.filter(tab => {
+        const configItem = navConfig.find(n => n.id === tab.id)
+        return configItem ? configItem.enabled : true
+      })
+    : allTabs
+
+  const sosEnabled = useFeatureFlag('sosEmergency')
 
   return (
     <nav className="navbar" style={{
@@ -39,14 +52,16 @@ export default function Navbar({ dark, setDark, lang, setLang, navigate, t, onSO
         ))}
       </div>
 
-            <button onClick={onSOS} style={{
-        display: 'flex', alignItems: 'center', gap: 6,
-        padding: '7px 14px', background: '#D92B2B', color: '#fff',
-        border: 'none', borderRadius: 7, fontSize: 12, fontWeight: 700,
-        cursor: 'pointer', flexShrink: 0,
-      }}>
-        📞 SOS
-      </button>
+      {sosEnabled && (
+        <button onClick={onSOS} style={{
+          display: 'flex', alignItems: 'center', gap: 6,
+          padding: '7px 14px', background: '#D92B2B', color: '#fff',
+          border: 'none', borderRadius: 7, fontSize: 12, fontWeight: 700,
+          cursor: 'pointer', flexShrink: 0,
+        }}>
+          📞 SOS
+        </button>
+      )}
 
       <select value={lang} onChange={(e) => setLang(e.target.value)} style={{
         padding: '5px 8px', borderRadius: 6, border: '1px solid var(--border)',
@@ -65,6 +80,18 @@ export default function Navbar({ dark, setDark, lang, setLang, navigate, t, onSO
       }}>
         {dark ? '☀️' : '🌙'}
       </button>
+      <button onClick={() => {
+  localStorage.removeItem('sajilo_user')
+  localStorage.removeItem('sajilo_token')
+  window.location.href = '/login'
+}} style={{
+  padding: '6px 12px', borderRadius: 6,
+  border: '1px solid var(--accent-red)', background: 'transparent',
+  color: 'var(--accent-red)', fontSize: 12, fontWeight: 600,
+  cursor: 'pointer', flexShrink: 0,
+}}>
+  Logout
+</button>
     </nav>
   )
 }

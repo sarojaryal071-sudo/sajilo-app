@@ -1,7 +1,24 @@
 import { plans } from '../config/data.js'
 import PlanCard from '../components/PlanCard.jsx'
+import { useFeatureFlag } from '../hooks/useFeatureFlag.js'
 
 export default function ProScreen({ t }) {
+  const proEnabled = useFeatureFlag('proSubscription')
+
+  if (!proEnabled) {
+    return (
+      <div style={{ textAlign: 'center', padding: 60, color: 'var(--text-secondary)' }}>
+        <div style={{ fontSize: 48, marginBottom: 12 }}>🔒</div>
+        <h3 style={{ fontSize: 'var(--font-heading)', color: 'var(--text-primary)', marginBottom: 8 }}>
+          Pro Subscription Unavailable
+        </h3>
+        <p style={{ fontSize: 'var(--font-body)' }}>
+          This feature is currently disabled. Please check back later.
+        </p>
+      </div>
+    )
+  }
+
   return (
     <div>
       <div style={{

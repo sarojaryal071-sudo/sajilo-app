@@ -47,6 +47,20 @@ export default function MobileDrawer({ isOpen, onClose, navigate, t }) {
             {t[item.labelKey]}
           </button>
         ))}
+        <button onClick={() => {
+  localStorage.removeItem('sajilo_user')
+  localStorage.removeItem('sajilo_token')
+  window.location.href = '/login'
+}} style={{
+  display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0',
+  border: 'none', background: 'transparent', cursor: 'pointer',
+  width: '100%', fontSize: 14, fontWeight: 500,
+  color: 'var(--accent-red)', borderBottom: '1px solid var(--border)',
+  marginTop: 8,
+}}>
+  <span style={{ fontSize: 18 }}>🚪</span>
+  Logout
+</button>
       </div>
       <style>{`@keyframes slideIn{from{transform:translateX(100%)}to{transform:translateX(0)}}`}</style>
     </>
