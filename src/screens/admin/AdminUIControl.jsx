@@ -1,6 +1,18 @@
 import { useState } from 'react'
 import uiRegistry from '../../config/ui/uiRegistry.js'
 
+const FLAG_LABELS = {
+  sosEmergency: 'SOS Emergency',
+  proSubscription: 'Pro Subscription',
+  googleLogin: 'Google Login',
+  appleLogin: 'Apple Login',
+  forgotPassword: 'Forgot Password',
+  rememberMe: 'Remember Me',
+  termsText: 'Terms & Privacy',
+  socialDivider: 'Social Divider',
+  loginLogo: 'Login Logo',
+}
+
 export default function AdminUIControl() {
   const [flags, setFlags] = useState(() => {
     const saved = localStorage.getItem('sajilo_flags')
@@ -8,6 +20,13 @@ export default function AdminUIControl() {
     return {
       sosEmergency: allFlags.sosEmergency || { enabled: true },
       proSubscription: allFlags.proSubscription || { enabled: true },
+      googleLogin: allFlags.googleLogin || { enabled: false },
+      appleLogin: allFlags.appleLogin || { enabled: false },
+      forgotPassword: allFlags.forgotPassword || { enabled: true },
+      rememberMe: allFlags.rememberMe || { enabled: true },
+      termsText: allFlags.termsText || { enabled: true },
+      socialDivider: allFlags.socialDivider || { enabled: false },
+      loginLogo: allFlags.loginLogo || { enabled: false },
     }
   })
   const [theme, setTheme] = useState(uiRegistry.theme)
@@ -62,8 +81,8 @@ export default function AdminUIControl() {
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
               padding: '12px 0', borderBottom: '1px solid var(--border)',
             }}>
-              <span style={{ fontSize: 13, color: 'var(--text-secondary)', textTransform: 'capitalize' }}>
-                {key === 'sosEmergency' ? 'SOS Emergency' : 'Pro Subscription'}
+              <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                {FLAG_LABELS[key] || key}
               </span>
               <button onClick={() => toggleFlag(key)} style={{
                 width: 48, height: 26, borderRadius: 13, border: 'none',

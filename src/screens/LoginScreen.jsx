@@ -1,20 +1,19 @@
 import { useState } from 'react'
 import { loginUser } from '../config/auth.js'
 import BrandPanel from '../components/BrandPanel.jsx'
+import LoginForm from '../components/auth/LoginForm.jsx'
 
 export default function LoginScreen({ navigate, t, onLogin }) {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
   const [error, setError] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState('')
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+  const handleSubmit = async (formData) => {
+    const identifier = formData.identifier
+    const password = formData.password
     setError('')
     setLoading(true)
-    const result = await loginUser(email, password)
+    const result = await loginUser(identifier, password)
     if (!result.success) { setError(result.error); setLoading(false); return }
     const roleMessages = { customer: 'Welcome back! Find trusted workers near you.', worker: 'Ready to work? Check your dashboard for new jobs.', admin: 'Welcome back, Admin.' }
     setSuccess(roleMessages[result.user.role] || 'Welcome back!')
@@ -27,25 +26,18 @@ export default function LoginScreen({ navigate, t, onLogin }) {
       <div className="form-side" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', position: 'relative', zIndex: 1 }}>
         <div className="auth-card" style={{ width: '100%', maxWidth: 430, background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)', padding: 'clamp(28px, 5vw, 44px)', boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }}>
           <h2 style={{ fontSize: 'var(--font-large)', fontWeight: 800, color: 'var(--text-primary)', marginBottom: 4 }}>Welcome back</h2>
-          <p style={{ fontSize: 'var(--font-body)', color: 'var(--text-secondary)', marginBottom: 28 }}>Sign in to continue</p>
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div><label style={{ fontSize: 'var(--font-body-sm)', fontWeight: 600, color: 'var(--text-primary)', display: 'block', marginBottom: 6 }}>Email</label><input type="email" value={email} onChange={(e) => { setEmail(e.target.value); setError(''); }} placeholder="you@email.com" required style={{ width: '100%', padding: '12px 14px', borderRadius: 'var(--radius-md)', border: `1px solid ${error ? 'var(--accent-red)' : 'var(--border)'}`, background: 'var(--bg-surface2)', color: 'var(--text-primary)', fontSize: 'var(--font-body)', outline: 'none' }} /></div>
-            <div><label style={{ fontSize: 'var(--font-body-sm)', fontWeight: 600, color: 'var(--text-primary)', display: 'block', marginBottom: 6 }}>Password</label><div style={{ position: 'relative' }}><input type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => { setPassword(e.target.value); setError(''); }} placeholder="••••••••" required style={{ width: '100%', padding: '12px 40px 12px 14px', borderRadius: 'var(--radius-md)', border: `1px solid ${error ? 'var(--accent-red)' : 'var(--border)'}`, background: 'var(--bg-surface2)', color: 'var(--text-primary)', fontSize: 'var(--font-body)', outline: 'none' }} /><span onMouseDown={() => setShowPassword(true)} onMouseUp={() => setShowPassword(false)} onMouseLeave={() => setShowPassword(false)} onTouchStart={() => setShowPassword(true)} onTouchEnd={() => setShowPassword(false)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', cursor: 'pointer', fontSize: 16, userSelect: 'none', opacity: 0.5, color: 'var(--text-secondary)' }}>👁</span></div></div>
-            {error && <div style={{ fontSize: 'var(--font-body-sm)', color: 'var(--accent-red)', fontWeight: 500 }}>{error}</div>}
-            {success && <div style={{ fontSize: 'var(--font-body-sm)', color: 'var(--accent-green)', fontWeight: 600, background: 'var(--accent-green-light)', padding: '10px 14px', borderRadius: 'var(--radius-sm)' }}>{success}</div>}
-            <button type="submit" disabled={loading} className={error ? 'error-shake' : ''} style={{ padding: '14px', borderRadius: 'var(--radius-md)', border: 'none', background: loading ? '#94a3b8' : 'var(--accent-blue)', color: '#fff', fontSize: 'var(--font-body)', fontWeight: 600, cursor: loading ? 'wait' : 'pointer', marginTop: 8, transition: 'all 0.2s', transform: loading ? 'scale(0.98)' : 'scale(1)' }} onClick={(e) => { if (!loading) { e.target.classList.add('btn-click'); setTimeout(() => e.target.classList.remove('btn-click'), 300); } }}>{loading ? <span className="loading-dots">Signing in<span>.</span><span>.</span><span>.</span></span> : 'Sign In'}</button>
-          </form>
-          <p style={{ fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)', textAlign: 'center', marginTop: 16 }}>Don't have an account? <span onClick={() => navigate('/signup')} style={{ color: 'var(--accent-blue)', cursor: 'pointer', fontWeight: 600 }}>Sign up</span></p>
+          <p style={{ fontSize: 'var(--font-body)', color: 'var(--text-secondary)', marginBottom: 24 }}>Sign in to continue</p>
+          <LoginForm onSubmit={handleSubmit} loading={loading} error={error} success={success} navigate={navigate} />
         </div>
       </div>
-            <style>{`
+      <style>{`
         .auth-page, .auth-page .form-side, .auth-page .form-side * { --bg-primary: #f0f2f6 !important; --bg-surface: #ffffff !important; --bg-surface2: #f7f8fa !important; --text-primary: #1a1d23 !important; --text-secondary: #6b7280 !important; --border: #e5e7eb !important; --accent-blue: #1A6FD4 !important; --accent-blue-light: #EBF3FF !important; }
         @media (max-width: 768px) {
-  .brand-side { position: absolute !important; inset: 0 !important; opacity: 1 !important; pointer-events: none !important; }
-  .auth-page { overflow-y: auto; overscroll-behavior: none; }
-  .form-side { flex: none !important; width: 100% !important; min-height: 100vh !important; min-height: 100dvh !important; }
-  .auth-card { box-shadow: 0 12px 48px rgba(0,0,0,0.2), 0 4px 16px rgba(0,0,0,0.1) !important; margin: 0; background: #ffffff !important; padding: 20px !important; width: 100% !important; max-width: 430px !important; align-self: center !important; }
-}
+          .brand-side { position: absolute !important; inset: 0 !important; opacity: 1 !important; pointer-events: none !important; }
+          .auth-page { overflow-y: auto; overscroll-behavior: none; }
+          .form-side { flex: none !important; width: 100% !important; min-height: 100vh !important; min-height: 100dvh !important; }
+          .auth-card { box-shadow: 0 12px 48px rgba(0,0,0,0.2), 0 4px 16px rgba(0,0,0,0.1) !important; margin: 0; background: #ffffff !important; padding: 20px !important; width: 100% !important; max-width: 430px !important; align-self: center !important; }
+        }
       `}</style>
     </div>
   )
