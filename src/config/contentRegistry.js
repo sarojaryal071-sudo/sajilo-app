@@ -41,13 +41,21 @@ const contentRegistry = {
 
     // Home page
   'home.welcome': { en: 'Welcome to Sajilo', ne: 'Sajilo मा स्वागत छ' },
-  'home.subtitle': { en: 'Find trusted workers near you', ne: 'नजिकका विश्वसनीय कामदार खोज्नुहोस्' },
-  'home.services': { en: 'Services', ne: 'सेवाहरू' },
-  'home.nearbyWorkers': { en: 'Nearby Workers', ne: 'नजिकका कामदारहरू' },
-  'home.noWorkers': { en: 'No workers available yet', ne: 'कुनै कामदार उपलब्ध छैन' },
-  'home.viewAll': { en: 'See all', ne: 'सबै हेर्नुहोस्' },
-  'home.promoOff': { en: 'First booking 20% off', ne: 'पहिलो बुकिंगमा २०% छुट' },
-  'home.promoPrio': { en: 'Priority access all month', ne: 'महिनाभर प्राथमिकता पहुँच' },
+'home.subtitle': { en: 'Find trusted workers near you', ne: 'नजिकका विश्वसनीय कामदार खोज्नुहोस्' },
+'home.services': { en: 'Services', ne: 'सेवाहरू' },
+'home.nearbyWorkers': { en: 'Nearby Workers', ne: 'नजिकका कामदारहरू' },
+'home.noWorkers': { en: 'No workers available yet', ne: 'कुनै कामदार उपलब्ध छैन' },
+'home.viewAll': { en: 'See all', ne: 'सबै हेर्नुहोस्' },
+'home.promoOff': { en: 'First booking 20% off', ne: 'पहिलो बुकिंगमा २०% छुट' },
+'home.promoPrio': { en: 'Priority access all month', ne: 'महिनाभर प्राथमिकता पहुँच' },
+'home.back': { en: 'Back', ne: 'पछाडि' },
+'home.swipeClose': { en: 'Swipe down to close', ne: 'बन्द गर्न तल स्वाइप गर्नुहोस्' },
+'home.worker.role': { en: 'Role', ne: 'भूमिका' },
+'home.worker.location': { en: 'Location', ne: 'स्थान' },
+'home.worker.rating': { en: 'Rating', ne: 'रेटिंग' },
+'worker.available': { en: 'Available', ne: 'उपलब्ध' },
+'worker.jobsDone': { en: 'jobs done', ne: 'काम सम्पन्न' },
+'worker.message': { en: 'Message', ne: 'सन्देश' },
 
   // Search
   'search.title': { en: 'Search Workers', ne: 'कामदार खोज्नुहोस्' },
