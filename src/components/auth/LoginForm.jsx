@@ -51,7 +51,7 @@ export default function LoginForm({ onSubmit, loading, error, success, navigate 
         </label>
         <div style={{ position: 'relative' }}>
           <input type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)}
-            placeholder={useContent('auth.login.password.placeholder')} required
+            placeholder={useContent('auth.login.password.placeholder')}
             style={{ width: '100%', padding: '12px 40px 12px 14px', borderRadius: 'var(--radius-md)', border: `1px solid ${error ? 'var(--accent-red)' : 'var(--border)'}`, background: 'var(--bg-surface2)', color: 'var(--text-primary)', fontSize: 'var(--font-body)', outline: 'none', transition: 'border-color 0.2s, box-shadow 0.2s' }}
             onFocus={(e) => { e.target.style.borderColor = 'var(--accent-blue)'; e.target.style.boxShadow = '0 0 0 3px var(--accent-blue-light)' }}
             onBlur={(e) => { e.target.style.borderColor = error ? 'var(--accent-red)' : 'var(--border)'; e.target.style.boxShadow = 'none' }}
