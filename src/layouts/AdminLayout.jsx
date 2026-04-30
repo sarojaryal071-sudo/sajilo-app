@@ -64,7 +64,7 @@ const handleSetDark = (val) => {
         }}>
           {/* Logo */}
           <div style={{ padding: '0 20px', marginBottom: 24 }}>
-            <div onClick={() => navigate('/home')} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+            <div onClick={() => navigate('/admin/home')} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
               <div style={{
                 width: 32, height: 32, borderRadius: 8,
                 background: 'linear-gradient(135deg, #1A56DB, #1e3a5f)',

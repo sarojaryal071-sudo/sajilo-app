@@ -26,6 +26,7 @@ import AdminCategories from '../screens/admin/AdminCategories.jsx'
 import AdminDisputes from '../screens/admin/AdminDisputes.jsx'
 import AdminUIControl from '../screens/admin/AdminUIControl.jsx'
 import AdminAudit from '../screens/admin/AdminAudit.jsx'
+import AdminCustomers from '../screens/admin/AdminCustomers.jsx'
 
 const routes = [
   { path: '/login', component: LoginScreen, public: true },
@@ -58,6 +59,8 @@ const routes = [
 { path: '/admin/categories', component: AdminCategories, role: 'admin' },
 { path: '/admin/ui-control', component: AdminUIControl, role: 'admin' },
 { path: '/admin/audit', component: AdminAudit, role: 'admin' },
+{ path: '/admin/customers', component: AdminCustomers, role: 'admin' },
+{ path: '/admin/home', component: PlaceholderScreen, role: 'admin', label: 'Home' },
 ]
 
 export default routes
