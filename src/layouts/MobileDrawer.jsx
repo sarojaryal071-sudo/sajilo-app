@@ -32,6 +32,21 @@ export default function MobileDrawer({ isOpen, onClose, navigate, t }) {
             {t[item.labelKey]}
           </button>
         ))}
+        {/* Theme Toggle */}
+        <button onClick={() => {
+          const current = localStorage.getItem('sajilo_theme')
+          localStorage.setItem('sajilo_theme', current === 'dark' ? 'light' : 'dark')
+          window.location.reload()
+        }} style={{
+          display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0',
+          border: 'none', background: 'transparent', cursor: 'pointer',
+          width: '100%', fontSize: 14, fontWeight: 500,
+          color: 'var(--text-primary)', borderBottom: '1px solid var(--border)',
+        }}>
+          <span style={{ fontSize: 18 }}>🌓</span>
+          Theme
+        </button>
+        {/* Logout */}
         <button onClick={() => { localStorage.removeItem('sajilo_user'); localStorage.removeItem('sajilo_token'); window.location.href = '/login' }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0', border: 'none', background: 'transparent', cursor: 'pointer', width: '100%', fontSize: 14, fontWeight: 500, color: 'var(--accent-red)', borderBottom: '1px solid var(--border)', marginTop: 8 }}>
           <span style={{ fontSize: 18 }}>🚪</span>Logout
         </button>

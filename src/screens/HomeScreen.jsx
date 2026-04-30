@@ -57,11 +57,9 @@ export default function HomeScreen({ navigate, t }) {
         <div
           key={service.id}
           onClick={() => {
-            if (!isMobile) {
-              setStackedCategory(service.id)
-              setSelectedCategory(service.id)
-            }
-          }}
+  setStackedCategory(service.id)
+  setSelectedCategory(service.id)
+}}
           style={{
             ...cardStyle,
             display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer',
@@ -79,7 +77,7 @@ export default function HomeScreen({ navigate, t }) {
   )
 
   // Desktop stacked view — LOCKED SCROLL
-  if (!isMobile && stackedCategory) {
+  if (stackedCategory) {
     return (
       <div style={{ height: 'calc(100vh - 140px)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         <h2 style={welcomeTitleStyle}>{txt.welcome}</h2>
