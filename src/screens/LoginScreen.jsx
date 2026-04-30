@@ -41,10 +41,11 @@ export default function LoginScreen({ navigate, t, onLogin }) {
             <style>{`
         .auth-page, .auth-page .form-side, .auth-page .form-side * { --bg-primary: #f0f2f6 !important; --bg-surface: #ffffff !important; --bg-surface2: #f7f8fa !important; --text-primary: #1a1d23 !important; --text-secondary: #6b7280 !important; --border: #e5e7eb !important; --accent-blue: #1A6FD4 !important; --accent-blue-light: #EBF3FF !important; }
         @media (max-width: 768px) {
-          .brand-side { position: absolute !important; inset: 0 !important; opacity: 1 !important; pointer-events: none !important; }
-          .form-side { flex: none !important; width: 100% !important; height: 100vh !important; height: 100dvh !important; overflow: hidden; }
-          .auth-card { box-shadow: 0 12px 48px rgba(0,0,0,0.2), 0 4px 16px rgba(0,0,0,0.1) !important; margin: 0; background: #ffffff !important; padding: 20px !important; overflow-y: auto; width: 100% !important; max-width: 430px !important; align-self: center !important; }
-        }
+  .brand-side { position: absolute !important; inset: 0 !important; opacity: 1 !important; pointer-events: none !important; }
+  .auth-page { overflow-y: auto; overscroll-behavior: none; }
+  .form-side { flex: none !important; width: 100% !important; min-height: 100vh !important; min-height: 100dvh !important; }
+  .auth-card { box-shadow: 0 12px 48px rgba(0,0,0,0.2), 0 4px 16px rgba(0,0,0,0.1) !important; margin: 0; background: #ffffff !important; padding: 20px !important; width: 100% !important; max-width: 430px !important; align-self: center !important; }
+}
       `}</style>
     </div>
   )
