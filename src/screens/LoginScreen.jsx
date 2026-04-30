@@ -18,6 +18,16 @@ export default function LoginScreen({ navigate, t, onLogin }) {
     return () => document.documentElement.classList.remove('auth-locked')
   }, [])
 
+  // Allow pull-to-refresh when card is at rest
+  useEffect(() => {
+    if (dragY === 0 && !isDragging) {
+      document.documentElement.style.overscrollBehavior = 'auto'
+    } else {
+      document.documentElement.style.overscrollBehavior = 'none'
+    }
+    return () => { document.documentElement.style.overscrollBehavior = 'auto' }
+  }, [dragY, isDragging])
+
   const handleSubmit = async (formData) => {
     const identifier = formData.identifier
     const password = formData.password

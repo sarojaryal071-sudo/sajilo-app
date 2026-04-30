@@ -16,6 +16,9 @@ const uiRegistry = {
     termsText: { enabled: true },
     socialDivider: { enabled: false },
     loginLogo: { enabled: false },
+    promoBanners: { enabled: true },
+    primaryServices: { enabled: true },
+    secondaryServices: { enabled: true },
   },
   layout: {
     desktopColumns: 3,

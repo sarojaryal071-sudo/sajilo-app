@@ -1,17 +1,18 @@
 import { useState } from 'react'
 import { workers } from '../config/data.js'
 import Calendar from '../components/Calendar.jsx'
+import { useContent } from '../hooks/useContent.js'
 
 const jobSizes = [
-  { id: 'small', labelKey: 'smallJob', descKey: 'smallDesc', price: 'Rs 500-1500' },
-  { id: 'medium', labelKey: 'mediumJob', descKey: 'mediumDesc', price: 'Rs 1500-4000' },
-  { id: 'large', labelKey: 'largeJob', descKey: 'largeDesc', price: 'Rs 4000-10000' },
+  { id: 'small', labelKey: 'detail.small', descKey: 'detail.smallDesc', price: 'Rs 500-1500' },
+  { id: 'medium', labelKey: 'detail.medium', descKey: 'detail.mediumDesc', price: 'Rs 1500-4000' },
+  { id: 'large', labelKey: 'detail.large', descKey: 'detail.largeDesc', price: 'Rs 4000-10000' },
 ]
 
 const HOURS = ['01','02','03','04','05','06','07','08','09','10','11','12']
 const MINUTES = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'))
 
-export default function DetailScreen({ navigate, workerId, previousTab, t }) {
+export default function DetailScreen({ navigate, workerId }) {
   const [selectedJob, setSelectedJob] = useState('medium')
   const [urgency, setUrgency] = useState('now')
   const [selectedDate, setSelectedDate] = useState('')
@@ -19,6 +20,19 @@ export default function DetailScreen({ navigate, workerId, previousTab, t }) {
   const [selectedMinute, setSelectedMinute] = useState('00')
   const [isAM, setIsAM] = useState(true)
   const [showCalendar, setShowCalendar] = useState(false)
+
+  const txt = {
+    back: useContent('auth.signup.loginLink'),
+    selectJob: useContent('detail.selectJob'),
+    small: useContent('detail.small'),
+    medium: useContent('detail.medium'),
+    large: useContent('detail.large'),
+    when: useContent('detail.when'),
+    now: useContent('detail.now'),
+    schedule: useContent('detail.schedule'),
+    book: useContent('detail.book'),
+    date: useContent('auth.login.identifier.placeholder'),
+  }
 
   const worker = workers.find(w => w.id === workerId)
 
@@ -29,243 +43,81 @@ export default function DetailScreen({ navigate, workerId, previousTab, t }) {
   }
 
   const handleBack = () => {
-    if (window.history.length > 1) {
-      navigate(-1)
-    } else {
-      navigate('/search')
-    }
+    if (window.history.length > 1) navigate(-1)
+    else navigate('/search')
   }
 
   if (!worker) {
     return (
       <div style={{ textAlign: 'center', padding: 40 }}>
-        <p style={{ color: 'var(--text-secondary)' }}>{t.workerNotFound}</p>
-        <button onClick={handleBack} style={{
-          marginTop: 16,
-          padding: '8px 16px',
-          borderRadius: 'var(--radius-sm)',
-          border: '1px solid var(--border)',
-          background: 'var(--bg-surface2)',
-          color: 'var(--accent-blue)',
-          cursor: 'pointer',
-        }}>
-          {t.back}
-        </button>
+        <p style={{ color: 'var(--text-secondary)' }}>Worker not found</p>
+        <button onClick={handleBack} style={{ marginTop: 16, padding: '8px 16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--accent-blue)', cursor: 'pointer' }}>{txt.back}</button>
       </div>
     )
   }
 
   return (
     <div>
-      <button
-        onClick={handleBack}
-        style={{
-          background: 'var(--bg-surface2)',
-          border: '1px solid var(--border)',
-          borderRadius: 'var(--radius-sm)',
-          cursor: 'pointer',
-          fontSize: 'var(--font-body)',
-          color: 'var(--text-secondary)',
-          marginBottom: 16,
-          fontWeight: 500,
-          padding: '6px 14px',
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 4,
-          transition: 'all 0.15s',
-        }}
-        onMouseEnter={(e) => {
-          e.target.style.background = 'var(--accent-blue-light)'
-          e.target.style.color = 'var(--accent-blue)'
-          e.target.style.borderColor = 'var(--accent-blue)'
-        }}
-        onMouseLeave={(e) => {
-          e.target.style.background = 'var(--bg-surface2)'
-          e.target.style.color = 'var(--text-secondary)'
-          e.target.style.borderColor = 'var(--border)'
-        }}
-      >
-        {t.back}
-      </button>
+      <button onClick={handleBack} style={{ background: 'var(--bg-surface2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: 'var(--font-body)', color: 'var(--text-secondary)', marginBottom: 16, fontWeight: 500, padding: '6px 14px', display: 'inline-flex', alignItems: 'center', gap: 4, transition: 'all 0.15s' }}
+        onMouseEnter={(e) => { e.target.style.background = 'var(--accent-blue-light)'; e.target.style.color = 'var(--accent-blue)'; e.target.style.borderColor = 'var(--accent-blue)' }}
+        onMouseLeave={(e) => { e.target.style.background = 'var(--bg-surface2)'; e.target.style.color = 'var(--text-secondary)'; e.target.style.borderColor = 'var(--border)' }}
+      >{txt.back}</button>
 
-      <div style={{
-        height: 160,
-        background: worker.bg || '#EBF3FF',
-        borderRadius: 'var(--radius-lg)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginBottom: 20,
-      }}>
-        <div style={{
-          width: 80,
-          height: 80,
-          borderRadius: '50%',
-          background: 'rgba(255,255,255,0.7)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: 36,
-          fontWeight: 700,
-          color: 'var(--text-primary)',
-        }}>
+      <div style={{ height: 160, background: worker.bg || '#EBF3FF', borderRadius: 'var(--radius-lg)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
+        <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, fontWeight: 700, color: 'var(--text-primary)' }}>
           {worker.name.split(' ').map(n => n[0]).join('')}
         </div>
       </div>
 
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        marginBottom: 16,
-      }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
         <div>
-          <div style={{ fontSize: 'var(--font-large)', fontWeight: 800, color: 'var(--text-primary)' }}>
-            {worker.name}
-          </div>
-          <div style={{ fontSize: 'var(--font-body)', color: 'var(--text-secondary)', marginTop: 3 }}>
-            ⭐ {worker.rating} · {worker.role} · {worker.location}
-          </div>
+          <div style={{ fontSize: 'var(--font-large)', fontWeight: 800, color: 'var(--text-primary)' }}>{worker.name}</div>
+          <div style={{ fontSize: 'var(--font-body)', color: 'var(--text-secondary)', marginTop: 3 }}>⭐ {worker.rating} · {worker.role} · {worker.location}</div>
         </div>
-        <div style={{
-          background: 'var(--accent-orange-light)',
-          color: 'var(--accent-orange)',
-          fontSize: 'var(--font-body)',
-          fontWeight: 700,
-          padding: '6px 12px',
-          borderRadius: 20,
-        }}>
-          Rs 500-2500{t.hr}
-        </div>
+        <div style={{ background: 'var(--accent-orange-light)', color: 'var(--accent-orange)', fontSize: 'var(--font-body)', fontWeight: 700, padding: '6px 12px', borderRadius: 20 }}>Rs 500-2500/hr</div>
       </div>
 
       <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '16px 0' }} />
 
-      <div style={{ fontSize: 'var(--font-body)', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 10 }}>
-        {t.selectJobSize}
-      </div>
+      <div style={{ fontSize: 'var(--font-body)', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 10 }}>{txt.selectJob}</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
         {jobSizes.map((job) => (
-          <div
-            key={job.id}
-            onClick={() => setSelectedJob(job.id)}
-            style={{
-              border: selectedJob === job.id ? '2px solid var(--accent-blue)' : '1px solid var(--border)',
-              borderRadius: 'var(--radius-md)',
-              padding: 14,
-              cursor: 'pointer',
-              background: selectedJob === job.id ? 'var(--accent-blue-light)' : 'var(--bg-surface)',
-              position: 'relative',
-            }}
-          >
-            <div style={{ fontSize: 'var(--font-body)', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>
-              {t[job.labelKey]}
-            </div>
-            <div style={{ fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)' }}>
-              {t[job.descKey]}
-            </div>
-            <span style={{
-              position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)',
-              fontSize: 'var(--font-body)', fontWeight: 700, color: 'var(--text-primary)',
-            }}>
-              {job.price}
-            </span>
+          <div key={job.id} onClick={() => setSelectedJob(job.id)} style={{ border: selectedJob === job.id ? '2px solid var(--accent-blue)' : '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: 14, cursor: 'pointer', background: selectedJob === job.id ? 'var(--accent-blue-light)' : 'var(--bg-surface)', position: 'relative' }}>
+            <div style={{ fontSize: 'var(--font-body)', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>{txt[job.labelKey.split('.')[1]]}</div>
+            <div style={{ fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)' }}>{job.descKey}</div>
+            <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 'var(--font-body)', fontWeight: 700, color: 'var(--text-primary)' }}>{job.price}</span>
           </div>
         ))}
       </div>
 
-      <div style={{ fontSize: 'var(--font-body)', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 10 }}>
-        {t.when}
-      </div>
+      <div style={{ fontSize: 'var(--font-body)', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 10 }}>{txt.when}</div>
       <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
-        {[
-          { key: 'now', label: t.now },
-          { key: 'schedule', label: t.schedule },
-        ].map((opt) => (
-          <button
-            key={opt.key}
-            onClick={() => setUrgency(opt.key)}
-            style={{
-              flex: 1, padding: 11, borderRadius: 'var(--radius-md)', cursor: 'pointer',
-              fontSize: 'var(--font-body)', fontWeight: 500,
-              border: urgency === opt.key ? '2px solid var(--accent-orange)' : '1px solid var(--border)',
-              background: urgency === opt.key ? 'var(--accent-orange-light)' : 'transparent',
-              color: urgency === opt.key ? 'var(--accent-orange)' : 'var(--text-primary)',
-            }}
-          >
-            {opt.label}
-          </button>
+        {[{ key: 'now', label: txt.now }, { key: 'schedule', label: txt.schedule }].map((opt) => (
+          <button key={opt.key} onClick={() => setUrgency(opt.key)} style={{ flex: 1, padding: 11, borderRadius: 'var(--radius-md)', cursor: 'pointer', fontSize: 'var(--font-body)', fontWeight: 500, border: urgency === opt.key ? '2px solid var(--accent-orange)' : '1px solid var(--border)', background: urgency === opt.key ? 'var(--accent-orange-light)' : 'transparent', color: urgency === opt.key ? 'var(--accent-orange)' : 'var(--text-primary)' }}>{opt.label}</button>
         ))}
       </div>
 
       {urgency === 'schedule' && (
         <div style={{ display: 'flex', gap: 6, marginBottom: 20, alignItems: 'center' }}>
           <div style={{ position: 'relative', flex: 1 }}>
-            <button
-              onClick={() => setShowCalendar(!showCalendar)}
-              style={{
-                width: '100%', padding: '8px 6px', borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--border)', background: 'var(--bg-surface2)',
-                color: selectedDate ? 'var(--text-primary)' : 'var(--text-secondary)',
-                fontSize: 'var(--font-body-sm)', cursor: 'pointer', textAlign: 'center',
-              }}
-            >
-              {selectedDate ? formatDate(selectedDate) : '📅 ' + t.selectDate}
+            <button onClick={() => setShowCalendar(!showCalendar)} style={{ width: '100%', padding: '8px 6px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: selectedDate ? 'var(--text-primary)' : 'var(--text-secondary)', fontSize: 'var(--font-body-sm)', cursor: 'pointer', textAlign: 'center' }}>
+              {selectedDate ? formatDate(selectedDate) : '📅 Date'}
             </button>
-            {showCalendar && (
-              <div style={{ position: 'absolute', bottom: '100%', left: 0, marginBottom: 4, zIndex: 1000 }}>
-                <Calendar value={selectedDate} onChange={setSelectedDate} onClose={() => setShowCalendar(false)} />
-              </div>
-            )}
+            {showCalendar && <div style={{ position: 'absolute', bottom: '100%', left: 0, marginBottom: 4, zIndex: 1000 }}><Calendar value={selectedDate} onChange={setSelectedDate} onClose={() => setShowCalendar(false)} /></div>}
           </div>
-
-          <select value={selectedHour} onChange={(e) => setSelectedHour(e.target.value)} style={{
-            width: 48, padding: '8px 2px', borderRadius: 'var(--radius-sm)',
-            border: '1px solid var(--border)', background: 'var(--bg-surface2)',
-            color: 'var(--text-primary)', fontSize: 'var(--font-body-sm)', cursor: 'pointer',
-          }}>
-            {HOURS.map(h => <option key={h} value={h}>{h}</option>)}
-          </select>
-
+          <select value={selectedHour} onChange={(e) => setSelectedHour(e.target.value)} style={{ width: 48, padding: '8px 2px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)', fontSize: 'var(--font-body-sm)', cursor: 'pointer' }}>{HOURS.map(h => <option key={h} value={h}>{h}</option>)}</select>
           <span style={{ color: 'var(--text-secondary)' }}>:</span>
-
-          <select value={selectedMinute} onChange={(e) => setSelectedMinute(e.target.value)} style={{
-            width: 48, padding: '8px 2px', borderRadius: 'var(--radius-sm)',
-            border: '1px solid var(--border)', background: 'var(--bg-surface2)',
-            color: 'var(--text-primary)', fontSize: 'var(--font-body-sm)', cursor: 'pointer',
-          }}>
-            {MINUTES.map(m => <option key={m} value={m}>{m}</option>)}
-          </select>
-
-          <button onClick={() => setIsAM(!isAM)} style={{
-            padding: '8px 8px', borderRadius: 'var(--radius-sm)',
-            border: '1px solid var(--border)',
-            background: isAM ? 'var(--accent-blue)' : 'var(--bg-surface2)',
-            color: isAM ? '#fff' : 'var(--text-secondary)',
-            fontSize: 'var(--font-body-sm)', fontWeight: 600, cursor: 'pointer',
-          }}>
-            {isAM ? 'AM' : 'PM'}
-          </button>
+          <select value={selectedMinute} onChange={(e) => setSelectedMinute(e.target.value)} style={{ width: 48, padding: '8px 2px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)', fontSize: 'var(--font-body-sm)', cursor: 'pointer' }}>{MINUTES.map(m => <option key={m} value={m}>{m}</option>)}</select>
+          <button onClick={() => setIsAM(!isAM)} style={{ padding: '8px 8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: isAM ? 'var(--accent-blue)' : 'var(--bg-surface2)', color: isAM ? '#fff' : 'var(--text-secondary)', fontSize: 'var(--font-body-sm)', fontWeight: 600, cursor: 'pointer' }}>{isAM ? 'AM' : 'PM'}</button>
         </div>
       )}
 
-      <div style={{
-        background: 'var(--bg-surface2)', borderRadius: 'var(--radius-md)',
-        padding: '10px 14px', fontSize: 'var(--font-body-sm)',
-        color: 'var(--text-secondary)', marginBottom: 20,
-      }}>
-        {t.paymentNote}
+      <div style={{ background: 'var(--bg-surface2)', borderRadius: 'var(--radius-md)', padding: '10px 14px', fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)', marginBottom: 20 }}>
+        💳 Pay via eSewa, Khalti, or cash · Platform fee 15%
       </div>
 
-      <button
-        onClick={() => navigate(`/tracking/${worker.id}`)}
-        style={{
-          width: '100%', background: 'var(--accent-orange)', color: '#fff',
-          border: 'none', borderRadius: 'var(--radius-md)', padding: 14,
-          fontSize: 'var(--font-title)', fontWeight: 700, cursor: 'pointer',
-        }}
-      >
-        {t.bookWorker} ({jobSizes.find(j => j.id === selectedJob)?.price || 'Rs 1500-4000'})
+      <button onClick={() => navigate(`/tracking/${worker.id}`)} style={{ width: '100%', background: 'var(--accent-orange)', color: '#fff', border: 'none', borderRadius: 'var(--radius-md)', padding: 14, fontSize: 'var(--font-title)', fontWeight: 700, cursor: 'pointer' }}>
+        {txt.book} ({jobSizes.find(j => j.id === selectedJob)?.price || 'Rs 1500-4000'})
       </button>
     </div>
   )

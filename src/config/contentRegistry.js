@@ -38,6 +38,80 @@ const contentRegistry = {
   'auth.signup.loginLink': { en: 'Sign in', ne: 'साइन इन' },
   'auth.signup.success.customer': { en: 'Account created! Welcome to Sajilo.', ne: 'खाता बन्यो! Sajilo मा स्वागत छ।' },
   'auth.signup.success.worker': { en: 'Account created! Start earning by helping people.', ne: 'खाता बन्यो! मानिसहरूलाई सहयोग गरेर कमाउन सुरु गर्नुहोस्।' },
+
+    // Home page
+  'home.welcome': { en: 'Welcome to Sajilo', ne: 'Sajilo मा स्वागत छ' },
+  'home.subtitle': { en: 'Find trusted workers near you', ne: 'नजिकका विश्वसनीय कामदार खोज्नुहोस्' },
+  'home.services': { en: 'Services', ne: 'सेवाहरू' },
+  'home.nearbyWorkers': { en: 'Nearby Workers', ne: 'नजिकका कामदारहरू' },
+  'home.noWorkers': { en: 'No workers available yet', ne: 'कुनै कामदार उपलब्ध छैन' },
+  'home.viewAll': { en: 'See all', ne: 'सबै हेर्नुहोस्' },
+  'home.promoOff': { en: 'First booking 20% off', ne: 'पहिलो बुकिंगमा २०% छुट' },
+  'home.promoPrio': { en: 'Priority access all month', ne: 'महिनाभर प्राथमिकता पहुँच' },
+
+  // Search
+  'search.title': { en: 'Search Workers', ne: 'कामदार खोज्नुहोस्' },
+  'search.placeholder': { en: 'Search electrician, plumber, cleaner...', ne: 'इलेक्ट्रिसियन, प्लम्बर खोज्नुहोस्...' },
+  'search.all': { en: 'All', ne: 'सबै' },
+  'search.topRated': { en: 'Top Rated', ne: 'उच्च रेटिंग' },
+  'search.availableNow': { en: 'Available Now', ne: 'अहिले उपलब्ध' },
+  'search.nearby': { en: 'Nearby', ne: 'नजिकै' },
+  'search.priceLow': { en: 'Price ↑', ne: 'मूल्य ↑' },
+  'search.noResults': { en: 'No workers found', ne: 'कुनै कामदार भेटिएन' },
+  'search.verified': { en: '✓ Verified', ne: '✓ प्रमाणित' },
+
+  // Bookings
+  'bookings.title': { en: 'My Bookings', ne: 'मेरो बुकिंग' },
+  'bookings.active': { en: 'Active', ne: 'सक्रिय' },
+  'bookings.scheduled': { en: 'Scheduled', ne: 'निर्धारित' },
+  'bookings.completed': { en: 'Completed', ne: 'सम्पन्न' },
+  'bookings.noBookings': { en: 'No bookings yet', ne: 'कुनै बुकिंग छैन' },
+  'bookings.track': { en: 'Track →', ne: 'ट्र्याक →' },
+  'bookings.manage': { en: 'Manage →', ne: 'व्यवस्थापन →' },
+  'bookings.rate': { en: 'Rate worker ★', ne: 'रेटिंग दिनुहोस् ★' },
+
+  // Detail
+  'detail.selectJob': { en: 'Select Job Size', ne: 'कामको साइज छान्नुहोस्' },
+  'detail.small': { en: 'Small Job', ne: 'सानो काम' },
+  'detail.medium': { en: 'Medium Job', ne: 'मध्यम काम' },
+  'detail.large': { en: 'Large Job', ne: 'ठूलो काम' },
+  'detail.when': { en: 'When?', ne: 'कहिले?' },
+  'detail.now': { en: 'Now (~12 min)', ne: 'अहिले (~१२ मिनेट)' },
+  'detail.schedule': { en: 'Schedule', ne: 'तालिका' },
+  'detail.book': { en: 'Book Worker →', ne: 'बुक गर्नुहोस् →' },
+
+  // Profile
+  'profile.title': { en: 'Profile', ne: 'प्रोफाइल' },
+  'profile.wallet': { en: 'Wallet Balance', ne: 'वालेट ब्यालेन्स' },
+  'profile.memberSince': { en: 'Member since', ne: 'सदस्य' },
+  'profile.jobsBooked': { en: 'jobs booked', ne: 'काम बुक गरिएको' },
+  'profile.editProfile': { en: 'Edit Profile', ne: 'प्रोफाइल सम्पादन' },
+  'profile.settings': { en: 'Settings', ne: 'सेटिंग्स' },
+  'profile.logout': { en: 'Logout', ne: 'लगआउट' },
+
+  // Tracking
+  'tracking.title': { en: 'Live Tracking', ne: 'लाइभ ट्र्याकिंग' },
+  'tracking.onWay': { en: 'On the way', ne: 'बाटोमा' },
+  'tracking.eta': { en: 'min ETA', ne: 'मिनेट' },
+  'tracking.accepted': { en: 'Accepted', ne: 'स्वीकृत' },
+  'tracking.working': { en: 'Working', ne: 'काम गर्दै' },
+  'tracking.done': { en: 'Done', ne: 'सम्पन्न' },
+
+  // Pro
+  'pro.title': { en: 'Sajilo Pro', ne: 'Sajilo प्रो' },
+  'pro.subtitle': { en: 'Priority workers. Zero surge fees.', ne: 'प्राथमिकता कामदार। सर्ज शुल्क छैन।' },
+  'pro.mostPopular': { en: 'Most Popular', ne: 'सबैभन्दा लोकप्रिय' },
+  'pro.startPro': { en: 'Start Pro →', ne: 'प्रो सुरु गर्नुहोस् →' },
+   
+  'promo.tag1': { en: 'Limited offer', ne: 'सीमित प्रस्ताव' },
+  'promo.title1': { en: 'First booking 20% off', ne: 'पहिलो बुकिंगमा २०% छुट' },
+  'promo.sub1': { en: 'New users · Any service', ne: 'नयाँ प्रयोगकर्ता · जुनसुकै सेवा' },
+  'promo.tag2': { en: 'Pro subscription', ne: 'प्रो सदस्यता' },
+  'promo.title2': { en: 'Priority access all month', ne: 'महिनाभर प्राथमिकता पहुँच' },
+  'promo.sub2': { en: 'Skip the queue · Rs 999/mo', ne: 'लाइन छोड्नुहोस् · रु ९९९/महिना' },
+  'category.primary': { en: 'Our Services', ne: 'हाम्रा सेवाहरू' },
+  'category.secondary': { en: 'More Services', ne: 'थप सेवाहरू' },
+  'category.all': { en: 'All', ne: 'सबै' },
 }
 
 export default contentRegistry

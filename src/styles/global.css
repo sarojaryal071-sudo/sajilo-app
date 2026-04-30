@@ -120,3 +120,35 @@ html.auth-locked body {
   overscroll-behavior: none;
   height: 100%;
 }
+
+/* Hide scrollbars but keep scroll functionality */
+.sidebar-panel::-webkit-scrollbar,
+.main-content::-webkit-scrollbar,
+.auth-page::-webkit-scrollbar,
+.auth-card::-webkit-scrollbar,
+.form-side::-webkit-scrollbar,
+.brand-side::-webkit-scrollbar {
+  display: none;
+}
+
+.sidebar-panel,
+.main-content,
+.auth-page,
+.auth-card,
+.form-side,
+.brand-side {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Hide all scrollbars everywhere */
+* {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+*::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
