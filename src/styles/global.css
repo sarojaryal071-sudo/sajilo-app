@@ -101,12 +101,22 @@ body {
   letter-spacing: 2px;
 }
 
+.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+/* Auth page scroll lock */
 .auth-page {
   height: 100vh;
   height: 100dvh;
   overflow-y: auto;
   overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
-.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
-.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+/* Prevent document overscroll on auth pages only */
+html.auth-locked,
+html.auth-locked body {
+  overflow: hidden;
+  overscroll-behavior: none;
+  height: 100%;
+}

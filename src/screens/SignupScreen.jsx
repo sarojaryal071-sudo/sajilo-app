@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { registerUser } from '../config/auth.js'
 import BrandPanel from '../components/BrandPanel.jsx'
 import SignupForm from '../components/auth/SignupForm.jsx'
@@ -7,6 +7,12 @@ export default function SignupScreen({ navigate, t }) {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState('')
+
+  // Lock body scroll on auth page — remove on leave
+  useEffect(() => {
+    document.documentElement.classList.add('auth-locked')
+    return () => document.documentElement.classList.remove('auth-locked')
+  }, [])
 
   const handleSubmit = async ({ name, email, password, role }) => {
     setError('')
@@ -32,7 +38,7 @@ export default function SignupScreen({ navigate, t }) {
         .auth-page, .auth-page .form-side, .auth-page .form-side * { --bg-primary: #f0f2f6 !important; --bg-surface: #ffffff !important; --bg-surface2: #f7f8fa !important; --text-primary: #1a1d23 !important; --text-secondary: #6b7280 !important; --border: #e5e7eb !important; --accent-blue: #1A6FD4 !important; --accent-blue-light: #EBF3FF !important; --accent-green: #2D9E6B !important; --accent-green-light: #E8F5EF !important; }
         @media (max-width: 768px) {
           .brand-side { position: absolute !important; inset: 0 !important; opacity: 1 !important; pointer-events: none !important; }
-          .auth-page { overflow-y: auto; overscroll-behavior: none; }
+          .auth-page { overflow-y: auto; overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; }
           .form-side { flex: none !important; width: 100% !important; min-height: 100vh !important; min-height: 100dvh !important; }
           .auth-card { box-shadow: 0 12px 48px rgba(0,0,0,0.2), 0 4px 16px rgba(0,0,0,0.1) !important; margin: 0; background: #ffffff !important; padding: 20px !important; width: 100% !important; max-width: 430px !important; align-self: center !important; }
         }
