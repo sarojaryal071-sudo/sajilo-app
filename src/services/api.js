@@ -1,4 +1,6 @@
-const API_URL = 'http://localhost:5000/api'
+const API_URL = import.meta.env.PROD 
+  ? 'https://sajilo-backend-c7mi.onrender.com/api'
+  : 'http://localhost:5000/api'
 
 function getToken() {
   return localStorage.getItem('sajilo_token')
