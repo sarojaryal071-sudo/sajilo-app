@@ -2,11 +2,12 @@ const appFlow = {
   customer: {
     routes: ['/home', '/search', '/detail/:id', '/tracking/:id', '/bookings', '/pro', '/profile'],
     navigation: [
-      { id: 'home', labelKey: 'navHome', icon: '🏠', route: '/home' },
-      { id: 'search', labelKey: 'navSearch', icon: '🔍', route: '/search' },
-      { id: 'bookings', labelKey: 'navBookings', icon: '📋', route: '/bookings' },
-      { id: 'pro', labelKey: 'navPro', icon: '⭐', route: '/pro' },
-      { id: 'profile', labelKey: 'navProfile', icon: '👤', route: '/profile' },
+      { id: 'home', labelKey: 'navHome', icon: '🏠', route: '/home', priority: 'primary' },
+      { id: 'search', labelKey: 'navSearch', icon: '🔍', route: '/search', priority: 'secondary' },
+      { id: 'bookings', labelKey: 'navBookings', icon: '📋', route: '/bookings', priority: 'primary' },
+      { id: 'tracking', labelKey: 'liveTracking', icon: '📍', route: '/tracking/1', priority: 'primary' },
+      { id: 'pro', labelKey: 'navPro', icon: '⭐', route: '/pro', priority: 'secondary' },
+      { id: 'profile', labelKey: 'navProfile', icon: '👤', route: '/profile', priority: 'secondary' },
     ],
     dashboard: '/home',
   },

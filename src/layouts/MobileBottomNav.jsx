@@ -15,7 +15,7 @@ export default function MobileBottomNav({ navigate, t, onMore, onSOS }) {
       borderTop: '1px solid var(--border)', flexShrink: 0,
       position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: mobile.bottomNav.zIndex,
     }}>
-      {primaryItems.slice(0, 3).map((item) => (
+      {primaryItems.slice(0, 5).map((item) => (
         <button key={item.id} onClick={() => navigate(item.route)} style={{
           flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
           justifyContent: 'center', gap: mobile.bottomNav.gap, border: 'none', background: 'transparent',
