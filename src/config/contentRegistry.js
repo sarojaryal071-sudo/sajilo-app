@@ -335,6 +335,56 @@ const contentRegistry = {
   'misc.hr': { en: '/hr', ne: '/घण्टा' },
   'misc.noActiveJob': { en: 'No active job', ne: 'कुनै सक्रिय काम छैन' },
   'misc.waitingRequests': { en: 'Waiting for customer requests...', ne: 'ग्राहक अनुरोधको प्रतीक्षा गर्दै...' },
+
+// Worker Apply Cards
+'worker.apply.cardIdentity': { en: 'Identity', ne: 'पहिचान' },
+'worker.apply.cardService': { en: 'Service Category', ne: 'सेवा वर्ग' },
+'worker.apply.cardLocation': { en: 'Location', ne: 'स्थान' },
+'worker.apply.cardVerification': { en: 'Verification', ne: 'प्रमाणीकरण' },
+'worker.apply.cardPreferences': { en: 'Preferences', ne: 'प्राथमिकताहरू' },
+'worker.apply.cardTerms': { en: 'Terms & Safety', ne: 'सर्त र सुरक्षा' },
+'worker.apply.next': { en: 'Next', ne: 'अर्को' },
+'worker.apply.previous': { en: 'Previous', ne: 'अघिल्लो' },
+'worker.apply.clearAll': { en: 'Clear All', ne: 'सबै खाली' },
+'worker.apply.progress': { en: 'Step', ne: 'चरण' },
+'worker.apply.missingFields': { en: 'Please complete all required fields.', ne: 'सबै आवश्यक फाँटहरू भर्नुहोस्।' },
+'worker.apply.dob': { en: 'Date of Birth', ne: 'जन्म मिति' },
+'worker.apply.primaryRole': { en: 'Primary Role', ne: 'मुख्य भूमिका' },
+'worker.apply.secondaryRoles': { en: 'Secondary Roles', ne: 'अतिरिक्त भूमिका' },
+'worker.apply.address': { en: 'Address', ne: 'ठेगाना' },
+'worker.apply.addressPlaceholder': { en: 'Your full address', ne: 'तपाईंको पूरा ठेगाना' },
+'worker.apply.serviceArea': { en: 'Service Area', ne: 'सेवा क्षेत्र' },
+'worker.apply.serviceAreaPlaceholder': { en: 'e.g. Kathmandu, Lalitpur', ne: 'जस्तै: काठमाडौं, ललितपुर' },
+'worker.apply.govId': { en: 'Government ID Number', ne: 'सरकारी परिचयपत्र नम्बर' },
+'worker.apply.govIdPlaceholder': { en: 'Citizenship or passport number', ne: 'नागरिकता वा पासपोर्ट नम्बर' },
+'worker.apply.selfie': { en: 'Selfie / Photo', ne: 'सेल्फी / फोटो' },
+'worker.apply.availability': { en: 'Availability', ne: 'उपलब्धता' },
+'worker.apply.notifications': { en: 'Notification Preference', ne: 'सूचना प्राथमिकता' },
+'worker.apply.acceptTerms': { en: 'I accept the Terms & Conditions', ne: 'म सर्त र शर्तहरू स्वीकार गर्छु' },
+'worker.apply.backgroundCheck': { en: 'I consent to a background check', ne: 'म पृष्ठभूमि जाँचको लागि सहमति दिन्छु' },
+'worker.apply.safetyAgreement': { en: 'I agree to the safety guidelines', ne: 'म सुरक्षा दिशानिर्देशहरूमा सहमत छु' },
+
+// Worker Roles
+'worker.role.electrician': { en: 'Electrician', ne: 'इलेक्ट्रिसियन' },
+'worker.role.plumber': { en: 'Plumber', ne: 'प्लम्बर' },
+'worker.role.cleaner': { en: 'Cleaner', ne: 'सफाई' },
+'worker.role.painter': { en: 'Painter', ne: 'चित्रकार' },
+'worker.role.carpenter': { en: 'Carpenter', ne: 'काठको काम' },
+
+// Availability
+'worker.avail.weekdays': { en: 'Weekdays', ne: 'हप्ताका दिन' },
+'worker.avail.weekends': { en: 'Weekends', ne: 'सप्ताहन्त' },
+'worker.avail.fulltime': { en: 'Full Time', ne: 'पूर्ण समय' },
+
+// Notifications
+'worker.notify.email': { en: 'Email', ne: 'ईमेल' },
+'worker.notify.sms': { en: 'SMS', ne: 'एसएमएस' },
+'worker.notify.app': { en: 'App Notification', ne: 'एप सूचना' },
+
+'worker.apply.confirm': { en: 'Confirm', ne: 'पुष्टि' },
+'worker.apply.confirmTitle': { en: 'Confirm Submission', ne: 'पेश गर्ने पुष्टि' },
+'worker.apply.confirmMsg': { en: 'You cannot make any changes after you submit the application. Are you sure to submit the application?', ne: 'आवेदन पेश गरेपछि तपाईं कुनै परिवर्तन गर्न सक्नुहुन्न। के तपाईं आवेदन पेश गर्न निश्चित हुनुहुन्छ?' },
+'worker.apply.cancel': { en: 'Cancel', ne: 'रद्द' },
 }
 
 export default contentRegistry
