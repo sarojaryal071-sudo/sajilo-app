@@ -31,9 +31,9 @@ export default function AdminApprovals() {
   }
 
   const filtered = workers.filter(w => {
-    if (filter === 'Pending') return w.status !== 'active' && w.status !== 'inactive'
+    if (filter === 'Pending') return w.status === 'pending'
     if (filter === 'Approved') return w.status === 'active'
-    if (filter === 'Rejected') return w.status === 'inactive'
+    if (filter === 'Rejected') return w.status === 'rejected'
     return true
   })
 

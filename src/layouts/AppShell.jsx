@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import translations from '../config/translations.js'
-import { getCurrentUser, logoutUser } from '../config/auth.js'
+import { getCurrentUser, logoutAndRedirect } from '../config/auth.js'
 import routes from '../config/routes.config.js'
 import { RequireAuth, RequireRole } from '../components/RequireAuth.jsx'
 import Navbar from './Navbar.jsx'
@@ -14,63 +14,125 @@ import uiRegistry from '../config/ui/uiRegistry.js'
 import WorkerLayout from './WorkerLayout.jsx'
 import AdminMobileBlock from '../screens/admin/AdminMobileBlock.jsx'
 import AdminLayout from './AdminLayout.jsx'
+import { WorkerProvider } from '../contexts/WorkerContext.jsx'
 
 export default function AppShell() {
   const [dark, setDark] = useState(() => {
-  return localStorage.getItem('sajilo_theme') === 'dark'
-})
+    return localStorage.getItem('sajilo_theme') === 'dark'
+  })
   const handleSetDark = (val) => {
-  const newVal = typeof val === 'function' ? val(dark) : val
-  setDark(newVal)
-  localStorage.setItem('sajilo_theme', newVal ? 'dark' : 'light')
-}
-  const [lang, setLang] = useState('en')
+    const newVal = typeof val === 'function' ? val(dark) : val
+    setDark(newVal)
+    localStorage.setItem('sajilo_theme', newVal ? 'dark' : 'light')
+  }
+  const [lang, setLang] = useState(() => localStorage.getItem('sajilo_lang') || 'en')
   const [showSOS, setShowSOS] = useState(false)
   const [showDrawer, setShowDrawer] = useState(false)
   const [user, setUser] = useState(getCurrentUser)
+  const [authChecked, setAuthChecked] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
   const t = translations[lang]
 
   useEffect(() => {
-    if (!user && location.pathname !== '/login' && location.pathname !== '/signup') {
-      navigate('/login')
-    }
+    console.log("🔍 APP STATE", {
+      email: user?.email, role: user?.role, status: user?.status, path: location.pathname
+    })
   }, [user, location.pathname])
 
+  useEffect(() => {
+    const currentUser = getCurrentUser()
+    console.log("🔍 AUTH CHECK - Initial user:", {
+      email: currentUser?.email, role: currentUser?.role, status: currentUser?.status
+    })
+    setUser(currentUser)
+    setAuthChecked(true)
+  }, [])
+
+  useEffect(() => {
+    if (!authChecked) return
+    if (!user && location.pathname !== '/login' && location.pathname !== '/signup') {
+      console.log("🔍 REDIRECT: No user, redirecting to /login")
+      navigate('/login')
+    }
+  }, [user, authChecked, location.pathname, navigate])
+
+  // Redirect pending workers
+  useEffect(() => {
+    if (!user || !authChecked) return
+    if (user.role === 'worker' && user.status === 'pending') {
+      const hasApplied = user.application_submitted || user.phone
+      if (hasApplied && location.pathname !== '/worker/pending') {
+        console.log("🔍 REDIRECT: Pending (applied) → /worker/pending")
+        navigate('/worker/pending', { replace: true })
+      } else if (!hasApplied && location.pathname !== '/worker/apply') {
+        console.log("🔍 REDIRECT: Pending (no app) → /worker/apply")
+        navigate('/worker/apply', { replace: true })
+      }
+    }
+  }, [user, authChecked, location.pathname, navigate])
+
   const handleLogin = (userData) => {
+    console.log("🔍 LOGIN: Setting user", {
+      email: userData?.email, role: userData?.role, status: userData?.status
+    })
     setUser(userData)
     localStorage.setItem('sajilo_user', JSON.stringify(userData))
   }
 
   const handleLogout = () => {
-    logoutUser()
+    console.log("🔍 LOGOUT: Clearing user")
     setUser(null)
-    navigate('/login')
+    setAuthChecked(true)
+    logoutAndRedirect()
   }
 
-  // Admin on mobile — block access
+  if (!authChecked) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)', fontFamily: 'var(--font-family)' }}>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: 'var(--primary)' }}></div>
+      </div>
+    )
+  }
+
   if (user && user.role === 'admin' && window.innerWidth < 768) {
     return (
-      <div style={{
-        minHeight: '100vh', display: 'flex',
-        background: 'var(--bg-primary)', fontFamily: 'var(--font-family)',
-      }}>
+      <div style={{ minHeight: '100vh', display: 'flex', background: 'var(--bg-primary)', fontFamily: 'var(--font-family)' }}>
         <AdminMobileBlock />
       </div>
     )
   }
 
-  // Worker gets their own layout
+  // ═══ STANDALONE PAGES (no WorkerLayout) ═══
+
+  if (user && user.role === 'worker' && user.status === 'pending' && location.pathname === '/worker/pending') {
+    const route = routes.find(r => r.path === '/worker/pending')
+    if (route) {
+      const Component = route.component
+      return <WorkerProvider><Component navigate={navigate} t={t} onLogin={handleLogin} /></WorkerProvider>
+    }
+  }
+
+  if (user && user.role === 'worker' && user.status === 'pending' && location.pathname === '/worker/apply') {
+    const route = routes.find(r => r.path === '/worker/apply')
+    if (route) {
+      const Component = route.component
+      return <WorkerProvider><Component navigate={navigate} t={t} onLogin={handleLogin} /></WorkerProvider>
+    }
+  }
+
+  // ═══ WORKER LAYOUT (approved workers only) ═══
   if (user && user.role === 'worker') {
+    const workerRoutes = routes.filter(r => r.role === 'worker')
+    console.log("🔍 WORKER ROUTES:", { status: user.status, totalRoutes: workerRoutes.length, paths: workerRoutes.map(r => r.path) })
+
     return (
-      <WorkerLayout>
+      <WorkerLayout user={user} onLogout={handleLogout}>
         <main style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-primary)', padding: 0 }}>
           <Routes>
-            {routes.filter(r => r.role === 'worker').map(route => {
+            {workerRoutes.map(route => {
               const Component = route.component
-              const element = <Component navigate={navigate} t={t} onLogin={handleLogin} title={route.label} />
-              return <Route key={route.path} path={route.path} element={<RequireRole role="worker">{element}</RequireRole>} />
+              return <Route key={route.path} path={route.path} element={<Component navigate={navigate} t={t} onLogin={handleLogin} title={route.label} />} />
             })}
           </Routes>
         </main>
@@ -78,74 +140,47 @@ export default function AppShell() {
     )
   }
 
-  // Admin gets their own layout
-if (user && user.role === 'admin') {
-  return (
-    <AdminLayout>
-      <Routes>
-        {routes.filter(r => r.role === 'admin').map(route => {
-          const Component = route.component
-          const element = <Component navigate={navigate} t={t} title={route.label} />
-          return <Route key={route.path} path={route.path} element={<RequireRole role="admin">{element}</RequireRole>} />
-        })}
-      </Routes>
-    </AdminLayout>
-  )
-}
+  // ═══ ADMIN ═══
+  if (user && user.role === 'admin') {
+    return (
+      <AdminLayout>
+        <Routes>
+          {routes.filter(r => r.role === 'admin').map(route => {
+            const Component = route.component
+            return <Route key={route.path} path={route.path} element={<RequireRole role="admin"><Component navigate={navigate} t={t} title={route.label} /></RequireRole>} />
+          })}
+        </Routes>
+      </AdminLayout>
+    )
+  }
 
+  // ═══ CUSTOMER / DEFAULT ═══
   const isAdminOrWorker = user && user.role === 'admin'
   const showLayout = user && !isAdminOrWorker && location.pathname !== '/login' && location.pathname !== '/signup'
 
-
   return (
     <div className="app-shell" data-theme={dark ? 'dark' : 'light'} style={{
-      height: '100vh', width: '100vw', background: 'var(--bg-primary)',
-      display: 'flex', flexDirection: 'column',
-      fontFamily: 'var(--font-family)',
+      height: '100vh', width: '100vw', background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column', fontFamily: 'var(--font-family)',
     }}>
-      {showLayout && (
-        <Navbar dark={dark} setDark={handleSetDark} lang={lang} setLang={setLang} navigate={navigate} t={t} onSOS={() => setShowSOS(true)} />
-      )}
+      {showLayout && <Navbar dark={dark} setDark={handleSetDark} lang={lang} setLang={setLang} navigate={navigate} t={t} onSOS={() => setShowSOS(true)} />}
       <div className="layout-row" style={{ display: 'flex', flex: 1, minHeight: 0 }}>
-        {showLayout && (
-          <div className="desktop-sidebar" style={{ flexShrink: 0 }}>
-            <Sidebar t={t} />
-          </div>
-        )}
-        <main className="main-content" style={{
-          flex: 1, minWidth: 0, minHeight: 0,
-          padding: showLayout ? 28 : 0,
-          overflowY: 'auto', background: 'var(--bg-primary)',
-        }}>
+        {showLayout && <div className="desktop-sidebar" style={{ flexShrink: 0 }}><Sidebar t={t} /></div>}
+        <main className="main-content" style={{ flex: 1, minWidth: 0, minHeight: 0, padding: showLayout ? 28 : 0, overflowY: 'auto', background: 'var(--bg-primary)' }}>
           <Routes>
             {routes.filter(r => r.role !== 'worker' && r.role !== 'admin').map(route => {
               const Component = route.component
               const element = <Component navigate={navigate} t={t} onLogin={handleLogin} title={route.label} />
-
-              if (route.public) {
-                return <Route key={route.path} path={route.path} element={element} />
-              }
-
-              if (route.role === 'admin') {
-                return <Route key={route.path} path={route.path} element={<RequireRole role={route.role}>{element}</RequireRole>} />
-              }
-
+              if (route.public) return <Route key={route.path} path={route.path} element={element} />
+              if (route.role === 'admin') return <Route key={route.path} path={route.path} element={<RequireRole role={route.role}>{element}</RequireRole>} />
               return <Route key={route.path} path={route.path} element={<RequireAuth>{element}</RequireAuth>} />
             })}
           </Routes>
         </main>
-        {showLayout && (
-          <div className="desktop-right" style={{ flexShrink: 0 }}>
-            <RightPanel t={t} />
-          </div>
-        )}
+        {showLayout && <div className="desktop-right" style={{ flexShrink: 0 }}><RightPanel t={t} /></div>}
       </div>
-      {showLayout && (
-        <MobileBottomNav navigate={navigate} t={t} onMore={() => setShowDrawer(!showDrawer)} onSOS={() => setShowSOS(true)} />
-      )}
-      <MobileDrawer isOpen={showDrawer} onClose={() => setShowDrawer(false)} navigate={navigate} t={t} />
+      {showLayout && <MobileBottomNav navigate={navigate} t={t} onMore={() => setShowDrawer(!showDrawer)} onSOS={() => setShowSOS(true)} />}
+      <MobileDrawer isOpen={showDrawer} onClose={() => setShowDrawer(false)} navigate={navigate} t={t} lang={lang} setLang={setLang} />
       {showSOS && <EmergencyModal onClose={() => setShowSOS(false)} />}
-
       <style>{`
         @media (max-width: 768px) {
           .desktop-sidebar, .desktop-right { display: none !important; }

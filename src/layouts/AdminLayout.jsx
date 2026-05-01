@@ -8,14 +8,14 @@ export default function AdminLayout({ children }) {
   const navigate = useNavigate()
   const location = useLocation()
   const [dark, setDark] = useState(() => {
-  return localStorage.getItem('sajilo_theme') === 'dark'
-})
+    return localStorage.getItem('sajilo_theme') === 'dark'
+  })
 
-const handleSetDark = (val) => {
-  const newVal = typeof val === 'function' ? val(dark) : val
-  setDark(newVal)
-  localStorage.setItem('sajilo_theme', newVal ? 'dark' : 'light')
-}
+  const handleSetDark = (val) => {
+    const newVal = typeof val === 'function' ? val(dark) : val
+    setDark(newVal)
+    localStorage.setItem('sajilo_theme', newVal ? 'dark' : 'light')
+  }
 
   const handleLogout = () => {
     localStorage.removeItem('sajilo_user')
@@ -38,6 +38,19 @@ const handleSetDark = (val) => {
           Dashboard
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {/* Language toggle */}
+          <select value={localStorage.getItem('sajilo_lang') || 'en'} onChange={(e) => {
+            localStorage.setItem('sajilo_lang', e.target.value)
+            window.dispatchEvent(new Event('langChange'))
+          }} style={{
+            padding: '4px 6px', borderRadius: 6, border: '1px solid var(--border)',
+            background: 'var(--bg-surface2)', color: 'var(--text-primary)',
+            fontSize: 12, fontWeight: 600, cursor: 'pointer', outline: 'none',
+          }}>
+            <option value="en">EN</option>
+            <option value="ne">ने</option>
+          </select>
+          {/* Theme toggle */}
           <button onClick={() => handleSetDark(!dark)} style={{
             width: 34, height: 34, borderRadius: 7, display: 'flex',
             alignItems: 'center', justifyContent: 'center',
@@ -57,12 +70,10 @@ const handleSetDark = (val) => {
 
       {/* Body */}
       <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
-        {/* Dark Sidebar */}
         <div style={{
           width: 240, flexShrink: 0, background: '#0F172A',
           padding: '20px 0', overflowY: 'auto', display: 'flex', flexDirection: 'column',
         }}>
-          {/* Logo */}
           <div style={{ padding: '0 20px', marginBottom: 24 }}>
             <div onClick={() => navigate('/admin/home')} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
               <div style={{
@@ -79,7 +90,6 @@ const handleSetDark = (val) => {
             </div>
           </div>
 
-          {/* Navigation sections */}
           {sections.map((section) => (
             <div key={section} style={{ marginBottom: 16 }}>
               <div style={{
@@ -111,7 +121,6 @@ const handleSetDark = (val) => {
             </div>
           ))}
 
-          {/* User at bottom */}
           <div style={{ marginTop: 'auto', padding: '16px 20px', borderTop: '1px solid #1e293b' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{
@@ -127,7 +136,6 @@ const handleSetDark = (val) => {
           </div>
         </div>
 
-        {/* Content */}
         <div style={{
           flex: 1, overflowY: 'auto', padding: 24,
           background: 'var(--bg-surface2)',

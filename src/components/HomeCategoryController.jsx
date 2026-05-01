@@ -11,7 +11,7 @@ export default function HomeCategoryController({ categoryId, onClose }) {
 
   const category = services.find(s => s.id === categoryId)
   const approvedWorkers = workers.filter(
-    w => w.approved && w.role?.toLowerCase() === category?.name?.toLowerCase()
+    w => w.approved && w.status === 'active' && w.role?.toLowerCase() === category?.name?.toLowerCase()
   )
 
   const txt = {

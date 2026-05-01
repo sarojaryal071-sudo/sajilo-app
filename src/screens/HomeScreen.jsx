@@ -34,7 +34,7 @@ export default function HomeScreen({ navigate, t }) {
   const iconStyle = useStyle('homeServiceIcon')
   const labelStyle = useStyle('homeServiceLabel')
 
-  const approvedWorkers = workers.filter(w => w.approved)
+  const approvedWorkers = workers.filter(w => w.approved && w.status === 'active')
 
   const stackedWorkers = stackedCategory
     ? approvedWorkers.filter(w => {

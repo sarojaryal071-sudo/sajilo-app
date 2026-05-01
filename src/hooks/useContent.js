@@ -1,26 +1,22 @@
-import { useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import contentRegistry from '../config/contentRegistry.js'
 
+// Single source of truth — same key for all panels
+const STORAGE_KEY = 'sajilo_lang'
+
 export function useContent(key, fallback = '') {
-  const text = useMemo(() => {
-    // Check admin override
-    const overrides = localStorage.getItem('sajilo_content_overrides')
-    if (overrides) {
-      const parsed = JSON.parse(overrides)
-      if (parsed[key]) return parsed[key]
+  const [lang, setLang] = useState(() => localStorage.getItem(STORAGE_KEY) || 'en')
+
+  useEffect(() => {
+    const handleChange = () => {
+      setLang(localStorage.getItem(STORAGE_KEY) || 'en')
     }
+    window.addEventListener('langChange', handleChange)
+    return () => window.removeEventListener('langChange', handleChange)
+  }, [])
 
-    // Check language
-    const lang = localStorage.getItem('sajilo_lang') || 'en'
-
-    // Get from registry
-    const entry = contentRegistry[key]
-    if (entry && entry[lang]) return entry[lang]
-    if (entry && entry.en) return entry.en
-
-    // Fallback
-    return fallback || key
-  }, [key, fallback])
-
-  return text
+  const entry = contentRegistry[key]
+  if (entry && entry[lang]) return entry[lang]
+  if (entry && entry.en) return entry.en
+  return fallback || key
 }

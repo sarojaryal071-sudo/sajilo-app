@@ -2,7 +2,7 @@ import { useRef, useEffect } from 'react'
 import getNavigation from '../config/navigation.js'
 import mobile from '../config/ui/mobile.config.js'
 
-export default function MobileDrawer({ isOpen, onClose, navigate, t }) {
+export default function MobileDrawer({ isOpen, onClose, navigate, t, lang, setLang }) {
   const ref = useRef()
 
   useEffect(() => {
@@ -22,16 +22,37 @@ export default function MobileDrawer({ isOpen, onClose, navigate, t }) {
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: mobile.drawer.overlayBackground, zIndex: mobile.drawer.overlayZIndex }} />
       <div ref={ref} style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: mobile.drawer.width, background: mobile.drawer.background, zIndex: mobile.drawer.zIndex, padding: mobile.drawer.padding, overflowY: 'auto', animation: 'slideIn 0.2s ease' }}>
+        
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
           <span style={{ fontSize: mobile.drawer.titleSize, fontWeight: mobile.drawer.titleWeight, color: 'var(--text-primary)' }}>More</span>
           <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: 'var(--text-secondary)' }}>✕</button>
         </div>
+
         {secondaryItems.map((item) => (
           <button key={item.id} onClick={() => { navigate(item.route); onClose() }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: mobile.drawer.itemPadding, border: 'none', background: 'transparent', cursor: 'pointer', width: '100%', fontSize: mobile.drawer.itemFontSize, fontWeight: mobile.drawer.itemWeight, color: 'var(--text-primary)', borderBottom: mobile.drawer.itemBorder }}>
             <span style={{ fontSize: mobile.drawer.iconSize }}>{item.icon}</span>
             {t[item.labelKey]}
           </button>
         ))}
+
+        {/* Language Toggle — closes drawer so page re-renders */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
+          <span style={{ fontSize: 18 }}>🌐</span>
+          <select value={lang || 'en'} onChange={(e) => {
+            const val = e.target.value
+            setLang(val)
+            localStorage.setItem('sajilo_lang', val)
+            window.dispatchEvent(new Event('langChange'))  // ← ADD THIS
+            onClose()
+          }} style={{
+            border: 'none', background: 'transparent', color: 'var(--text-primary)',
+            fontSize: 14, fontWeight: 500, cursor: 'pointer', outline: 'none', flex: 1,
+          }}>
+            <option value="en">English</option>
+            <option value="ne">नेपाली</option>
+          </select>
+        </div>
+
         {/* Theme Toggle */}
         <button onClick={() => {
           const current = localStorage.getItem('sajilo_theme')
@@ -46,6 +67,7 @@ export default function MobileDrawer({ isOpen, onClose, navigate, t }) {
           <span style={{ fontSize: 18 }}>🌓</span>
           Theme
         </button>
+
         {/* Logout */}
         <button onClick={() => { localStorage.removeItem('sajilo_user'); localStorage.removeItem('sajilo_token'); window.location.href = '/login' }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0', border: 'none', background: 'transparent', cursor: 'pointer', width: '100%', fontSize: 14, fontWeight: 500, color: 'var(--accent-red)', borderBottom: '1px solid var(--border)', marginTop: 8 }}>
           <span style={{ fontSize: 18 }}>🚪</span>Logout

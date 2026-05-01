@@ -26,6 +26,15 @@ export default function Navbar({ dark, setDark, lang, setLang, navigate, t, onSO
 
   const sosEnabled = useFeatureFlag('sosEmergency')
 
+  const handleLangChange = (e) => {
+    const newLang = e.target.value
+    setLang(newLang)
+    const user = JSON.parse(localStorage.getItem('sajilo_user') || '{}')
+    const role = user?.role || 'customer'
+    localStorage.setItem(`sajilo_lang_${role}`, newLang)
+    window.dispatchEvent(new Event('langChange'))
+  }
+
   return (
     <nav className="navbar" style={{
       height: navbar.height, background: 'var(--bg-nav)', borderBottom: '1px solid var(--border)',
@@ -63,7 +72,7 @@ export default function Navbar({ dark, setDark, lang, setLang, navigate, t, onSO
         </button>
       )}
 
-      <select value={lang} onChange={(e) => setLang(e.target.value)} style={{
+      <select value={lang} onChange={handleLangChange} style={{
         padding: '5px 8px', borderRadius: 6, border: '1px solid var(--border)',
         background: 'var(--bg-surface2)', color: 'var(--text-primary)',
         fontSize: 12, fontWeight: 600, cursor: 'pointer', outline: 'none', flexShrink: 0,
@@ -81,17 +90,17 @@ export default function Navbar({ dark, setDark, lang, setLang, navigate, t, onSO
         {dark ? '☀️' : '🌙'}
       </button>
       <button onClick={() => {
-  localStorage.removeItem('sajilo_user')
-  localStorage.removeItem('sajilo_token')
-  window.location.href = '/login'
-}} style={{
-  padding: '6px 12px', borderRadius: 6,
-  border: '1px solid var(--accent-red)', background: 'transparent',
-  color: 'var(--accent-red)', fontSize: 12, fontWeight: 600,
-  cursor: 'pointer', flexShrink: 0,
-}}>
-  Logout
-</button>
+        localStorage.removeItem('sajilo_user')
+        localStorage.removeItem('sajilo_token')
+        window.location.href = '/login'
+      }} style={{
+        padding: '6px 12px', borderRadius: 6,
+        border: '1px solid var(--accent-red)', background: 'transparent',
+        color: 'var(--accent-red)', fontSize: 12, fontWeight: 600,
+        cursor: 'pointer', flexShrink: 0,
+      }}>
+        Logout
+      </button>
     </nav>
   )
 }

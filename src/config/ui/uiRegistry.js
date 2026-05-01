@@ -19,6 +19,10 @@ const uiRegistry = {
     promoBanners: { enabled: true },
     primaryServices: { enabled: true },
     secondaryServices: { enabled: true },
+    workerQuickActions: { enabled: true },
+workerNotifications: { enabled: true },
+workerStats: { enabled: true },
+workerActiveTask: { enabled: true },
   },
   layout: {
     desktopColumns: 3,

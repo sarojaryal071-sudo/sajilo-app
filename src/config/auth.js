@@ -20,8 +20,11 @@ export async function registerUser(email, password, role, name) {
   }
 }
 
-export function logoutUser() {
+export function logoutAndRedirect() {
+  localStorage.removeItem('sajilo_user')
+  localStorage.removeItem('sajilo_token')
   removeToken()
+  window.location.href = '/login'
 }
 
 export function getCurrentUser() {

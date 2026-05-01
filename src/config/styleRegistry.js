@@ -109,6 +109,95 @@ const styleRegistry = {
     color: 'var(--text-secondary)',
     marginBottom: '24px',
   },
+
+  // Worker Pending
+  pendingTopBar: {
+    padding: '12px 20px',
+    background: 'var(--bg-surface)',
+    border: '1px solid var(--border)',
+  },
+  pendingLogoutBtn: {
+    padding: '6px 12px',
+    borderRadius: 'var(--radius-sm)',
+    border: '1px solid var(--accent-red)',
+    background: 'transparent',
+    color: 'var(--accent-red)',
+    fontSize: 'var(--font-body-sm)',
+  },
+  pendingThemeBtn: {
+    width: '30px',
+    height: '30px',
+    borderRadius: '6px',
+    background: 'var(--bg-surface2)',
+    border: '1px solid var(--border)',
+  },
+
+  // Worker Detail Overlay
+  workerDetailOverlay: {
+    padding: '20px',
+    background: 'var(--bg-primary)',
+  },
+  categoryOverlay: {
+    background: 'var(--bg-primary)',
+    borderLeft: '1px solid var(--border)',
+    boxShadow: '-4px 0 24px rgba(0,0,0,0.08)',
+  },
+  subLayer: {
+    background: 'var(--bg-primary)',
+    padding: '20px',
+  },
+
+  // Tracker
+  trackerCard: {
+    background: 'var(--bg-surface)',
+    borderRadius: 'var(--radius-lg)',
+    boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+    padding: '24px',
+  },
+  trackerTitle: {
+    fontSize: 'var(--font-large)',
+    fontWeight: 800,
+    color: 'var(--text-primary)',
+    textAlign: 'center',
+  },
+
+  trackerNote: {
+  background: '#fef3c7',
+  border: '1px solid #D97706',
+  borderRadius: 'var(--radius-md)',
+  padding: '12px 14px',
+},
+trackerNoteTitle: {
+  fontSize: '11px',
+  fontWeight: 600,
+  color: '#D97706',
+},
+trackerNoteText: {
+  fontSize: '12px',
+  color: '#92400e',
+},
+trackerStatusBox: {
+  background: 'var(--bg-surface2)',
+  borderRadius: 'var(--radius-md)',
+  padding: '16px',
+},
+trackerStepDone: {
+  background: 'var(--accent-blue)',
+  color: '#fff',
+},
+trackerStepCurrent: {
+  background: '#fff',
+  border: '2px solid var(--accent-blue)',
+  color: 'var(--accent-blue)',
+  boxShadow: '0 0 0 5px var(--accent-blue-light)',
+},
+trackerStepFuture: {
+  background: 'var(--bg-surface2)',
+  border: '2px solid var(--border)',
+  color: 'var(--text-secondary)',
+},
 }
+
+
 
 export default styleRegistry

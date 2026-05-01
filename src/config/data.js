@@ -23,6 +23,7 @@ export const workers = [
     photo: null,
     verified: true,
     approved: true,
+    status: 'active'
   },
   {
     id: 2,
@@ -37,6 +38,7 @@ export const workers = [
     photo: null,
     verified: true,
     approved: true,
+    status: 'active'
   },
   {
     id: 3,
@@ -51,6 +53,7 @@ export const workers = [
     photo: null,
     verified: true,
     approved: true,
+    status: 'pending'
   },
 ]
 
