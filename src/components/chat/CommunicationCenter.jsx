@@ -7,9 +7,8 @@ import { useSocket } from '../../hooks/useSocket.js'
 import conversationState from '../../services/chat/ConversationStateManager.js'
 
 
-const API_URL = import.meta.env.PROD 
-  ? 'https://sajilo-backend-c7mi.onrender.com/api'
-  : 'http://localhost:5000/api'
+const API_URL = 'https://sajilo-backend-c7mi.onrender.com/api'
+// const API_URL = import.meta.env.PROD ? '...' : 'http://localhost:5000/api'
 
   
 // Admin user ID for support chat — messages route to this user
