@@ -1,3 +1,4 @@
+import WelcomeScreen from '../screens/WelcomeScreen.jsx'
 import HomeScreen from '../screens/HomeScreen.jsx'
 import SearchScreen from '../screens/SearchScreen.jsx'
 import BookingsScreen from '../screens/BookingsScreen.jsx'
@@ -32,6 +33,10 @@ import WorkerApply from '../screens/worker/WorkerApply.jsx'
 import AdminChat from '../screens/admin/AdminChat.jsx'
 
 const routes = [
+  // Add as first route:
+{ path: '/welcome', component: WelcomeScreen, public: true },
+
+
   { path: '/login', component: LoginScreen, public: true },
   { path: '/signup', component: SignupScreen, public: true },
   { path: '/worker/apply', component: WorkerApply, public: true },

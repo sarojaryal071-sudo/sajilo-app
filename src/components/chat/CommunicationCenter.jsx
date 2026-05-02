@@ -4,7 +4,14 @@ import { useFeatureFlag } from '../../hooks/useFeatureFlag.js'
 import { useContent } from '../../hooks/useContent.js'
 import { useStyle } from '../../hooks/useStyle.js'
 import { useSocket } from '../../hooks/useSocket.js'
+import conversationState from '../../services/chat/ConversationStateManager.js'
 
+
+const API_URL = import.meta.env.PROD 
+  ? 'https://sajilo-backend-c7mi.onrender.com/api'
+  : 'http://localhost:5000/api'
+
+  
 // Admin user ID for support chat — messages route to this user
 const SUPPORT_ID = 9
 
@@ -15,11 +22,13 @@ export default function CommunicationCenter() {
   const [conversations, setConversations] = useState([])
   const [chatInput, setChatInput] = useState('')
   const [pendingId, setPendingId] = useState(null)
+  const [chatBadge, setChatBadge] = useState(0)
   const messagesEndRef = useRef(null)
   const chatRef = useRef(null)
 
   const { socket } = useSocket()
   const chatEnabled = useFeatureFlag('liveChat')
+  console.log('[BUBBLE] chatEnabled:', chatEnabled)
   const positionStyle = useStyle('commCenterPosition') || {}
 
   const chatTitle = useContent('chat.title') || 'Support Chat'
@@ -29,11 +38,11 @@ export default function CommunicationCenter() {
   const newChatLabel = useContent('chat.newChat') || 'New Message'
   const backLabel = useContent('chat.back') || '← Back'
 
-  // Loads conversations from backend — single source of truth for chat list
+  // Loads conversations from backend
   useEffect(() => {
     const token = localStorage.getItem('sajilo_token')
     if (!token) return
-    fetch('http://localhost:5000/api/chat/conversations', {
+    fetch(`${API_URL}/chat/conversations`, {
       headers: { Authorization: `Bearer ${token}` }
     }).then(r => r.json()).then(d => {
       if (d.data?.length > 0) setConversations(d.data)
@@ -49,18 +58,31 @@ export default function CommunicationCenter() {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [showChat])
 
-  // Socket listeners — appends messages, never manages conversation list
+  // Subscribe to conversation state changes for badge
+  useEffect(() => {
+  const unsub = conversationState.onChange((count) => {
+    console.log('[BADGE] count changed:', count)
+    setChatBadge(count)
+  })
+  return unsub
+}, [])
+  // Socket listeners
   useEffect(() => {
     if (!socket) return
     socket.on('new_message', (msg) => {
-      setMessages(prev => [...prev, { ...msg, from: msg.sender_role === 'admin' ? 'support' : 'user' }])
-    })
+  console.log('[WORKER NEW_MSG]', msg.text)
+  setMessages(prev => [...prev, { ...msg, from: msg.sender_role === 'admin' ? 'support' : 'user' }])
+  if (msg.conversation_id) {
+    conversationState.setUnread(msg.conversation_id)
+    console.log('[SET UNREAD]', msg.conversation_id, 'unread count:', conversationState.getUnreadCount())
+  }
+})
     socket.on('message_sent', (msg) => {
       setMessages(prev => prev.map(m => m.id === pendingId ? { ...msg, from: 'user' } : m))
       setPendingId(null)
     })
-        socket.on('message_error', (err) => console.error('Chat error:', err))
-    socket.on('conversation_created', (conversation) => {
+    socket.on('message_error', (err) => console.error('Chat error:', err))
+    socket.on('conversation_updated', (conversation) => {
       setConversations(prev => {
         if (prev.find(c => c.id === conversation.id)) return prev
         return [conversation, ...prev]
@@ -70,7 +92,7 @@ export default function CommunicationCenter() {
       socket.off('new_message')
       socket.off('message_sent')
       socket.off('message_error')
-      socket.off('conversation_created')
+      socket.off('conversation_updated')
     }
   }, [socket, pendingId])
 
@@ -78,37 +100,35 @@ export default function CommunicationCenter() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // Sends a message through socket
   const handleSend = () => {
     if (!chatInput.trim()) return
     const text = chatInput.trim()
     const tempId = Date.now()
     setPendingId(tempId)
     if (socket) {
-      socket.emit('send_message', { receiverId: activeChat?.otherId || SUPPORT_ID, text, bookingId: activeChat?.bookingId || null })
+      socket.emit('send_message', { receiverId: activeChat?.other_id || SUPPORT_ID, text, bookingId: activeChat?.bookingId || null })
     }
     setMessages(prev => [...prev, { id: tempId, from: 'user', text, sender_name: 'You', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }])
     setChatInput('')
   }
 
-  // Opens a conversation — loads messages from API
   const openConversation = (conv) => {
     setActiveChat(conv)
+        conversationState.setRead(conv.id)
     const token = localStorage.getItem('sajilo_token')
-    fetch(`http://localhost:5000/api/chat/conversations/${conv.id}/messages`, {
+    fetch(`${API_URL}/chat/conversations/${conv.id}/messages`, {
       headers: { Authorization: `Bearer ${token}` }
     }).then(r => r.json()).then(d => {
-  const normalized = (d.data || []).map(msg => ({
-    ...msg,
-    from: msg.sender_role === 'admin' ? 'support' : 'user'
-  }))
-  setMessages(normalized)
-})
+      const normalized = (d.data || []).map(msg => ({
+        ...msg,
+        from: msg.sender_role === 'admin' ? 'support' : 'user'
+      }))
+      setMessages(normalized)
+    })
   }
 
-  // Opens a new support chat — persists in conversation list via backend
   const openNewChat = () => {
-    setActiveChat({ id: 'new', name: 'Support Chat', otherId: SUPPORT_ID })
+    setActiveChat({ id: 'new', name: 'Support Chat', other_id: SUPPORT_ID })
     setMessages([])
   }
 
@@ -157,7 +177,7 @@ export default function CommunicationCenter() {
                       <div key={chat.id} onClick={() => openConversation(chat)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', borderBottom: '1px solid var(--border)', cursor: 'pointer' }}>
                         <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--bg-surface2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>💬</div>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{chat.other_name || 'Support Chat'}</span></div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ fontSize: 13, fontWeight: conversationState.isUnread(chat.id) ? 700 : 400, color: 'var(--text-primary)' }}>{chat.other_name || 'Support Chat'}</span></div>
                           <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{chat.last_message || 'No messages'}</div>
                         </div>
                       </div>
@@ -168,7 +188,25 @@ export default function CommunicationCenter() {
             )}
           </div>
         )}
-        <button onClick={() => setShowChat(!showChat)} style={{ width: 44, height: 44, borderRadius: '50%', background: showChat ? 'var(--accent-blue)' : 'var(--bg-surface)', border: '2px solid var(--border)', cursor: 'pointer', fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>{showChat ? '✕' : '💬'}</button>
+        <button onClick={() => setShowChat(!showChat)} style={{ 
+          width: 44, height: 44, borderRadius: '50%', 
+          background: showChat ? 'var(--accent-blue)' : 'var(--bg-surface)', 
+          border: '2px solid var(--border)', cursor: 'pointer', fontSize: 18, 
+          display: 'flex', alignItems: 'center', justifyContent: 'center', 
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)', position: 'relative' 
+        }}>
+          {showChat ? '✕' : '💬'}
+          {chatBadge > 0 && (
+            <span style={{
+              position: 'absolute', top: -4, right: -4,
+              background: 'var(--accent-red)', color: '#fff',
+              fontSize: 10, fontWeight: 700, minWidth: 18, height: 18,
+              borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              {chatBadge}
+            </span>
+          )}
+        </button>
       </div>
     </div>
   )

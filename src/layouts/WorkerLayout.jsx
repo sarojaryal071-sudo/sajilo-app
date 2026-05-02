@@ -8,6 +8,7 @@ import WorkerMobileDrawer from './WorkerMobileDrawer.jsx'
 import { WorkerProvider, useWorker } from '../contexts/WorkerContext.jsx'
 import { BookingProvider } from '../contexts/BookingContext.jsx'
 import { useFeatureFlag } from '../hooks/useFeatureFlag.js'
+import { useNotification } from '../contexts/NotificationContext.jsx'
 
 function WorkerLayoutInner({ children, onLogout }) {
   const navigate = useNavigate()
@@ -19,9 +20,9 @@ function WorkerLayoutInner({ children, onLogout }) {
 
   const isApproved = profile?.status === 'active'
   const sosEnabled = useFeatureFlag('sosEmergency')
-    
-    const showTopbar = useFeatureFlag('workerTopbar')
-    const showTopbarName = useFeatureFlag('workerTopbarName')
+  const showTopbar = useFeatureFlag('workerTopbar')
+  const showTopbarName = useFeatureFlag('workerTopbarName')
+  const { unreadCount } = useNotification()
 
   const primaryItems = workerNavigation.filter(n => n.priority === 'primary')
   const secondaryItems = workerNavigation.filter(n => n.priority === 'secondary')
@@ -41,15 +42,15 @@ function WorkerLayoutInner({ children, onLogout }) {
     if (onLogout) { onLogout() } else { window.location.href = '/login' }
   }
 
+  console.log('[WORKER LAYOUT] Rendering - about to return JSX')
+  
   return (
     <div data-theme={dark ? 'dark' : 'light'} style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)', fontFamily: 'var(--font-family)' }}>
       
-           {/* Toggle — always fixed, admin can move but not hide */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '8px 20px', background: 'transparent', flexShrink: 0 }}>
         {isApproved && <OnlineToggle isOnline={profile?.is_online || false} onToggle={toggleOnline} />}
       </div>
 
-      {/* Name — admin can show/hide */}
       {showTopbar && showTopbarName && (
         <div style={{ padding: '0 20px 4px 20px', background: 'transparent' }}>
           <span style={{ fontSize: 'var(--font-body-lg)', fontWeight: 600, color: 'var(--text-primary)' }}>
@@ -58,9 +59,7 @@ function WorkerLayoutInner({ children, onLogout }) {
         </div>
       )}
 
-      {/* Body */}
       <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
-        {/* Desktop Sidebar */}
         <div className="worker-sidebar" style={{ width: 200, flexShrink: 0, background: 'var(--bg-surface)', borderRight: '1px solid var(--border)', padding: '12px 0', overflowY: 'auto' }}>
           {workerNavigation.filter(n => n.mobileVisible).map((item) => (
             <button key={item.id} onClick={() => navigate(item.path)} style={{
@@ -76,7 +75,6 @@ function WorkerLayoutInner({ children, onLogout }) {
         <div style={{ flex: 1, overflowY: 'auto', padding: 20, paddingBottom: 80 }}>{children}</div>
       </div>
 
-      {/* Mobile Bottom Bar — exact client panel style */}
       <div className="worker-bottom-nav" style={{ display: 'none', height: 60, background: 'var(--bg-nav)', borderTop: '1px solid var(--border)', position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9999 }}>
         {primaryItems.map((item) => (
           <button key={item.id} onClick={() => navigate(item.path)} style={{
@@ -88,6 +86,24 @@ function WorkerLayoutInner({ children, onLogout }) {
             <span style={{ fontSize: 10, fontWeight: 500 }}>{item.label}</span>
           </button>
         ))}
+        {/* Real notification bell — same as client panel */}
+        <button style={{
+          flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
+          justifyContent: 'center', gap: 2, border: 'none', background: 'transparent',
+          cursor: 'pointer', padding: '8px 4px', color: 'var(--text-secondary)',
+          position: 'relative',
+        }}>
+          <span style={{ fontSize: 18 }}>🔔</span>
+          <span style={{ fontSize: 10, fontWeight: 500 }}>Alerts</span>
+          {unreadCount > 0 && (
+            <span style={{
+              position: 'absolute', top: 2, right: 'calc(50% - 20px)',
+              background: 'var(--accent-red)', color: '#fff',
+              fontSize: 9, fontWeight: 700, width: 16, height: 16,
+              borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>{unreadCount}</span>
+          )}
+        </button>
         {sosEnabled && (
           <button onClick={() => {}} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, border: 'none', background: 'transparent', cursor: 'pointer', padding: '8px 4px', color: '#D92B2B' }}>
             <span style={{ fontSize: 18 }}>🆘</span>
@@ -100,10 +116,9 @@ function WorkerLayoutInner({ children, onLogout }) {
         </button>
       </div>
 
-      {/* Mobile Drawer */}
       <WorkerMobileDrawer isOpen={showDrawer} onClose={() => setShowDrawer(false)} navigate={navigate} lang={lang} setLang={setLang} dark={dark} setDark={setDark} onLogout={handleLogout} />
 
-            <style>{`
+      <style>{`
         .worker-topbar { background: transparent; border-bottom: 1px solid transparent; }
         @media (max-width: 768px) {
           .worker-sidebar { display: none !important; }

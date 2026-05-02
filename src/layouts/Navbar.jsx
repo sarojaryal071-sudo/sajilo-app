@@ -2,6 +2,9 @@ import { useState, useRef, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import navbar from '../config/ui/navbar.config.js'
 import { useFeatureFlag } from '../hooks/useFeatureFlag.js'
+import { useNotification } from '../contexts/NotificationContext.jsx'
+console.log("NAVBAR ACTIVE FILE:", import.meta.url)
+console.log("LOADED NAVBAR FILE:", import.meta.url)
 
 export default function Navbar({ dark, setDark, lang, setLang, navigate, t, onSOS }) {
   const location = useLocation()
@@ -29,15 +32,7 @@ export default function Navbar({ dark, setDark, lang, setLang, navigate, t, onSO
 
   const sosEnabled = useFeatureFlag('sosEmergency')
   const notifEnabled = useFeatureFlag('notifications')
-
-  // Mock notifications — 🔧 admin-configurable via backend
-  const [notifications] = useState([
-    { id: 1, icon: '📋', text: 'Your application is under review.', time: '2m ago' },
-    { id: 2, icon: '✅', text: 'Documents verified successfully.', time: '1h ago' },
-    { id: 3, icon: '💰', text: 'New earning credited: Rs 500.', time: '3h ago' },
-  ])
-
-  const unreadCount = notifications.length
+  const { notifications, unreadCount } = useNotification()
 
   // Close dropdown on outside click
   useEffect(() => {

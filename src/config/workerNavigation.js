@@ -18,15 +18,8 @@ const workerNavigation = [
     mobileVisible: true,
     priority: 'primary',
   },
-  {
-    id: 'notifications',
-    label: 'Notifications',
-    icon: '🔔',
-    path: '/worker/notifications',
-    role: 'worker',
-    mobileVisible: true,
-    priority: 'primary',
-  },
+  
+  
   // ═══ SECONDARY — Drawer (More menu) ═══
   {
     id: 'earnings',

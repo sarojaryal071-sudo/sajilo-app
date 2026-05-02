@@ -36,6 +36,13 @@ export default function AppShell() {
   const t = translations[lang]
 
   useEffect(() => {
+  if (!localStorage.getItem('sajilo_welcome_seen') && location.pathname !== '/welcome') {
+    localStorage.setItem('sajilo_welcome_seen', '1')
+    navigate('/welcome')
+  }
+}, [])
+
+  useEffect(() => {
     console.log("🔍 APP STATE", {
       email: user?.email, role: user?.role, status: user?.status, path: location.pathname
     })
@@ -52,7 +59,7 @@ export default function AppShell() {
 
   useEffect(() => {
     if (!authChecked) return
-    if (!user && location.pathname !== '/login' && location.pathname !== '/signup') {
+    if (!user && location.pathname !== '/login' && location.pathname !== '/signup' && location.pathname !== '/welcome') {
       console.log("🔍 REDIRECT: No user, redirecting to /login")
       navigate('/login')
     }
@@ -124,17 +131,18 @@ export default function AppShell() {
     console.log("🔍 WORKER ROUTES:", { status: user.status, totalRoutes: workerRoutes.length, paths: workerRoutes.map(r => r.path) })
 
     return (
-      <WorkerLayout user={user} onLogout={handleLogout}>
-        <main style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-primary)', padding: 0 }}>
-          <Routes>
-            {workerRoutes.map(route => {
-              const Component = route.component
-              return <Route key={route.path} path={route.path} element={<Component navigate={navigate} t={t} onLogin={handleLogin} title={route.label} />} />
-            })}
-          </Routes>
-        </main>
-      </WorkerLayout>
-    )
+  <WorkerLayout user={user} onLogout={handleLogout}>
+    <main style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-primary)', padding: 0 }}>
+      <Routes>
+        {workerRoutes.map(route => {
+          const Component = route.component
+          return <Route key={route.path} path={route.path} element={<Component navigate={navigate} t={t} onLogin={handleLogin} title={route.label} />} />
+        })}
+      </Routes>
+    </main>
+    <CommunicationCenter />
+  </WorkerLayout>
+)
   }
 
   if (user && user.role === 'admin') {
