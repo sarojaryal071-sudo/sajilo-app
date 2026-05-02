@@ -159,8 +159,7 @@ export default function AppShell() {
   }
 
   const isAdminOrWorker = user && user.role === 'admin'
-  const showLayout = user && !isAdminOrWorker && location.pathname !== '/login' && location.pathname !== '/signup'
-
+  const showLayout = user && !isAdminOrWorker && location.pathname !== '/login' && location.pathname !== '/signup' && location.pathname !== '/welcome'
   return (
     <div className="app-shell" data-theme={dark ? 'dark' : 'light'} style={{
       height: '100vh', width: '100vw', background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column', fontFamily: 'var(--font-family)',
