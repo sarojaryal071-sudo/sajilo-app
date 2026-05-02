@@ -12,7 +12,7 @@ const API_URL = 'https://sajilo-backend-c7mi.onrender.com/api'
 
   
 // Admin user ID for support chat — messages route to this user
-const SUPPORT_ID = 9
+const SUPPORT_ID = 6
 
 export default function CommunicationCenter() {
   const [showChat, setShowChat] = useState(false)
