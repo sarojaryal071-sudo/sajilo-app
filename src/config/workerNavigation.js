@@ -1,4 +1,5 @@
 const workerNavigation = [
+  // ═══ PRIMARY — Bottom Bar (mobile) ═══
   {
     id: 'dashboard',
     label: 'Dashboard',
@@ -6,6 +7,7 @@ const workerNavigation = [
     path: '/worker/dashboard',
     role: 'worker',
     mobileVisible: true,
+    priority: 'primary',
   },
   {
     id: 'jobs',
@@ -14,14 +16,26 @@ const workerNavigation = [
     path: '/worker/jobs',
     role: 'worker',
     mobileVisible: true,
+    priority: 'primary',
   },
+  {
+    id: 'notifications',
+    label: 'Notifications',
+    icon: '🔔',
+    path: '/worker/notifications',
+    role: 'worker',
+    mobileVisible: true,
+    priority: 'primary',
+  },
+  // ═══ SECONDARY — Drawer (More menu) ═══
   {
     id: 'earnings',
     label: 'Earnings',
     icon: '💰',
     path: '/worker/earnings',
     role: 'worker',
-    mobileVisible: true,
+    mobileVisible: false,
+    priority: 'secondary',
   },
   {
     id: 'schedule',
@@ -29,7 +43,8 @@ const workerNavigation = [
     icon: '📅',
     path: '/worker/schedule',
     role: 'worker',
-    mobileVisible: true,
+    mobileVisible: false,
+    priority: 'secondary',
   },
   {
     id: 'profile',
@@ -37,7 +52,17 @@ const workerNavigation = [
     icon: '👤',
     path: '/worker/profile',
     role: 'worker',
-    mobileVisible: true,
+    mobileVisible: false,
+    priority: 'secondary',
+  },
+  {
+    id: 'settings',
+    label: 'Settings',
+    icon: '⚙️',
+    path: '/worker/settings',
+    role: 'worker',
+    mobileVisible: false,
+    priority: 'secondary',
   },
 ]
 

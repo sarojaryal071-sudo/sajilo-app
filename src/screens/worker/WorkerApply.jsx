@@ -42,8 +42,8 @@ export default function WorkerApply() {
   const popupCancel = useContent('worker.apply.cancel') || 'Cancel'
   const popupSubmit = useContent('worker.applySubmit') || 'Submit'
   const successText = useContent('worker.applySuccess')
+  const missingFieldsMsg = useContent('worker.apply.missingFields') || 'Please complete all required fields.'
 
-    // Field labels — all called at top level, same count every render
   const lName = useContent('auth.signup.name.label')
   const lPhone = useContent('field.phone')
   const lEmail = useContent('auth.signup.email.label')
@@ -67,7 +67,21 @@ export default function WorkerApply() {
   const pGovId = useContent('worker.apply.govIdPlaceholder')
   const selectPlaceholder = useContent('field.select')
 
-    const labelMap = {
+  const roleLabels = {
+    electrician: lPrimaryRole,
+    plumber: lPrimaryRole,
+    cleaner: lPrimaryRole,
+    painter: lPrimaryRole,
+    carpenter: lPrimaryRole,
+    weekdays: lAvailability,
+    weekends: lAvailability,
+    fulltime: lAvailability,
+    email: lNotifications,
+    sms: lNotifications,
+    app: lNotifications,
+  }
+
+  const labelMap = {
     'auth.signup.name.label': lName, 'field.phone': lPhone, 'auth.signup.email.label': lEmail,
     'worker.apply.dob': lDob, 'worker.apply.primaryRole': lPrimaryRole,
     'worker.apply.secondaryRoles': lSecondaryRoles, 'worker.apply.address': lAddress,
@@ -152,39 +166,55 @@ export default function WorkerApply() {
                 <p style={{ fontSize: 'var(--font-body)', color: 'var(--text-secondary)', marginBottom: 8, textAlign: 'center' }}>{useContent(card.titleKey)}</p>
                 <div style={{ textAlign: 'center', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 20 }}>{progressLabel} {currentCard + 1} / {CARDS.length}</div>
 
-                                       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              {(card.fields || []).map(field => {
-                const value = formData[field.name] || ''
-                const label = labelMap[field.labelKey] || field.labelKey
-                const placeholder = placeholderMap[field.placeholderKey] || field.placeholderKey || ''
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  {(card.fields || []).map(field => {
+                    const value = formData[field.name] || ''
+                    const label = labelMap[field.labelKey] || field.labelKey
+                    const placeholder = placeholderMap[field.placeholderKey] || field.placeholderKey || ''
 
-                if (field.type === 'checkbox') {
-                  return (
-                    <div key={field.name}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
-                        <input type="checkbox" checked={!!value} onChange={(e) => setFormData(prev => ({ ...prev, [field.name]: e.target.checked }))} required={field.required}
-                          style={{ width: 18, height: 18, cursor: 'pointer', accentColor: 'var(--accent-blue)' }} />
-                        <span style={{ fontSize: 'var(--font-body)', color: 'var(--text-primary)' }}>{label}</span>
-                        {field.required && <span style={{ color: 'var(--accent-red)' }}>★</span>}
-                      </label>
-                    </div>
-                  )
-                }
+                    if (field.type === 'checkbox') {
+                      return (
+                        <div key={field.name}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+                            <input type="checkbox" checked={!!value} onChange={(e) => setFormData(prev => ({ ...prev, [field.name]: e.target.checked }))} required={field.required}
+                              style={{ width: 18, height: 18, cursor: 'pointer', accentColor: 'var(--accent-blue)' }} />
+                            <span style={{ fontSize: 'var(--font-body)', color: 'var(--text-primary)' }}>{label}</span>
+                            {field.required && <span style={{ color: 'var(--accent-red)' }}>★</span>}
+                          </label>
+                        </div>
+                      )
+                    }
 
-                return (
-                  <div key={field.name}>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', display: 'block', marginBottom: 4 }}>
-                      {label}
-                      {field.required && <span style={{ color: 'var(--accent-red)', marginLeft: 2 }}>★</span>}
-                    </label>
-                    <input type={field.type || 'text'} value={value}
-                      onChange={(e) => setFormData(prev => ({ ...prev, [field.name]: e.target.value }))}
-                      placeholder={placeholder} required={field.required}
-                      style={{ width: '100%', padding: '12px 14px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)', fontSize: 'var(--font-body)', outline: 'none' }} />
-                  </div>
-                )
-              })}
-            </div>
+                    if (field.type === 'select') {
+                      return (
+                        <div key={field.name}>
+                          <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', display: 'block', marginBottom: 4 }}>
+                            {label}{field.required && <span style={{ color: 'var(--accent-red)', marginLeft: 2 }}>★</span>}
+                          </label>
+                          <select value={value} onChange={(e) => setFormData(prev => ({ ...prev, [field.name]: e.target.value }))} required={field.required}
+                            style={{ width: '100%', padding: '12px 14px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)', fontSize: 'var(--font-body)', outline: 'none', cursor: 'pointer' }}>
+                            <option value="">{selectPlaceholder}</option>
+                            {(field.options || []).map(opt => (
+                              <option key={opt.value} value={opt.value}>{roleLabels[opt.value] || labelMap[opt.labelKey] || opt.labelKey}</option>
+                            ))}
+                          </select>
+                        </div>
+                      )
+                    }
+
+                    return (
+                      <div key={field.name}>
+                        <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', display: 'block', marginBottom: 4 }}>
+                          {label}{field.required && <span style={{ color: 'var(--accent-red)', marginLeft: 2 }}>★</span>}
+                        </label>
+                        <input type={field.type || 'text'} value={value}
+                          onChange={(e) => setFormData(prev => ({ ...prev, [field.name]: e.target.value }))}
+                          placeholder={placeholder} required={field.required}
+                          style={{ width: '100%', padding: '12px 14px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)', fontSize: 'var(--font-body)', outline: 'none' }} />
+                      </div>
+                    )
+                  })}
+                </div>
 
                 <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
                   {!isFirst && (
@@ -203,7 +233,6 @@ export default function WorkerApply() {
         </div>
       </div>
 
-      {/* Confirmation Popup */}
       {showConfirm && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div onClick={() => setShowConfirm(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)' }} />

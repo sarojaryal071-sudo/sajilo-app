@@ -29,6 +29,7 @@ import AdminAudit from '../screens/admin/AdminAudit.jsx'
 import AdminCustomers from '../screens/admin/AdminCustomers.jsx'
 import WorkerPending from '../screens/worker/WorkerPending.jsx'
 import WorkerApply from '../screens/worker/WorkerApply.jsx'
+import AdminChat from '../screens/admin/AdminChat.jsx'
 
 const routes = [
   { path: '/login', component: LoginScreen, public: true },
@@ -65,6 +66,7 @@ const routes = [
   { path: '/admin/audit', component: AdminAudit, role: 'admin' },
   { path: '/admin/customers', component: AdminCustomers, role: 'admin' },
   { path: '/admin/home', component: PlaceholderScreen, role: 'admin', label: 'Home' },
+  { path: '/admin/chat', component: AdminChat, role: 'admin' },
 ]
 
 export default routes

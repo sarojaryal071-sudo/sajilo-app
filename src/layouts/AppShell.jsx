@@ -15,6 +15,7 @@ import WorkerLayout from './WorkerLayout.jsx'
 import AdminMobileBlock from '../screens/admin/AdminMobileBlock.jsx'
 import AdminLayout from './AdminLayout.jsx'
 import { WorkerProvider } from '../contexts/WorkerContext.jsx'
+import CommunicationCenter from '../components/chat/CommunicationCenter.jsx'
 
 export default function AppShell() {
   const [dark, setDark] = useState(() => {
@@ -57,7 +58,6 @@ export default function AppShell() {
     }
   }, [user, authChecked, location.pathname, navigate])
 
-  // Redirect pending workers
   useEffect(() => {
     if (!user || !authChecked) return
     if (user.role === 'worker' && user.status === 'pending') {
@@ -103,8 +103,6 @@ export default function AppShell() {
     )
   }
 
-  // ═══ STANDALONE PAGES (no WorkerLayout) ═══
-
   if (user && user.role === 'worker' && user.status === 'pending' && location.pathname === '/worker/pending') {
     const route = routes.find(r => r.path === '/worker/pending')
     if (route) {
@@ -121,7 +119,6 @@ export default function AppShell() {
     }
   }
 
-  // ═══ WORKER LAYOUT (approved workers only) ═══
   if (user && user.role === 'worker') {
     const workerRoutes = routes.filter(r => r.role === 'worker')
     console.log("🔍 WORKER ROUTES:", { status: user.status, totalRoutes: workerRoutes.length, paths: workerRoutes.map(r => r.path) })
@@ -140,7 +137,6 @@ export default function AppShell() {
     )
   }
 
-  // ═══ ADMIN ═══
   if (user && user.role === 'admin') {
     return (
       <AdminLayout>
@@ -154,7 +150,6 @@ export default function AppShell() {
     )
   }
 
-  // ═══ CUSTOMER / DEFAULT ═══
   const isAdminOrWorker = user && user.role === 'admin'
   const showLayout = user && !isAdminOrWorker && location.pathname !== '/login' && location.pathname !== '/signup'
 
@@ -180,6 +175,7 @@ export default function AppShell() {
       </div>
       {showLayout && <MobileBottomNav navigate={navigate} t={t} onMore={() => setShowDrawer(!showDrawer)} onSOS={() => setShowSOS(true)} />}
       <MobileDrawer isOpen={showDrawer} onClose={() => setShowDrawer(false)} navigate={navigate} t={t} lang={lang} setLang={setLang} />
+      {user && <CommunicationCenter />}
       {showSOS && <EmergencyModal onClose={() => setShowSOS(false)} />}
       <style>{`
         @media (max-width: 768px) {

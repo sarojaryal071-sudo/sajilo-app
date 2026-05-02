@@ -381,6 +381,27 @@ const contentRegistry = {
 'worker.notify.sms': { en: 'SMS', ne: 'एसएमएस' },
 'worker.notify.app': { en: 'App Notification', ne: 'एप सूचना' },
 
+  // ═══════════════════════════════════════
+  // NOTIFICATIONS
+  // ═══════════════════════════════════════
+  'notifications.title': { en: 'Notifications', ne: 'सूचनाहरू' },
+  'notifications.empty': { en: 'No new notifications', ne: 'कुनै नयाँ सूचना छैन' },
+  'notifications.markRead': { en: 'Mark all as read', ne: 'सबै पढिसकेको चिन्ह लगाउनुहोस्' },
+  'notifications.badge': { en: 'Notifications', ne: 'सूचनाहरू' },
+
+  // ═══════════════════════════════════════
+  // LIVE CHAT
+  // ═══════════════════════════════════════
+  'chat.title': { en: 'Support Chat', ne: 'सहयोग च्याट' },
+  'chat.placeholder': { en: 'Type your message...', ne: 'तपाईंको सन्देश लेख्नुहोस्...' },
+  'chat.send': { en: 'Send', ne: 'पठाउनुहोस्' },
+  'chat.online': { en: 'Online', ne: 'अनलाइन' },
+  'chat.offline': { en: 'Offline', ne: 'अफलाइन' },
+  'chat.start': { en: 'Start Chat', ne: 'च्याट सुरु गर्नुहोस्' },
+  'chat.close': { en: 'Close', ne: 'बन्द गर्नुहोस्' },
+  'chat.support': { en: 'Support Team', ne: 'सहयोग टोली' },
+
+  
 'worker.apply.confirm': { en: 'Confirm', ne: 'पुष्टि' },
 'worker.apply.confirmTitle': { en: 'Confirm Submission', ne: 'पेश गर्ने पुष्टि' },
 'worker.apply.confirmMsg': { en: 'You cannot make any changes after you submit the application. Are you sure to submit the application?', ne: 'आवेदन पेश गरेपछि तपाईं कुनै परिवर्तन गर्न सक्नुहुन्न। के तपाईं आवेदन पेश गर्न निश्चित हुनुहुन्छ?' },
