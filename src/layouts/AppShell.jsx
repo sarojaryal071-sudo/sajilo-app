@@ -16,6 +16,8 @@ import AdminMobileBlock from '../screens/admin/AdminMobileBlock.jsx'
 import AdminLayout from './AdminLayout.jsx'
 import { WorkerProvider } from '../contexts/WorkerContext.jsx'
 import CommunicationCenter from '../components/chat/CommunicationCenter.jsx'
+import { reconnectSocket } from '../services/realtime/socketClient.js'
+
 
 export default function AppShell() {
   const [dark, setDark] = useState(() => {
@@ -25,6 +27,15 @@ export default function AppShell() {
     const newVal = typeof val === 'function' ? val(dark) : val
     setDark(newVal)
     localStorage.setItem('sajilo_theme', newVal ? 'dark' : 'light')
+  }
+
+    const handleLogin = (userData) => {
+    console.log("🔍 LOGIN: Setting user", {
+      email: userData?.email, role: userData?.role, status: userData?.status
+    })
+    setUser(userData)
+    localStorage.setItem('sajilo_user', JSON.stringify(userData))
+    reconnectSocket()
   }
   const [lang, setLang] = useState(() => localStorage.getItem('sajilo_lang') || 'en')
   const [showSOS, setShowSOS] = useState(false)
@@ -78,14 +89,6 @@ export default function AppShell() {
       }
     }
   }, [user, authChecked, location.pathname, navigate])
-
-  const handleLogin = (userData) => {
-    console.log("🔍 LOGIN: Setting user", {
-      email: userData?.email, role: userData?.role, status: userData?.status
-    })
-    setUser(userData)
-    localStorage.setItem('sajilo_user', JSON.stringify(userData))
-  }
 
   const handleLogout = () => {
     console.log("🔍 LOGOUT: Clearing user")

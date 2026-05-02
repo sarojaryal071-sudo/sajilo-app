@@ -1,23 +1,33 @@
 ﻿// Shared socket.io client instance — single connection reused across all components to avoid duplicate sockets
 import { io } from 'socket.io-client'
 
-// Force production URL when deployed — comment/uncomment for local dev
 const SOCKET_URL = 'https://sajilo-backend-c7mi.onrender.com'
-// const SOCKET_URL = import.meta.env.PROD 
-//   ? 'https://sajilo-backend-c7mi.onrender.com'
-//   : 'http://localhost:5000'
-
 let socket = null
 
+// Returns existing socket or creates new authenticated connection
 export function getSocket() {
-  if (!socket) {
-    const token = localStorage.getItem('sajilo_token')
-    if (!token) return null
-    socket = io(SOCKET_URL, { auth: { token } })
+  const token = localStorage.getItem('sajilo_token')
+  if (!token) return null
+  
+  if (!socket || !socket.connected) {
+    socket = io(SOCKET_URL, { 
+      auth: { token },
+      transports: ['websocket', 'polling']
+    })
   }
   return socket
 }
 
+// Reconnects socket with fresh token — call after login
+export function reconnectSocket() {
+  if (socket) {
+    socket.disconnect()
+    socket = null
+  }
+  return getSocket()
+}
+
+// Disconnects and clears socket — used on logout
 export function disconnectSocket() {
   if (socket) {
     socket.disconnect()
