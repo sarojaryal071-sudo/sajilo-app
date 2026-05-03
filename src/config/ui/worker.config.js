@@ -730,6 +730,111 @@ const worker = {
     padding: '40px',
     color: 'var(--text-secondary)',
   },
+
+  
+  // ── DESKTOP LAYOUT (Phase 13) ──────────────────────────
+  desktop: {
+    // Sidebar (left navigation)
+    sidebar: {
+      width: '240px',
+      background: 'var(--bg-surface)',
+      borderRight: '1px solid var(--border)',
+      padding: '20px 0',
+      // Logo / brand area at top
+      brand: {
+        fontSize: '20px',
+        fontWeight: 800,
+        color: 'var(--accent-blue)',
+        padding: '0 20px 20px',
+        marginBottom: '20px',
+        borderBottom: '1px solid var(--border)',
+      },
+      // Navigation link
+      link: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+        padding: '12px 20px',
+        fontSize: 'var(--font-body)',
+        fontWeight: 500,
+        color: 'var(--text-secondary)',
+        cursor: 'pointer',
+        transition: 'all 0.15s',
+        borderLeft: '3px solid transparent',
+        textDecoration: 'none',
+      },
+      // Active link
+      linkActive: {
+        background: 'var(--accent-blue-light)',
+        color: 'var(--accent-blue)',
+        fontWeight: 600,
+        borderLeftColor: 'var(--accent-blue)',
+      },
+      // Link hover
+      linkHover: {
+        background: 'var(--bg-surface2)',
+      },
+      // Icon inside link
+      icon: {
+        fontSize: '18px',
+        width: '24px',
+        textAlign: 'center',
+      },
+    },
+
+    // Top navbar
+    navbar: {
+      height: '56px',
+      background: 'var(--bg-surface)',
+      borderBottom: '1px solid var(--border)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+      padding: '0 24px',
+      gap: '12px',
+      // Control buttons (theme, lang, notifications, logout)
+      control: {
+        width: '36px',
+        height: '36px',
+        borderRadius: '8px',
+        border: '1px solid var(--border)',
+        background: 'var(--bg-surface2)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: 'pointer',
+        fontSize: '16px',
+        color: 'var(--text-secondary)',
+      },
+      // Notification badge
+      badge: {
+        background: 'var(--accent-red)',
+        color: '#fff',
+        fontSize: '10px',
+        fontWeight: 700,
+        width: '18px',
+        height: '18px',
+        borderRadius: '50%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'absolute',
+        top: '-4px',
+        right: '-4px',
+      },
+    },
+
+    // Content area (right side)
+    content: {
+      flex: 1,
+      padding: '24px',
+      overflowY: 'auto',
+      background: 'var(--bg-primary)',
+    },
+
+    // Breakpoint
+    breakpoint: '768px',
+  },
 }
 
 export default worker
