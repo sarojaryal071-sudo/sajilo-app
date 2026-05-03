@@ -5,9 +5,11 @@ const WorkerContext = createContext()
 
 export function WorkerProvider({ children }) {
   const [profile, setProfile] = useState(null)
+  
   const [bookings, setBookings] = useState([])
   const [earnings, setEarnings] = useState({ total_earnings: 0, completed_jobs: 0 })
   const [schedule, setSchedule] = useState([])
+  const [services, setServices] = useState([])
   const [loading, setLoading] = useState(true)
 
   const loadAll = useCallback(async () => {
@@ -72,11 +74,16 @@ export function WorkerProvider({ children }) {
     await api.saveWorkerSchedule(newSchedule)
     setSchedule(newSchedule)
   }
+  
+  const saveServices = async (newServices) => {
+  await api.saveWorkerServices(newServices)
+  setServices(newServices)
+}
 
   const value = {
     profile, bookings, earnings, schedule, loading,
     toggleOnline, updateProfile, acceptBooking, rejectBooking,
-    updateBookingStatus, saveSchedule, loadAll,
+    updateBookingStatus, saveSchedule, loadAll, services, saveServices,
   }
 
   return <WorkerContext.Provider value={value}>{children}</WorkerContext.Provider>

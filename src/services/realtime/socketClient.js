@@ -1,8 +1,8 @@
 ﻿// Shared socket.io client instance — single connection reused across all components
 import { io } from 'socket.io-client'
 
-const SOCKET_URL = 'https://sajilo-backend-c7mi.onrender.com'
-// const SOCKET_URL = 'http://localhost:5000'  // ← uncomment for local dev
+const SOCKET_URL = 'http://localhost:5000'
+// const SOCKET_URL = 'https://sajilo-backend-c7mi.onrender.com'  // PRODUCTION
 
 let socket = null
 

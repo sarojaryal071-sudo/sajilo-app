@@ -237,6 +237,30 @@ const contentRegistry = {
   'worker.status.approvedIcon': { en: '🎉', ne: '🎉' },
   'worker.status.rejectedIcon': { en: '❌', ne: '❌' },
 
+    // ── Phase 5.5 Additions: Worker element content keys ──
+  'worker.myJobs': { en: 'My Jobs', ne: 'मेरो कामहरू' },
+  'worker.jobsToday': { en: 'Jobs Today', ne: 'आजको काम' },
+  'worker.todayEarnings': { en: "Today's Earnings", ne: 'आजको आम्दानी' },
+  'worker.totalEarnings': { en: 'Total Earnings', ne: 'कुल आम्दानी' },
+  'worker.completedJobs': { en: 'completed jobs', ne: 'सम्पन्न कामहरू' },
+  'worker.jobHistory': { en: 'Job History', ne: 'कामको इतिहास' },
+  'worker.noCompletedJobs': { en: 'No completed jobs yet.', ne: 'कुनै सम्पन्न काम छैन।' },
+  'worker.availabilitySchedule': { en: 'Availability Schedule', ne: 'उपलब्धता तालिका' },
+  'worker.morning': { en: 'Morning', ne: 'बिहान' },
+  'worker.afternoon': { en: 'Afternoon', ne: 'दिउँसो' },
+  'worker.evening': { en: 'Evening', ne: 'साँझ' },
+  'worker.saving': { en: 'Saving...', ne: 'सेव गर्दै...' },
+  'worker.edit': { en: 'Edit', ne: 'सम्पादन' },
+  'worker.save': { en: 'Save', ne: 'सेव' },
+  'worker.saving': { en: 'Saving...', ne: 'सेव गर्दै...' },
+  'worker.accept': { en: 'Accept', ne: 'स्वीकार' },
+  'worker.reject': { en: 'Reject', ne: 'अस्वीकार' },
+  'worker.startTravel': { en: 'Start Travel', ne: 'यात्रा सुरु' },
+  'worker.startWork': { en: 'Start Work', ne: 'काम सुरु' },
+  'worker.completeJob': { en: 'Complete Job', ne: 'काम समाप्त' },
+  'worker.jobsDone': { en: 'Jobs Done', ne: 'गरेको काम' },
+  'worker.hourlyRate': { en: 'Hourly Rate (Rs)', ne: 'घण्टाको दर (रु)' },
+
   // ═══════════════════════════════════════
   // FIELDS
   // ═══════════════════════════════════════

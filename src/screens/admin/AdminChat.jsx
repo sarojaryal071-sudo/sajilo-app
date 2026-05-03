@@ -11,9 +11,8 @@ export default function AdminChat() {
   const activeConvRef = useRef(null)
 
   const token = localStorage.getItem('sajilo_token')
-  const apiUrl = import.meta.env.PROD 
-  ? 'https://sajilo-backend-c7mi.onrender.com'
-  : 'http://localhost:5000'
+  const apiUrl = 'http://localhost:5000'
+// const apiUrl = 'https://sajilo-backend-c7mi.onrender.com'  // PRODUCTION
   const { socket } = useSocket()
 
   useEffect(() => {

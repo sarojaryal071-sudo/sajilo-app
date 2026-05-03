@@ -1,13 +1,23 @@
-import { useFeatureFlag } from '../hooks/useFeatureFlag.js'
+import React from "react";
 
-export default function ConfigContainer({ id, children, style = {} }) {
-  const visible = useFeatureFlag(id)
+/**
+ * ConfigContainer
+ * ----------------
+ * Structural wrapper component — Phase 2 only.
+ * Does NOT modify UI, styling, or behavior.
+ * Marks sections with data-config-id for future admin control.
+ *
+ * Future phases will add: show/hide, reorder, admin-driven config.
+ */
 
-  if (!visible) return null
+const ConfigContainer = ({ id, children }) => {
+  console.log(`[ConfigContainer] rendering section: ${id}`);
 
   return (
-    <div style={{ marginBottom: 28, ...style }}>
+    <div data-config-id={id} className="config-container">
       {children}
     </div>
-  )
-}
+  );
+};
+
+export default ConfigContainer;

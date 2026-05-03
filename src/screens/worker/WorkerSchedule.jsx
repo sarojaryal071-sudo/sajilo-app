@@ -1,58 +1,31 @@
-import { useState } from 'react'
-import { useWorker } from '../../contexts/WorkerContext.jsx'
+﻿// sajilo-app/src/screens/worker/WorkerSchedule.jsx
 
-const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-const SLOTS = ['morning', 'afternoon', 'evening']
+/**
+ * WORKER SCHEDULE SCREEN
+ * -----------------------
+ * Phase 12: Subtab system with Time Slots + Services.
+ * All rendering via ElementRenderer.
+ * Data from WorkerContext.
+ */
+
+import { useWorker } from '../../contexts/WorkerContext.jsx';
+import ElementRenderer from '../../components/ElementRenderer.jsx';
 
 export default function WorkerSchedule() {
-  const { schedule, saveSchedule } = useWorker()
-  const [saving, setSaving] = useState(false)
-
-  const toggleSlot = async (dayIndex, slot) => {
-    const existing = schedule.find(s => s.day_of_week === dayIndex)
-    let updated
-    if (existing) {
-      updated = schedule.map(s => s.day_of_week === dayIndex ? { ...s, [slot]: !s[slot] } : s)
-    } else {
-      updated = [...schedule, { day_of_week: dayIndex, morning: false, afternoon: false, evening: false, [slot]: true }]
-    }
-    setSaving(true)
-    await saveSchedule(updated)
-    setSaving(false)
-  }
-
-  const isActive = (dayIndex, slot) => {
-    const day = schedule.find(s => s.day_of_week === dayIndex)
-    return day ? day[slot] : false
-  }
+  const { schedule, services, saveSchedule, saveServices } = useWorker();
 
   return (
     <div>
-      <h2 style={{ fontSize: 'var(--font-heading)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 20 }}>
-        Availability Schedule
-      </h2>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {DAYS.map((day, dayIndex) => (
-          <div key={day} style={{
-            background: 'var(--bg-surface)', border: '1px solid var(--border)',
-            borderRadius: 'var(--radius-md)', padding: 12,
-          }}>
-            <div style={{ fontSize: 'var(--font-body)', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 8 }}>{day}</div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              {SLOTS.map((slot) => (
-                <button key={slot} onClick={() => toggleSlot(dayIndex, slot)} style={{
-                  flex: 1, padding: '8px 0', borderRadius: 'var(--radius-sm)',
-                  border: '1px solid var(--border)', cursor: 'pointer',
-                  fontSize: 'var(--font-body-sm)', fontWeight: 500,
-                  background: isActive(dayIndex, slot) ? 'var(--accent-green-light)' : 'var(--bg-surface2)',
-                  color: isActive(dayIndex, slot) ? 'var(--accent-green)' : 'var(--text-secondary)',
-                }}>{slot.charAt(0).toUpperCase() + slot.slice(1)}</button>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-      {saving && <div style={{ textAlign: 'center', marginTop: 12, color: 'var(--text-secondary)', fontSize: 'var(--font-body-sm)' }}>Saving...</div>}
+      {/* Subtab Container: renders tab bar + active subtab content */}
+      <ElementRenderer
+        elementId="scheduleSubtabs"
+        overrideData={{
+          schedule: schedule || [],
+          services: services || [],
+          onSaveSchedule: saveSchedule,
+          onSaveServices: saveServices,
+        }}
+      />
     </div>
-  )
+  );
 }

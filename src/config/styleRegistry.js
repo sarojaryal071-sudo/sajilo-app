@@ -162,42 +162,40 @@ const styleRegistry = {
   },
 
   trackerNote: {
-  background: '#fef3c7',
-  border: '1px solid #D97706',
-  borderRadius: 'var(--radius-md)',
-  padding: '12px 14px',
-},
-trackerNoteTitle: {
-  fontSize: '11px',
-  fontWeight: 600,
-  color: '#D97706',
-},
-trackerNoteText: {
-  fontSize: '12px',
-  color: '#92400e',
-},
-trackerStatusBox: {
-  background: 'var(--bg-surface2)',
-  borderRadius: 'var(--radius-md)',
-  padding: '16px',
-},
-trackerStepDone: {
-  background: 'var(--accent-blue)',
-  color: '#fff',
-},
-trackerStepCurrent: {
-  background: '#fff',
-  border: '2px solid var(--accent-blue)',
-  color: 'var(--accent-blue)',
-  boxShadow: '0 0 0 5px var(--accent-blue-light)',
-},
-trackerStepFuture: {
-  background: 'var(--bg-surface2)',
-  border: '2px solid var(--border)',
-  color: 'var(--text-secondary)',
-},
+    background: '#fef3c7',
+    border: '1px solid #D97706',
+    borderRadius: 'var(--radius-md)',
+    padding: '12px 14px',
+  },
+  trackerNoteTitle: {
+    fontSize: '11px',
+    fontWeight: 600,
+    color: '#D97706',
+  },
+  trackerNoteText: {
+    fontSize: '12px',
+    color: '#92400e',
+  },
+  trackerStatusBox: {
+    background: 'var(--bg-surface2)',
+    borderRadius: 'var(--radius-md)',
+    padding: '16px',
+  },
+  trackerStepDone: {
+    background: 'var(--accent-blue)',
+    color: '#fff',
+  },
+  trackerStepCurrent: {
+    background: '#fff',
+    border: '2px solid var(--accent-blue)',
+    color: 'var(--accent-blue)',
+    boxShadow: '0 0 0 5px var(--accent-blue-light)',
+  },
+  trackerStepFuture: {
+    background: 'var(--bg-surface2)',
+    border: '2px solid var(--border)',
+    color: 'var(--text-secondary)',
+  },
 }
-
-
 
 export default styleRegistry

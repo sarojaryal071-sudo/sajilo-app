@@ -32,6 +32,7 @@ import WorkerPending from '../screens/worker/WorkerPending.jsx'
 import WorkerApply from '../screens/worker/WorkerApply.jsx'
 import AdminChat from '../screens/admin/AdminChat.jsx'
 
+
 const routes = [
   // Add as first route:
 { path: '/welcome', component: WelcomeScreen, public: true },
@@ -41,6 +42,7 @@ const routes = [
   { path: '/signup', component: SignupScreen, public: true },
   { path: '/worker/apply', component: WorkerApply, public: true },
   { path: '/worker/pending', component: WorkerPending, public: true },
+
 
   { path: '/', component: HomeScreen, role: 'customer' },
   { path: '/home', component: HomeScreen, role: 'customer' },
