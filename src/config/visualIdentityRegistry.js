@@ -56,6 +56,62 @@ const visualIdentityRegistry = {
     visible: true,
   },
 
+    // ── DASHBOARD: Map Preview Card (Phase 15) ──────────
+  dashboardMapCard: {
+    type: "mapPlaceholder",
+    screen: "WorkerDashboard",
+    layout: { width: "full", position: 1.5 },
+    style: { variant: "mapCard", styleRef: "dashboard.mapCard" },
+    content: {
+      titleKey: "worker.mapPreview",
+      emptyKey: "worker.mapEmpty",
+      dataSource: "BookingContext.activeBooking",
+      // Updates when worker accepts a job — shows location preview
+    },
+    behavior: { clickable: false },
+    responsive: { mobile: "full", desktop: "full" },
+    visible: true,
+  },
+
+  // ── DASHBOARD: Online Toggle Card (Phase 15) ──────────
+  dashboardOnlineToggle: {
+    type: "onlineToggleCard",
+    screen: "WorkerDashboard",
+    layout: { width: "full", position: 1.7 },
+    style: { variant: "centered", styleRef: "dashboard.toggleCard" },
+    content: {
+      onlineLabelKey: "worker.online",
+      offlineLabelKey: "worker.offline",
+      tapToOfflineKey: "worker.tapToGoOffline",
+      tapToOnlineKey: "worker.tapToGoOnline",
+      dataSource: "WorkerContext.profile.is_online",
+    },
+    behavior: { clickable: true, action: "toggleOnline" },
+    responsive: { mobile: "full", desktop: "full" },
+    visible: true,
+  },
+
+  // ── DASHBOARD: Analytics Section (Phase 15) ───────────
+  dashboardAnalytics: {
+    type: "analyticsChart",
+    screen: "WorkerDashboard",
+    layout: { width: "full", position: 1.9 },
+    style: { variant: "chartSection", styleRef: "dashboard.analytics" },
+    content: {
+      titleKey: "worker.analytics",
+      chartTypes: ["bar", "line", "pie"],
+      defaultChart: "bar",
+      periods: ["weekly", "monthly"],
+      defaultPeriod: "weekly",
+      dataSource: "WorkerContext.earnings",
+      groupByProfession: true,
+      // Colors pulled from theme.config.js chart palette
+    },
+    behavior: { clickable: true, action: "switchChart" },
+    responsive: { mobile: "full", desktop: "full" },
+    visible: true,
+  },
+  
   workerStatsBar: {
     type: "statsCardGroup",
     screen: "WorkerDashboard",
@@ -196,6 +252,25 @@ const visualIdentityRegistry = {
       mobile: "full",
       desktop: "full",
     },
+    visible: true,
+  },
+
+    jobsFilterTabs: {
+    type: "filterTabs",
+    screen: "WorkerJobs",
+    layout: { width: "full", position: 1.5 },
+    style: { variant: "filterTabs", styleRef: "jobs.filters" },
+    content: {
+      tabs: [
+        { id: "all", labelKey: "worker.jobs.all", default: true },
+        { id: "pending", labelKey: "booking.status.pending" },
+        { id: "accepted", labelKey: "booking.status.accepted" },
+        { id: "active", labelKey: "worker.jobs.active" },
+        { id: "completed", labelKey: "booking.status.completed" },
+      ],
+    },
+    behavior: { clickable: true, action: "filterJobs" },
+    responsive: { mobile: "scrollable", desktop: "horizontal" },
     visible: true,
   },
 

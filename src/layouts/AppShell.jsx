@@ -70,7 +70,7 @@ export default function AppShell() {
 
   useEffect(() => {
     if (!authChecked) return
-    if (!user && location.pathname !== '/login' && location.pathname !== '/signup' && location.pathname !== '/welcome') {
+    if (!user && location.pathname !== '/login' && location.pathname !== '/signup' && location.pathname !== '/welcome' && location.pathname !== '/worker/apply' && location.pathname !== '/worker/pending') {
       console.log("🔍 REDIRECT: No user, redirecting to /login")
       navigate('/login')
     }
@@ -113,11 +113,11 @@ export default function AppShell() {
     )
   }
 
-  if (user && user.role === 'worker' && user.status === 'pending' && location.pathname === '/worker/pending') {
+  if (location.pathname === '/worker/pending') {
     const route = routes.find(r => r.path === '/worker/pending')
     if (route) {
       const Component = route.component
-      return <WorkerProvider><Component navigate={navigate} t={t} onLogin={handleLogin} /></WorkerProvider>
+      return <Component navigate={navigate} t={t} onLogin={handleLogin} />
     }
   }
 
@@ -185,7 +185,7 @@ export default function AppShell() {
       </div>
       {showLayout && <MobileBottomNav navigate={navigate} t={t} onMore={() => setShowDrawer(!showDrawer)} onSOS={() => setShowSOS(true)} />}
       <MobileDrawer isOpen={showDrawer} onClose={() => setShowDrawer(false)} navigate={navigate} t={t} lang={lang} setLang={setLang} />
-      {user && <CommunicationCenter />}
+      {(user || location.pathname === '/worker/pending' || localStorage.getItem('sajilo_worker_application')) && <CommunicationCenter />}
       {showSOS && <EmergencyModal onClose={() => setShowSOS(false)} />}
       <style>{`
         @media (max-width: 768px) {

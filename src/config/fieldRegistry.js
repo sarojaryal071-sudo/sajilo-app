@@ -9,16 +9,16 @@ const fieldRegistry = {
     { name: 'bio', type: 'textarea', labelKey: 'field.bio', placeholderKey: 'field.bioPlaceholder', required: false },
   ],
 
-  // Worker Application — Multi-card form (admin-configurable)
-  workerApplyCards: [
+    workerApplyCards: [
     {
       id: 'identity',
       titleKey: 'worker.apply.cardIdentity',
       fields: [
         { name: 'fullName', type: 'text', labelKey: 'auth.signup.name.label', placeholderKey: 'auth.signup.name.placeholder', required: true },
+        { name: 'displayName', type: 'text', labelKey: 'worker.apply.displayName', placeholderKey: 'worker.apply.displayNamePlaceholder', required: false, noteKey: 'worker.apply.displayNameNote' },
         { name: 'phone', type: 'text', labelKey: 'field.phone', placeholderKey: 'field.phonePlaceholder', required: true },
         { name: 'email', type: 'email', labelKey: 'auth.signup.email.label', placeholderKey: 'auth.signup.email.placeholder', required: true },
-        { name: 'dob', type: 'date', labelKey: 'worker.apply.dob', placeholderKey: '', required: true },
+        { name: 'dob', type: 'datepicker', labelKey: 'worker.apply.dob', placeholderKey: '', required: true, minAge: 18 },
       ],
     },
     {
@@ -36,6 +36,8 @@ const fieldRegistry = {
           { value: 'electrician', labelKey: 'worker.role.electrician' },
           { value: 'plumber', labelKey: 'worker.role.plumber' },
           { value: 'cleaner', labelKey: 'worker.role.cleaner' },
+          { value: 'painter', labelKey: 'worker.role.painter' },
+          { value: 'carpenter', labelKey: 'worker.role.carpenter' },
         ]},
       ],
     },
@@ -44,7 +46,14 @@ const fieldRegistry = {
       titleKey: 'worker.apply.cardLocation',
       fields: [
         { name: 'address', type: 'textarea', labelKey: 'worker.apply.address', placeholderKey: 'worker.apply.addressPlaceholder', required: true },
-        { name: 'serviceArea', type: 'text', labelKey: 'worker.apply.serviceArea', placeholderKey: 'worker.apply.serviceAreaPlaceholder', required: false },
+                { name: 'serviceArea', type: 'select', labelKey: 'worker.apply.serviceArea', placeholderKey: 'worker.apply.serviceAreaPlaceholder', required: true, options: [
+          // Admin-configured available cities — reads from contentRegistry keys
+          { value: 'kathmandu', labelKey: 'city.kathmandu', group: 'available' },
+          { value: 'lalitpur', labelKey: 'city.lalitpur', group: 'available' },
+          { value: 'bhaktapur', labelKey: 'city.bhaktapur', group: 'available' },
+          { value: 'pokhara', labelKey: 'city.pokhara', group: 'comingSoon' },
+          { value: 'chitwan', labelKey: 'city.chitwan', group: 'comingSoon' },
+        ]},
       ],
     },
     {
@@ -52,7 +61,7 @@ const fieldRegistry = {
       titleKey: 'worker.apply.cardVerification',
       fields: [
         { name: 'govId', type: 'text', labelKey: 'worker.apply.govId', placeholderKey: 'worker.apply.govIdPlaceholder', required: true },
-        { name: 'selfie', type: 'imageUpload', labelKey: 'worker.apply.selfie', placeholderKey: '', required: true },
+        { name: 'selfie', type: 'photo', labelKey: 'worker.apply.selfie', placeholderKey: '', required: true },
       ],
     },
     {
@@ -64,24 +73,24 @@ const fieldRegistry = {
           { value: 'weekends', labelKey: 'worker.avail.weekends' },
           { value: 'fulltime', labelKey: 'worker.avail.fulltime' },
         ]},
-        { name: 'notifications', type: 'select', labelKey: 'worker.apply.notifications', required: false, options: [
-          { value: 'email', labelKey: 'worker.notify.email' },
-          { value: 'sms', labelKey: 'worker.notify.sms' },
-          { value: 'app', labelKey: 'worker.notify.app' },
-        ]},
+        { name: 'notifyEmail', type: 'checkbox', labelKey: 'worker.notify.email', required: false },
+        { name: 'notifySms', type: 'checkbox', labelKey: 'worker.notify.sms', required: false },
+        { name: 'notifyApp', type: 'checkbox', labelKey: 'worker.notify.app', required: false },
+        { name: 'notifyLater', type: 'checkbox', labelKey: 'worker.notify.later', required: false },
       ],
     },
-    {
+        {
       id: 'terms',
       titleKey: 'worker.apply.cardTerms',
       fields: [
+        { name: 'password', type: 'password', labelKey: 'auth.signup.password.label', placeholderKey: 'auth.signup.password.placeholder', required: true },
+        { name: 'confirmPassword', type: 'password', labelKey: 'auth.signup.confirmPassword.label', placeholderKey: 'auth.signup.confirmPassword.placeholder', required: true },
         { name: 'acceptTerms', type: 'checkbox', labelKey: 'worker.apply.acceptTerms', required: true },
         { name: 'backgroundCheck', type: 'checkbox', labelKey: 'worker.apply.backgroundCheck', required: true },
         { name: 'safetyAgreement', type: 'checkbox', labelKey: 'worker.apply.safetyAgreement', required: true },
       ],
     },
   ],
-
   // Signup form
   signup: [
     { name: 'name', type: 'text', labelKey: 'auth.signup.name.label', placeholderKey: 'auth.signup.name.placeholder', required: true },

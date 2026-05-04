@@ -37,7 +37,6 @@ const routes = [
   // Add as first route:
 { path: '/welcome', component: WelcomeScreen, public: true },
 
-
   { path: '/login', component: LoginScreen, public: true },
   { path: '/signup', component: SignupScreen, public: true },
   { path: '/worker/apply', component: WorkerApply, public: true },

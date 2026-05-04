@@ -1,266 +1,408 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import BrandPanel from '../../components/BrandPanel.jsx'
-import { useWorker } from '../../contexts/WorkerContext.jsx'
-import { getCurrentUser } from '../../config/auth.js'
-import { useAnimation } from '../../hooks/useAnimation.js'
-import { useContent } from '../../hooks/useContent.js'
-import { useStyle } from '../../hooks/useStyle.js'
 import fieldRegistry from '../../config/fieldRegistry.js'
+import contentRegistry from '../../config/contentRegistry.js'
+import { allRequiredFilled } from '../../utils/validateFields.js'
 
-const CARDS = fieldRegistry.workerApplyCards || []
+function getContent(key, fallback = '') {
+  const lang = localStorage.getItem('sajilo_lang') || 'en'
+  const entry = contentRegistry[key]
+  if (entry && entry[lang]) return entry[lang]
+  if (entry && entry.en) return entry.en
+  return fallback || key
+}
 
 export default function WorkerApply() {
   const navigate = useNavigate()
-  const { profile } = useWorker()
-  const [currentCard, setCurrentCard] = useState(0)
+  const CARDS = Array.isArray(fieldRegistry.workerApplyCards) ? fieldRegistry.workerApplyCards : []
+  const [currentCardIndex, setCurrentCardIndex] = useState(0)
   const [formData, setFormData] = useState({})
-  const [showConfirm, setShowConfirm] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
+  const [showErrors, setShowErrors] = useState(false) // false, true (missing fields), or 'age'
+  const [photoGender, setPhotoGender] = useState('male')
+  const [secondaryRoles, setSecondaryRoles] = useState([])
+  const [notifyLater, setNotifyLater] = useState(false)
+  const [showPasswords, setShowPasswords] = useState({})
 
-  const { style: animStyle, animated: Animated } = useAnimation('WorkerApply', 'card')
-  const popupAnim = useAnimation('WorkerApply', 'popup')
-  const navbarStyle = useStyle('pendingNavbar') || {}
-  const navBtnStyle = useStyle('pendingNavBtn') || {}
-  const logoutBtnStyle = useStyle('pendingLogoutBtn') || {}
-  const mobileBarStyle = useStyle('pendingMobileBar') || {}
-  const nextBtnStyle = useStyle('applyNextBtn') || {}
-  const prevBtnStyle = useStyle('applyPrevBtn') || {}
-  const confirmBtnStyle = useStyle('applyConfirmBtn') || {}
+  const currentCard = CARDS[currentCardIndex] || { titleKey: '', fields: [] }
+  const cardTitle = getContent(currentCard.titleKey, 'Worker Application')
+  const nextLabel = getContent('worker.apply.next', 'Next')
+  const prevLabel = getContent('worker.apply.previous', 'Previous')
+  const missingFieldsMsg = getContent('worker.apply.missingFields', 'Please fill all required fields.')
+  const notifLabel = getContent('worker.apply.notificationLabel', 'How would you like to receive notifications?')
 
-  const brandName = useContent('worker.pendingBrandName') || 'Sajilo'
-  const title = useContent('worker.applyTitle')
-  const themeLabel = useContent('worker.theme') || 'Theme'
-  const logoutLabel = useContent('worker.logout') || 'Logout'
-  const navbarTitle = useContent('worker.pendingNavbarTitle') || 'Application'
-  const nextLabel = useContent('worker.apply.next') || 'Next'
-  const prevLabel = useContent('worker.apply.previous') || 'Previous'
-  const confirmLabel = useContent('worker.apply.confirm') || 'Confirm'
-  const progressLabel = useContent('worker.apply.progress') || 'Step'
-  const popupTitle = useContent('worker.apply.confirmTitle') || 'Confirm Submission'
-  const popupMsg = useContent('worker.apply.confirmMsg') || 'You cannot make any changes after you submit the application. Are you sure to submit the application?'
-  const popupCancel = useContent('worker.apply.cancel') || 'Cancel'
-  const popupSubmit = useContent('worker.applySubmit') || 'Submit'
-  const successText = useContent('worker.applySuccess')
-  const missingFieldsMsg = useContent('worker.apply.missingFields') || 'Please complete all required fields.'
-
-  const lName = useContent('auth.signup.name.label')
-  const lPhone = useContent('field.phone')
-  const lEmail = useContent('auth.signup.email.label')
-  const lDob = useContent('worker.apply.dob')
-  const lPrimaryRole = useContent('worker.apply.primaryRole')
-  const lSecondaryRoles = useContent('worker.apply.secondaryRoles')
-  const lAddress = useContent('worker.apply.address')
-  const lServiceArea = useContent('worker.apply.serviceArea')
-  const lGovId = useContent('worker.apply.govId')
-  const lSelfie = useContent('worker.apply.selfie')
-  const lAvailability = useContent('worker.apply.availability')
-  const lNotifications = useContent('worker.apply.notifications')
-  const lAcceptTerms = useContent('worker.apply.acceptTerms')
-  const lBackgroundCheck = useContent('worker.apply.backgroundCheck')
-  const lSafetyAgreement = useContent('worker.apply.safetyAgreement')
-  const pName = useContent('auth.signup.name.placeholder')
-  const pPhone = useContent('field.phonePlaceholder')
-  const pEmail = useContent('auth.signup.email.placeholder')
-  const pAddress = useContent('worker.apply.addressPlaceholder')
-  const pServiceArea = useContent('worker.apply.serviceAreaPlaceholder')
-  const pGovId = useContent('worker.apply.govIdPlaceholder')
-  const selectPlaceholder = useContent('field.select')
-
-  const roleLabels = {
-    electrician: lPrimaryRole,
-    plumber: lPrimaryRole,
-    cleaner: lPrimaryRole,
-    painter: lPrimaryRole,
-    carpenter: lPrimaryRole,
-    weekdays: lAvailability,
-    weekends: lAvailability,
-    fulltime: lAvailability,
-    email: lNotifications,
-    sms: lNotifications,
-    app: lNotifications,
+  const handleFieldChange = (key, value) => {
+    setFormData(prev => ({ ...prev, [key]: value }))
+    if (showErrors) setShowErrors(false)
   }
-
-  const labelMap = {
-    'auth.signup.name.label': lName, 'field.phone': lPhone, 'auth.signup.email.label': lEmail,
-    'worker.apply.dob': lDob, 'worker.apply.primaryRole': lPrimaryRole,
-    'worker.apply.secondaryRoles': lSecondaryRoles, 'worker.apply.address': lAddress,
-    'worker.apply.serviceArea': lServiceArea, 'worker.apply.govId': lGovId,
-    'worker.apply.selfie': lSelfie, 'worker.apply.availability': lAvailability,
-    'worker.apply.notifications': lNotifications, 'worker.apply.acceptTerms': lAcceptTerms,
-    'worker.apply.backgroundCheck': lBackgroundCheck, 'worker.apply.safetyAgreement': lSafetyAgreement,
-  }
-  const placeholderMap = {
-    'auth.signup.name.placeholder': pName, 'field.phonePlaceholder': pPhone,
-    'auth.signup.email.placeholder': pEmail, 'worker.apply.addressPlaceholder': pAddress,
-    'worker.apply.serviceAreaPlaceholder': pServiceArea, 'worker.apply.govIdPlaceholder': pGovId,
-  }
-
-  const [dark, setDark] = useState(() => localStorage.getItem('sajilo_theme') === 'dark')
-  const [lang, setLang] = useState(() => localStorage.getItem('sajilo_lang') || 'en')
-
-  useEffect(() => {
-    const user = getCurrentUser()
-    if (!user) { navigate('/login'); return }
-    if (user.role !== 'worker' || user.status !== 'pending') { navigate('/login'); return }
-    if (user.application_submitted) { navigate('/worker/pending'); return }
-  }, [navigate])
-
-  const toggleTheme = () => { const n = !dark; setDark(n); localStorage.setItem('sajilo_theme', n ? 'dark' : 'light') }
-  const handleLangChange = (e) => { setLang(e.target.value); localStorage.setItem('sajilo_lang', e.target.value); window.dispatchEvent(new Event('langChange')) }
-  const handleLogout = () => { localStorage.removeItem('sajilo_user'); localStorage.removeItem('sajilo_token'); window.location.href = '/login' }
-
-  const goNext = () => { if (currentCard < CARDS.length - 1) setCurrentCard(currentCard + 1) }
-  const goPrev = () => { if (currentCard > 0) setCurrentCard(currentCard - 1) }
-
-  const allRequiredFilled = () => {
+  const checkAllRequired = () => {
     const allFields = CARDS.flatMap(c => c.fields || [])
-    const required = allFields.filter(f => f.required)
-    return required.every(f => formData[f.name])
+    return allRequiredFilled(allFields, formData)
   }
 
-  const handleConfirmClick = () => {
-    if (!allRequiredFilled()) return
-    setShowConfirm(true)
+    const checkAgeValid = () => {
+    if (!formData.dob) return false  // No DOB = invalid
+    const dob = new Date(formData.dob)
+    const today = new Date()
+    let age = today.getFullYear() - dob.getFullYear()
+    const monthDiff = today.getMonth() - dob.getMonth()
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+      age--
+    }
+    return age >= 18
   }
 
-  const handleSubmit = () => {
-    const user = getCurrentUser()
-    const updatedUser = { ...user, ...formData, application_submitted: true, application_date: new Date().toISOString() }
-    localStorage.setItem('sajilo_user', JSON.stringify(updatedUser))
-    setShowConfirm(false)
-    setSubmitted(true)
-    setTimeout(() => navigate('/worker/pending'), 2000)
+     const handleNext = () => {
+    if (currentCardIndex < CARDS.length - 1) {
+      setCurrentCardIndex(i => i + 1)
+      setShowErrors(false)
+    } else {
+      if (formData.dob && !checkAgeValid()) {
+        setShowErrors('age')
+        return
+      }
+      if (!checkAllRequired()) {
+        setShowErrors(true)
+        return
+      }
+      handleSubmit()
+    }
   }
 
-  const card = CARDS[currentCard]
-  const isFirst = currentCard === 0
-  const isLast = currentCard === CARDS.length - 1
-  const canConfirm = allRequiredFilled()
+  const handlePrev = () => {
+    if (currentCardIndex > 0) setCurrentCardIndex(i => i - 1)
+    setShowErrors(false)
+  }
+
+      const handleSubmit = async () => {
+    const finalData = { ...formData, secondaryRoles }
+    
+    // Save application data
+    localStorage.setItem('sajilo_worker_application', JSON.stringify(finalData))
+    
+    // Create pending worker user session
+    localStorage.setItem('sajilo_user', JSON.stringify({
+      id: Date.now(),
+      email: formData.email,
+      role: 'worker',
+      status: 'pending',
+      name: formData.fullName || formData.displayName || 'Applicant',
+      application_submitted: true,
+      phone: formData.phone,
+      primaryRole: formData.primaryRole,
+    }))
+    
+    // Set a fake token so WorkerContext can initialize
+    localStorage.setItem('sajilo_token', JSON.stringify({ pending: true, ts: Date.now() }))
+    
+    navigate('/worker/pending')
+  }
+    
+
+  const isFieldError = (field) => {
+    if (showErrors === 'age' && field.name === 'dob') return true
+    if (showErrors === true && field.required && !formData[field.name]) return true
+    return false
+  }
 
   return (
-    <div className="auth-page" data-theme={dark ? 'dark' : 'light'} style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', minHeight: '100dvh', background: 'var(--bg-primary)' }}>
-      
-      <div className="pending-navbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: navbarStyle.padding || '10px 20px', background: navbarStyle.background || 'var(--bg-surface)', borderBottom: navbarStyle.border || '1px solid var(--border)', flexShrink: 0, ...navbarStyle }}>
-        <span style={{ fontSize: navbarStyle.fontSize || 'var(--font-body-lg)', fontWeight: 600, color: 'var(--text-primary)' }}>{profile?.name || navbarTitle}</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: navBtnStyle.gap || 10 }}>
-          <button onClick={toggleTheme} style={{ width: 30, height: 30, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-surface2)', border: '1px solid var(--border)', cursor: 'pointer', fontSize: 14 }}>{dark ? '☀️' : '🌙'}</button>
-          <select value={lang} onChange={handleLangChange} style={{ padding: '4px 6px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)', fontSize: 12, fontWeight: 600, cursor: 'pointer', outline: 'none' }}><option value="en">EN</option><option value="ne">ने</option></select>
-          <button onClick={handleLogout} style={{ padding: logoutBtnStyle.padding || '6px 12px', borderRadius: logoutBtnStyle.borderRadius || 'var(--radius-sm)', border: '1px solid var(--accent-red)', background: 'transparent', color: 'var(--accent-red)', fontSize: logoutBtnStyle.fontSize || 'var(--font-body-sm)', fontWeight: 600, cursor: 'pointer' }}>{logoutLabel}</button>
-        </div>
+    <div style={{ maxWidth: 500, margin: '40px auto', padding: 24, background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)', boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }}>
+      <div style={{ textAlign: 'center', marginBottom: 16 }}>
+        <span style={{ fontSize: 22, fontWeight: 800, color: 'var(--accent-blue)' }}>Sajilo</span>
       </div>
+      <h2 style={{ textAlign: 'center', marginBottom: 8 }}>{cardTitle}</h2>
+      <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 20 }}>
+        Step {currentCardIndex + 1} of {CARDS.length || 1}
+      </p>
 
-      <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
-        <div className="brand-side" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1A6FD4 0%, #2D1B69 100%)', position: 'sticky', top: 0, height: '100%', overflow: 'hidden' }}><BrandPanel /></div>
-        <div className="form-side" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', position: 'relative', zIndex: 1, overflow: 'hidden', touchAction: 'none', overscrollBehavior: 'none' }}>
-          <Animated.div style={{ width: '100%', maxWidth: 430, background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)', padding: 'clamp(28px, 5vw, 44px)', boxShadow: '0 4px 24px rgba(0,0,0,0.08)', overflowY: 'auto', maxHeight: 'calc(100vh - 120px)', ...animStyle }}>
-            
-            {submitted ? (
-              <div style={{ textAlign: 'center', padding: 40, color: 'var(--accent-green)', fontWeight: 600, fontSize: 'var(--font-body)' }}>{successText}</div>
-            ) : (
-              <>
-                <div style={{ textAlign: 'center', marginBottom: 8 }}>
-                  <span style={{ fontSize: 22, fontWeight: 800, color: 'var(--accent-blue)' }}>{brandName}</span>
-                </div>
-                <h2 style={{ fontSize: 'var(--font-large)', fontWeight: 800, color: 'var(--text-primary)', marginBottom: 4, textAlign: 'center' }}>{title}</h2>
-                <p style={{ fontSize: 'var(--font-body)', color: 'var(--text-secondary)', marginBottom: 8, textAlign: 'center' }}>{useContent(card.titleKey)}</p>
-                <div style={{ textAlign: 'center', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 20 }}>{progressLabel} {currentCard + 1} / {CARDS.length}</div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                  {(card.fields || []).map(field => {
-                    const value = formData[field.name] || ''
-                    const label = labelMap[field.labelKey] || field.labelKey
-                    const placeholder = placeholderMap[field.placeholderKey] || field.placeholderKey || ''
-
-                    if (field.type === 'checkbox') {
-                      return (
-                        <div key={field.name}>
-                          <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
-                            <input type="checkbox" checked={!!value} onChange={(e) => setFormData(prev => ({ ...prev, [field.name]: e.target.checked }))} required={field.required}
-                              style={{ width: 18, height: 18, cursor: 'pointer', accentColor: 'var(--accent-blue)' }} />
-                            <span style={{ fontSize: 'var(--font-body)', color: 'var(--text-primary)' }}>{label}</span>
-                            {field.required && <span style={{ color: 'var(--accent-red)' }}>★</span>}
-                          </label>
-                        </div>
-                      )
-                    }
-
-                    if (field.type === 'select') {
-                      return (
-                        <div key={field.name}>
-                          <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', display: 'block', marginBottom: 4 }}>
-                            {label}{field.required && <span style={{ color: 'var(--accent-red)', marginLeft: 2 }}>★</span>}
-                          </label>
-                          <select value={value} onChange={(e) => setFormData(prev => ({ ...prev, [field.name]: e.target.value }))} required={field.required}
-                            style={{ width: '100%', padding: '12px 14px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)', fontSize: 'var(--font-body)', outline: 'none', cursor: 'pointer' }}>
-                            <option value="">{selectPlaceholder}</option>
-                            {(field.options || []).map(opt => (
-                              <option key={opt.value} value={opt.value}>{roleLabels[opt.value] || labelMap[opt.labelKey] || opt.labelKey}</option>
-                            ))}
-                          </select>
-                        </div>
-                      )
-                    }
-
-                    return (
-                      <div key={field.name}>
-                        <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', display: 'block', marginBottom: 4 }}>
-                          {label}{field.required && <span style={{ color: 'var(--accent-red)', marginLeft: 2 }}>★</span>}
-                        </label>
-                        <input type={field.type || 'text'} value={value}
-                          onChange={(e) => setFormData(prev => ({ ...prev, [field.name]: e.target.value }))}
-                          placeholder={placeholder} required={field.required}
-                          style={{ width: '100%', padding: '12px 14px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)', fontSize: 'var(--font-body)', outline: 'none' }} />
-                      </div>
-                    )
-                  })}
-                </div>
-
-                <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
-                  {!isFirst && (
-                    <button onClick={goPrev} style={{ flex: 1, padding: prevBtnStyle.padding || '12px', borderRadius: prevBtnStyle.borderRadius || 'var(--radius-md)', border: prevBtnStyle.border || '1px solid var(--border)', background: prevBtnStyle.background || 'var(--bg-surface2)', color: prevBtnStyle.color || 'var(--text-primary)', fontSize: prevBtnStyle.fontSize || '13px', fontWeight: prevBtnStyle.fontWeight || 600, cursor: 'pointer' }}>← {prevLabel}</button>
-                  )}
-                  {!isLast && (
-                    <button onClick={goNext} style={{ flex: 1, padding: nextBtnStyle.padding || '12px', borderRadius: nextBtnStyle.borderRadius || 'var(--radius-md)', border: nextBtnStyle.border || 'none', background: nextBtnStyle.background || 'var(--accent-blue)', color: nextBtnStyle.color || '#fff', fontSize: nextBtnStyle.fontSize || '13px', fontWeight: nextBtnStyle.fontWeight || 600, cursor: 'pointer' }}>{nextLabel} →</button>
-                  )}
-                  {isLast && (
-                    <button onClick={handleConfirmClick} disabled={!canConfirm} style={{ flex: 1, padding: confirmBtnStyle.padding || '12px', borderRadius: confirmBtnStyle.borderRadius || 'var(--radius-md)', border: confirmBtnStyle.border || 'none', background: canConfirm ? (confirmBtnStyle.background || 'var(--accent-green)') : '#94a3b8', color: confirmBtnStyle.color || '#fff', fontSize: confirmBtnStyle.fontSize || '13px', fontWeight: confirmBtnStyle.fontWeight || 600, cursor: canConfirm ? 'pointer' : 'not-allowed', opacity: canConfirm ? 1 : 0.6 }}>{confirmLabel}</button>
-                  )}
-                </div>
-              </>
-            )}
-          </Animated.div>
-        </div>
-      </div>
-
-      {showConfirm && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div onClick={() => setShowConfirm(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)' }} />
-          <popupAnim.animated.div style={{ position: 'relative', width: '90%', maxWidth: 380, background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)', padding: 'clamp(24px, 5vw, 32px)', boxShadow: '0 8px 32px rgba(0,0,0,0.2)', textAlign: 'center', ...popupAnim.style }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>📋</div>
-            <h3 style={{ fontSize: 'var(--font-body-lg)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>{popupTitle}</h3>
-            <p style={{ fontSize: 'var(--font-body)', color: 'var(--text-secondary)', marginBottom: 24, lineHeight: 1.5 }}>{popupMsg}</p>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => setShowConfirm(false)} style={{ flex: 1, padding: '12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>{popupCancel}</button>
-              <button onClick={handleSubmit} style={{ flex: 1, padding: '12px', borderRadius: 'var(--radius-md)', border: 'none', background: 'var(--accent-green)', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>{popupSubmit}</button>
-            </div>
-          </popupAnim.animated.div>
+            {showErrors && (
+        <div style={{
+          background: '#fee2e2', color: '#DC2626', padding: '10px 14px',
+          borderRadius: 'var(--radius-md)', fontSize: 13, fontWeight: 500,
+          marginBottom: 16, textAlign: 'center', animation: 'shake 0.4s ease'
+        }}>
+          {showErrors === 'age' 
+            ? getContent('worker.apply.ageError', 'You must be 18 or older to apply.')
+            : missingFieldsMsg}
         </div>
       )}
 
-      <div className="pending-mobile-bar" style={{ display: 'none', height: 60, background: 'var(--bg-surface)', borderTop: '1px solid var(--border)', position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9999, alignItems: 'center', justifyContent: 'space-around', padding: '0 16px', ...mobileBarStyle }}>
-        <button onClick={toggleTheme} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, border: 'none', background: 'transparent', cursor: 'pointer', padding: '8px 12px', color: 'var(--text-secondary)', fontSize: 10, fontWeight: 500 }}><span style={{ fontSize: 18 }}>{dark ? '☀️' : '🌙'}</span>{themeLabel}</button>
-        <select value={lang} onChange={handleLangChange} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 12, fontWeight: 600, textAlign: 'center', outline: 'none' }}><option value="en">EN</option><option value="ne">ने</option></select>
-        <button onClick={handleLogout} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, border: 'none', background: 'transparent', cursor: 'pointer', padding: '8px 12px', color: 'var(--accent-red)', fontSize: 10, fontWeight: 500 }}><span style={{ fontSize: 18 }}>🚪</span>{logoutLabel}</button>
+      {(currentCard.fields || []).map(field => {
+        const val = formData[field.name] || ''
+        const label = getContent(field.labelKey, field.name)
+        const hasError = isFieldError(field)
+
+        
+
+        // ── Notification section label ──
+        if (field.name === 'notifyEmail') {
+          return (
+            <div key="notif-group">
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 10, marginTop: 4 }}>
+                {notifLabel}
+              </div>
+              {/* Render all notification checkboxes */}
+              {(currentCard.fields || []).filter(f => f.name.startsWith('notify')).map(nf => {
+                const nfVal = nf.name === 'notifyLater' ? notifyLater : formData[nf.name] || false
+                const nfLabel = getContent(nf.labelKey, nf.name)
+                const isDisabled = nf.name !== 'notifyLater' && notifyLater
+                return (
+                  <label key={nf.name} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, cursor: isDisabled ? 'not-allowed' : 'pointer', opacity: isDisabled ? 0.5 : 1 }}>
+                    <input type="checkbox"
+                      checked={!!nfVal}
+                      disabled={isDisabled}
+                      onChange={e => {
+                        if (nf.name === 'notifyLater') {
+                          setNotifyLater(e.target.checked)
+                          if (e.target.checked) {
+                            // Clear all other notification choices
+                            handleFieldChange('notifyEmail', false)
+                            handleFieldChange('notifySms', false)
+                            handleFieldChange('notifyApp', false)
+                          }
+                        } else {
+                          handleFieldChange(nf.name, e.target.checked)
+                        }
+                      }}
+                      style={{ width: 18, height: 18, accentColor: 'var(--accent-blue)' }} />
+                    <span style={{ color: 'var(--text-primary)', fontSize: 14 }}>{nfLabel}</span>
+                  </label>
+                )
+              })}
+            </div>
+          )
+        }
+        // Skip other notify fields (handled in group above)
+        if (field.name === 'notifySms' || field.name === 'notifyApp' || field.name === 'notifyLater') {
+          return null
+        }
+
+                // ── Password (show/hide toggle) ──
+        if (field.type === 'password') {
+          const shown = showPasswords[field.name] || false
+          return (
+            <div key={field.name} style={{ marginBottom: 14 }}>
+              <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4, color: hasError ? 'var(--accent-red)' : 'var(--text-primary)' }}>
+                {label}{field.required && <span style={{ color: 'var(--accent-red)', marginLeft: 2 }}>★</span>}
+              </label>
+              <div style={{ position: 'relative' }}>
+                <input type={shown ? 'text' : 'password'} value={val} onChange={e => handleFieldChange(field.name, e.target.value)}
+                  placeholder={getContent(field.placeholderKey, '')} required={field.required}
+                  style={{ width: '100%', padding: '12px 44px 12px 12px', borderRadius: 'var(--radius-md)', border: `1px solid ${hasError ? 'var(--accent-red)' : 'var(--border)'}`, background: 'var(--bg-surface2)', outline: 'none' }} />
+                <span onClick={() => setShowPasswords(prev => ({ ...prev, [field.name]: !prev[field.name] }))}
+                  style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', cursor: 'pointer', fontSize: 16, userSelect: 'none' }}>
+                  {shown ? '🙈' : '👁'}
+                </span>
+              </div>
+            </div>
+          )
+        }
+
+        // ── Checkbox ──
+        if (field.type === 'checkbox') {
+          return (
+            <label key={field.name} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, cursor: 'pointer' }}>
+              <input type="checkbox" checked={!!val} onChange={e => handleFieldChange(field.name, e.target.checked)}
+                style={{ width: 18, height: 18, accentColor: hasError ? 'var(--accent-red)' : 'var(--accent-blue)' }} />
+              <span style={{ color: hasError ? 'var(--accent-red)' : 'var(--text-primary)' }}>
+                {label}{field.required && <span style={{ color: 'var(--accent-red)', marginLeft: 2 }}>★</span>}
+              </span>
+            </label>
+          )
+        }
+
+                // ── Datepicker (full button, no typing) ──
+        if (field.type === 'datepicker') {
+          const maxDate = new Date()
+          maxDate.setFullYear(maxDate.getFullYear() - 18)
+          const maxDateStr = maxDate.toISOString().split('T')[0]
+          const dateInputId = `date-${field.name}`
+          
+          return (
+            <div key={field.name} style={{ marginBottom: 14 }}>
+              <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4, color: hasError ? 'var(--accent-red)' : 'var(--text-primary)' }}>
+                {label}{field.required && <span style={{ color: 'var(--accent-red)', marginLeft: 2 }}>★</span>}
+              </label>
+              <div style={{ position: 'relative' }}>
+                <input id={dateInputId} type="date" value={val} onChange={e => handleFieldChange(field.name, e.target.value)}
+                  max={maxDateStr} required={field.required}
+                  style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', width: 0, height: 0 }} />
+                <button type="button" onClick={() => document.getElementById(dateInputId)?.showPicker()}
+                  style={{
+                    width: '100%', padding: 12, borderRadius: 'var(--radius-md)',
+                    border: `1px solid ${hasError ? 'var(--accent-red)' : 'var(--border)'}`,
+                    background: 'var(--bg-surface2)', cursor: 'pointer',
+                    fontSize: 'var(--font-body)', textAlign: 'left',
+                    color: val ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                  }}>
+                  <span>{val || 'Select date...'}</span>
+                  <span>📅</span>
+                </button>
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 4 }}>{getContent('worker.apply.ageRequirement', 'Must be 18+')}</div>
+            </div>
+          )
+        }
+        // ── Photo (square tile + gender avatar) ──
+        if (field.type === 'photo' || field.type === 'imageUpload') {
+          return (
+            <div key={field.name} style={{ marginBottom: 14 }}>
+              <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4, color: hasError ? 'var(--accent-red)' : 'var(--text-primary)' }}>
+                {label}{field.required && <span style={{ color: 'var(--accent-red)', marginLeft: 2 }}>★</span>}
+              </label>
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                <div style={{
+                  width: 100, height: 100, borderRadius: 'var(--radius-md)',
+                  border: `2px dashed ${hasError ? 'var(--accent-red)' : 'var(--border)'}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: 'var(--bg-surface2)', cursor: 'pointer', overflow: 'hidden',
+                  position: 'relative', flexShrink: 0
+                }}>
+                  {val ? (
+                    <img src={val} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <span style={{ fontSize: 36 }}>{photoGender === 'male' ? '👨' : '👩'}</span>
+                  )}
+                  <input type="file" accept="image/*" capture="environment"
+                    onChange={e => {
+                      const file = e.target.files?.[0]
+                      if (file) handleFieldChange(field.name, URL.createObjectURL(file))
+                    }}
+                    style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} />
+                </div>
+                <select value={photoGender} onChange={e => setPhotoGender(e.target.value)}
+                  style={{ padding: 8, borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-surface2)', fontSize: 13 }}>
+                  <option value="male">👨 Male</option>
+                  <option value="female">👩 Female</option>
+                </select>
+              </div>
+            </div>
+          )
+        }
+
+        // ── Secondary Roles (max 2, tags) ──
+        if (field.name === 'secondaryRoles') {
+          const isMaxed = secondaryRoles.length >= 2
+          return (
+            <div key={field.name} style={{ marginBottom: 14 }}>
+              <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4, color: 'var(--text-primary)' }}>
+                {label} <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>(max 2)</span>
+              </label>
+              {secondaryRoles.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+                  {secondaryRoles.map(role => (
+                    <span key={role} style={{
+                      padding: '6px 10px', borderRadius: 20, background: 'var(--accent-blue-light)', color: 'var(--accent-blue)',
+                      fontSize: 13, display: 'flex', alignItems: 'center', gap: 6
+                    }}>
+                      {getContent((field.options || []).find(o => o.value === role)?.labelKey, role)}
+                      <span onClick={() => setSecondaryRoles(prev => prev.filter(r => r !== role))}
+                        style={{ cursor: 'pointer', fontWeight: 700, fontSize: 16, lineHeight: 1 }}>×</span>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <select value="" onChange={e => {
+                const v = e.target.value
+                if (v && !secondaryRoles.includes(v) && secondaryRoles.length < 2) {
+                  setSecondaryRoles(prev => [...prev, v])
+                }
+              }} style={{ width: '100%', padding: 12, borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', background: 'var(--bg-surface2)', cursor: 'pointer' }}>
+                <option value="">Select skill...</option>
+                {(field.options || []).map(o => (
+                  <option key={o.value} value={o.value}
+                    disabled={secondaryRoles.includes(o.value) || isMaxed || o.value === formData.primaryRole}
+                    style={{ color: secondaryRoles.includes(o.value) ? '#aaa' : 'inherit' }}>
+                    {getContent(o.labelKey, o.value)} {secondaryRoles.includes(o.value) ? '✓' : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )
+        }
+
+        // ── Select ──
+                if (field.type === 'select') {
+          // Group options by availability if they have a 'group' field
+          const groups = {}
+          ;(field.options || []).forEach(o => {
+            const g = o.group || 'available'
+            if (!groups[g]) groups[g] = []
+            groups[g].push(o)
+          })
+          const hasGroups = Object.keys(groups).length > 1
+
+          return (
+            <div key={field.name} style={{ marginBottom: 14 }}>
+              <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4, color: hasError ? 'var(--accent-red)' : 'var(--text-primary)' }}>
+                {label}{field.required && <span style={{ color: 'var(--accent-red)', marginLeft: 2 }}>★</span>}
+              </label>
+              <select value={val} onChange={e => handleFieldChange(field.name, e.target.value)}
+                required={field.required}
+                style={{ width: '100%', padding: 12, borderRadius: 'var(--radius-md)', border: `1px solid ${hasError ? 'var(--accent-red)' : 'var(--border)'}`, background: 'var(--bg-surface2)', outline: 'none' }}>
+                <option value="">Select...</option>
+                {hasGroups ? (
+                  Object.entries(groups).map(([group, opts]) => (
+                    <optgroup key={group} label={group === 'comingSoon' ? getContent('city.comingSoon', 'Coming Soon') : getContent('city.available', 'Available Now')}>
+                      {opts.map(o => (
+                        <option key={o.value} value={o.value}>{getContent(o.labelKey, o.value)}</option>
+                      ))}
+                    </optgroup>
+                  ))
+                ) : (
+                  (field.options || []).map(o => (
+                    <option key={o.value} value={o.value}>{getContent(o.labelKey, o.value)}</option>
+                  ))
+                )}
+              </select>
+            </div>
+          )
+        }
+
+        // ── Textarea ──
+        if (field.type === 'textarea') {
+          return (
+            <div key={field.name} style={{ marginBottom: 14 }}>
+              <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4, color: hasError ? 'var(--accent-red)' : 'var(--text-primary)' }}>
+                {label}{field.required && <span style={{ color: 'var(--accent-red)', marginLeft: 2 }}>★</span>}
+              </label>
+              <textarea value={val} onChange={e => handleFieldChange(field.name, e.target.value)}
+                placeholder={getContent(field.placeholderKey, '')} required={field.required} rows={3}
+                style={{ width: '100%', padding: 12, borderRadius: 'var(--radius-md)', border: `1px solid ${hasError ? 'var(--accent-red)' : 'var(--border)'}`, background: 'var(--bg-surface2)', outline: 'none', resize: 'vertical' }} />
+            </div>
+          )
+        }
+
+        // ── Default: text/email/number input ──
+        return (
+          <div key={field.name} style={{ marginBottom: 14 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4, color: hasError ? 'var(--accent-red)' : 'var(--text-primary)' }}>
+              {label}{field.required && <span style={{ color: 'var(--accent-red)', marginLeft: 2 }}>★</span>}
+            </label>
+            <input type={field.type || 'text'} value={val} onChange={e => handleFieldChange(field.name, e.target.value)}
+              placeholder={getContent(field.placeholderKey, '')} required={field.required}
+              style={{ width: '100%', padding: 12, borderRadius: 'var(--radius-md)', border: `1px solid ${hasError ? 'var(--accent-red)' : 'var(--border)'}`, background: 'var(--bg-surface2)', outline: 'none' }} />
+          </div>
+        )
+      })}
+
+      <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+        {currentCardIndex > 0 && (
+          <button onClick={handlePrev} style={{ flex: 1, padding: 12, borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', background: 'var(--bg-surface2)', cursor: 'pointer' }}>
+            ← {prevLabel}
+          </button>
+        )}
+        <button onClick={handleNext} style={{ flex: 1, padding: 12, borderRadius: 'var(--radius-md)', border: 'none', background: 'var(--accent-blue)', color: '#fff', cursor: 'pointer' }}>
+          {currentCardIndex === CARDS.length - 1 ? 'Submit' : nextLabel} →
+        </button>
       </div>
 
       <style>{`
-        .auth-page, .auth-page .form-side, .auth-page .form-side * { --bg-primary: #f0f2f6 !important; --bg-surface: #ffffff !important; --bg-surface2: #f7f8fa !important; --text-primary: #1a1d23 !important; --text-secondary: #6b7280 !important; --border: #e5e7eb !important; --accent-blue: #1A6FD4 !important; --accent-blue-light: #EBF3FF !important; --accent-red: #DC2626 !important; --accent-green: #16A34A !important; }
-        @media (max-width: 768px) {
-          .brand-side { position: absolute !important; inset: 0 !important; opacity: 1 !important; pointer-events: none !important; }
-          .auth-page { overflow-y: auto; overscroll-behavior-y: contain; }
-          .form-side { flex: none !important; width: 100% !important; min-height: 100vh !important; min-height: 100dvh !important; padding-bottom: 80px !important; }
-          .pending-mobile-bar { display: flex !important; }
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-6px); }
+          50% { transform: translateX(6px); }
+          75% { transform: translateX(-4px); }
         }
       `}</style>
     </div>

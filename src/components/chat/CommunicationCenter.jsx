@@ -7,7 +7,7 @@ import { useSocket } from '../../hooks/useSocket.js'
 import conversationState from '../../services/chat/ConversationStateManager.js'
 
 
-const SUPPORT_ID = 9  // localhost admin
+const SUPPORT_ID = 32  // localhost admin (A001)
 // const SUPPORT_ID = 6  // Render admin  
 // Admin user ID for support chat — messages route to this user
 
@@ -58,6 +58,8 @@ export default function CommunicationCenter() {
   }, [showChat])
 
   // Subscribe to conversation state changes for badge
+ const [, refresh] = useState(0)
+
   useEffect(() => {
   const unsub = conversationState.onChange((count) => {
     console.log('[BADGE] count changed:', count)
@@ -104,6 +106,10 @@ export default function CommunicationCenter() {
     const text = chatInput.trim()
     const tempId = Date.now()
     setPendingId(tempId)
+    console.log('[SEND] socket:', !!socket, 'receiverId:', activeChat?.other_id || SUPPORT_ID)
+if (socket) {
+  socket.emit('send_message', { receiverId: activeChat?.other_id || SUPPORT_ID, text, bookingId: activeChat?.bookingId || null })
+}
     if (socket) {
       socket.emit('send_message', { receiverId: activeChat?.other_id || SUPPORT_ID, text, bookingId: activeChat?.bookingId || null })
     }

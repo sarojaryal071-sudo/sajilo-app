@@ -1332,9 +1332,199 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
       );
     }
 
+        // ──────────────────────────────────────────────
+    // MAP PLACEHOLDER (Dashboard — Phase 15)
+    // ──────────────────────────────────────────────
+        case "mapPlaceholder": {
+      const hasBooking = !!overrideData?.activeBooking
+      const wd = w.dashboard?.mapCard || {}
+      const title = useContent("worker.mapPreview", "Service Map")
+      const emptyText = useContent("worker.mapEmpty", "Map updates when job accepted")
+
+      return (
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <div style={{
+            width: wd.width || '175px',
+            height: wd.height || '175px',
+            background: hasBooking ? (wd.active?.background || 'var(--accent-blue-light)') : (wd.background || 'var(--bg-surface2)'),
+            border: hasBooking ? (wd.active?.border || '2px solid var(--accent-blue)') : (wd.border || '2px dashed var(--border)'),
+            borderRadius: wd.borderRadius || 'var(--radius-lg)',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            marginBottom: wd.marginBottom || '16px',
+            ...overrideStyles,
+          }}>
+            <span style={{ fontSize: wd.icon?.fontSize || '40px', opacity: hasBooking ? 1 : (wd.icon?.opacity || 0.3) }}>
+              {hasBooking ? '📍' : '🗺️'}
+            </span>
+            <span style={{ fontSize: wd.title?.fontSize || '11px', color: wd.title?.color || 'var(--text-secondary)', marginTop: wd.title?.marginTop || '8px', textAlign: 'center', padding: '0 12px' }}>
+              {hasBooking ? title : emptyText}
+            </span>
+          </div>
+        </div>
+      )
+    }
 
     // ──────────────────────────────────────────────
-    // UNKNOWN TYPE — safe fallback
+    // ONLINE TOGGLE CARD (Dashboard — Phase 15)
+    // ──────────────────────────────────────────────
+               case "onlineToggleCard": {
+      const isOnline = overrideData?.isOnline ?? false
+      const onToggle = overrideData?.onToggle
+      const onlineLabel = isOnline ? '🟢 Online' : '🔴 Offline'
+
+      return (
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
+          <button onClick={() => {
+            console.log('Toggle clicked, onToggle exists:', !!onToggle)
+            onToggle?.()
+          }} style={{
+            padding: '8px 16px',
+            borderRadius: '20px',
+            border: `2px solid ${isOnline ? 'var(--accent-green)' : 'var(--accent-red)'}`,
+            background: isOnline ? 'var(--accent-green-light)' : 'var(--accent-red-light)',
+            color: isOnline ? 'var(--accent-green)' : 'var(--accent-red)',
+            fontSize: 'var(--font-body-sm)',
+            fontWeight: 700,
+            cursor: 'pointer',
+            whiteSpace: 'nowrap',
+          }}>
+            {onlineLabel}
+          </button>
+        </div>
+      )
+    }
+
+    // ──────────────────────────────────────────────
+    // ANALYTICS CHART (Dashboard — Phase 15)
+    // ──────────────────────────────────────────────
+                    case "analyticsChart": {
+      const wd = w.dashboard?.analytics || {}
+      const title = useContent("worker.analytics", "Analytics")
+      const earnings = overrideData?.earnings || {}
+      const hasData = (earnings?.total_earnings || 0) > 0
+      const [chartType, setChartType] = React.useState('bar')
+      const chartColors = wd.chartColors || ['var(--accent-blue)', 'var(--accent-green)', 'var(--accent-orange)', '#8B5CF6', '#EC4899']
+
+      return (
+        <div style={{
+          background: wd.background || 'var(--bg-surface)',
+          borderRadius: wd.borderRadius || 'var(--radius-lg)',
+          padding: wd.padding || '20px',
+          marginBottom: wd.marginBottom || '16px',
+          boxShadow: wd.boxShadow || '0 2px 8px rgba(0,0,0,0.05)',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <span style={{ fontSize: 'var(--font-title)', fontWeight: 700, color: 'var(--text-primary)' }}>{title}</span>
+            <div style={{ display: 'flex', gap: 4 }}>
+              {['bar', 'line', 'pie'].map(type => (
+                <button key={type} onClick={() => setChartType(type)} style={{
+                  padding: '4px 10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)',
+                  background: chartType === type ? 'var(--accent-blue)' : 'transparent',
+                  color: chartType === type ? '#fff' : 'var(--text-secondary)',
+                  fontSize: 'var(--font-caption)', cursor: 'pointer', fontWeight: 500,
+                }}>
+                  {type === 'bar' ? '📊' : type === 'line' ? '📈' : '🥧'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+                    <div style={{ height: '140px', position: 'relative' }}>
+            {/* BAR CHART */}
+            {chartType === 'bar' && (
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: '100%', padding: '4px 0' }}>
+                {[40, 70, 30, 90, 50, 60, 80].map((h, i) => (
+                  <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
+                    <div style={{
+                      width: '100%', height: `${h}%`,
+                      background: hasData ? chartColors[i % chartColors.length] : 'var(--border)',
+                      borderRadius: '4px 4px 0 0', minHeight: 2,
+                    }} />
+                    <span style={{ fontSize: '9px', color: 'var(--text-secondary)', marginTop: 4 }}>
+                      {['M','T','W','T','F','S','S'][i]}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* LINE CHART */}
+            {chartType === 'line' && (
+              <svg width="100%" height="100%" viewBox="0 0 300 140" preserveAspectRatio="none">
+                <polyline fill="none" stroke={hasData ? chartColors[0] : 'var(--border)'} strokeWidth="3"
+                  points={[40,70,30,90,50,60,80].map((v, i) => `${(i/6)*300},${140-(v/100)*140}`).join(' ')} />
+                {[40,70,30,90,50,60,80].map((v, i) => (
+                  <circle key={i} cx={(i/6)*300} cy={140-(v/100)*140} r="4" fill={hasData ? chartColors[i % chartColors.length] : 'var(--border)'} />
+                ))}
+              </svg>
+            )}
+
+            {/* PIE CHART */}
+            {chartType === 'pie' && (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                <svg width="120" height="120" viewBox="0 0 100 100">
+                  {[40,70,30,90,50,60,80].reduce((acc, val, i) => {
+                    const total = [40,70,30,90,50,60,80].reduce((s, x) => s + x, 0)
+                    const slice = (val / total) * 360
+                    const start = acc.offset
+                    const end = start + slice
+                    const x1 = 50 + 40 * Math.cos((start - 90) * Math.PI / 180)
+                    const y1 = 50 + 40 * Math.sin((start - 90) * Math.PI / 180)
+                    const x2 = 50 + 40 * Math.cos((end - 90) * Math.PI / 180)
+                    const y2 = 50 + 40 * Math.sin((end - 90) * Math.PI / 180)
+                    const large = slice > 180 ? 1 : 0
+                    return {
+                      offset: end,
+                      elements: [...acc.elements,
+                        <path key={i} d={`M50,50 L${x1},${y1} A40,40 0 ${large},1 ${x2},${y2} Z`}
+                          fill={hasData ? chartColors[i % chartColors.length] : 'var(--border)'} />
+                      ]
+                    }
+                  }, { offset: 0, elements: [] }).elements}
+                  <circle cx="50" cy="50" r="20" fill="var(--bg-surface)" />
+                </svg>
+              </div>
+            )}
+          </div>
+        </div>
+      )
+    }
+
+        case "filterTabs": {
+      const tabs = elementConfig.content?.tabs || []
+      const [activeTab, setActiveTab] = React.useState(tabs.find(t => t.default)?.id || tabs[0]?.id || 'all')
+      const wj = w.jobs || {}
+
+      return (
+        <div style={{
+          display: wj.filters?.display || 'flex',
+          gap: wj.filters?.gap || '6px',
+          marginBottom: wj.filters?.marginBottom || '16px',
+          overflowX: 'auto',
+          padding: '4px 0',
+        }}>
+          {tabs.map(tab => (
+            <button key={tab.id} onClick={() => {
+              setActiveTab(tab.id)
+              overrideData?.onFilter?.(tab.id)
+            }} style={{
+              padding: wj.filterTab?.padding || '8px 16px',
+              borderRadius: wj.filterTab?.borderRadius || '20px',
+              border: wj.filterTab?.border || '1px solid var(--border)',
+              background: activeTab === tab.id ? (wj.filterTabActive?.background || 'var(--accent-blue)') : (wj.filterTab?.background || 'transparent'),
+              color: activeTab === tab.id ? (wj.filterTabActive?.color || '#fff') : (wj.filterTab?.color || 'var(--text-secondary)'),
+              fontSize: wj.filterTab?.fontSize || 'var(--font-body-sm)',
+              fontWeight: wj.filterTab?.fontWeight || 500,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+            }}>
+              {useContent(tab.labelKey, tab.id)}
+            </button>
+          ))}
+        </div>
+      )
+    }
+
     // ──────────────────────────────────────────────
     default: {
       console.warn(`[ElementRenderer] Unknown type: "${elementConfig.type}" for element: "${elementId}"`);

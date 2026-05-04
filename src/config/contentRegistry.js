@@ -201,6 +201,7 @@ const contentRegistry = {
   'worker.applySuccess': { en: 'Application submitted! Redirecting...', ne: 'आवेदन पेश गरियो! रिडाइरेक्ट गर्दै...' },
   'worker.uploadDocuments': { en: 'Upload Documents', ne: 'कागजात अपलोड' },
   'worker.reapply': { en: 'Reapply', ne: 'पुन: आवेदन' },
+    'auth.signup.displayName.label': { en: 'Display Name', ne: 'नाम' },
 
   // Worker — Application Tracker
   'worker.applicationTitle': { en: 'Application Status', ne: 'आवेदन स्थिति' },
@@ -260,6 +261,17 @@ const contentRegistry = {
   'worker.completeJob': { en: 'Complete Job', ne: 'काम समाप्त' },
   'worker.jobsDone': { en: 'Jobs Done', ne: 'गरेको काम' },
   'worker.hourlyRate': { en: 'Hourly Rate (Rs)', ne: 'घण्टाको दर (रु)' },
+  'worker.mapPreview': { en: 'Service Map', ne: 'सेवा नक्सा' },
+  'worker.mapEmpty': { en: 'Map updates when job is accepted', ne: 'काम स्वीकार भएपछि नक्सा अपडेट हुन्छ' },
+  'worker.tapToGoOffline': { en: 'Tap to go offline', ne: 'अफलाइन जान ट्याप गर्नुहोस्' },
+  'worker.tapToGoOnline': { en: 'Tap to go online', ne: 'अनलाइन जान ट्याप गर्नुहोस्' },
+  'worker.analytics': { en: 'Analytics', ne: 'विश्लेषण' },
+  'worker.chart.bar': { en: 'Bar', ne: 'बार' },
+  'worker.chart.line': { en: 'Line', ne: 'रेखा' },
+  'worker.chart.pie': { en: 'Pie', ne: 'पाई' },
+  'worker.chart.weekly': { en: 'Weekly', ne: 'साप्ताहिक' },
+  'worker.chart.monthly': { en: 'Monthly', ne: 'मासिक' },
+  'worker.chart.noData': { en: 'Complete jobs to see analytics', ne: 'विश्लेषण हेर्न काम पूरा गर्नुहोस्' },
 
   // ═══════════════════════════════════════
   // FIELDS
@@ -387,6 +399,14 @@ const contentRegistry = {
 'worker.apply.acceptTerms': { en: 'I accept the Terms & Conditions', ne: 'म सर्त र शर्तहरू स्वीकार गर्छु' },
 'worker.apply.backgroundCheck': { en: 'I consent to a background check', ne: 'म पृष्ठभूमि जाँचको लागि सहमति दिन्छु' },
 'worker.apply.safetyAgreement': { en: 'I agree to the safety guidelines', ne: 'म सुरक्षा दिशानिर्देशहरूमा सहमत छु' },
+  'worker.apply.displayName': { en: 'Display Name', ne: 'प्रदर्शन नाम' },
+  'worker.apply.displayNamePlaceholder': { en: 'Optional — same as full name if empty', ne: 'खाली भएमा पूरा नाम' },
+  'worker.apply.displayNameNote': { en: 'Same as legal name if left blank', ne: 'खाली राखे कानुनी नाम जस्तै' },
+  'worker.apply.ageRequirement': { en: 'Must be 18 or older', ne: '१८ वर्ष वा माथि हुनुपर्छ' },
+  'worker.apply.tapToUpload': { en: '📷 Tap to upload photo', ne: '📷 फोटो अपलोड गर्न ट्याप गर्नुहोस्' },
+  'worker.notify.later': { en: 'I will add later', ne: 'पछि थप्नेछु' },
+    'auth.signup.confirmPassword.label': { en: 'Confirm Password', ne: 'पासवर्ड पुष्टि' },
+  'auth.signup.confirmPassword.placeholder': { en: 'Re-enter password', ne: 'पुन: लेख्नुहोस्' },
 
 // Worker Roles
 'worker.role.electrician': { en: 'Electrician', ne: 'इलेक्ट्रिसियन' },
@@ -430,6 +450,42 @@ const contentRegistry = {
 'worker.apply.confirmTitle': { en: 'Confirm Submission', ne: 'पेश गर्ने पुष्टि' },
 'worker.apply.confirmMsg': { en: 'You cannot make any changes after you submit the application. Are you sure to submit the application?', ne: 'आवेदन पेश गरेपछि तपाईं कुनै परिवर्तन गर्न सक्नुहुन्न। के तपाईं आवेदन पेश गर्न निश्चित हुनुहुन्छ?' },
 'worker.apply.cancel': { en: 'Cancel', ne: 'रद्द' },
-}
+
+  // ── Worker Schedule Subtabs ──
+  'worker.schedule.timeSlots': { en: 'Time Slots', ne: 'समय तालिका' },
+  'worker.schedule.services': { en: 'Services', ne: 'सेवाहरू' },
+  'worker.schedule.addSlot': { en: '+ Add Time Slot', ne: '+ समय थप्नुहोस्' },
+  'worker.schedule.startTime': { en: 'Start Time', ne: 'सुरु समय' },
+  'worker.schedule.endTime': { en: 'End Time', ne: 'अन्त्य समय' },
+  'worker.schedule.remove': { en: 'Remove', ne: 'हटाउनुहोस्' },
+  'worker.schedule.updateAvailability': { en: 'Update Availability', ne: 'उपलब्धता अपडेट' },
+  'worker.desktopGoOnline': { en: 'Open the mobile app to go online and start earning.', ne: 'अनलाइन जान र कमाउन मोबाइल एप खोल्नुहोस्।' },
+
+  // ── Worker Services ──
+  'worker.services.title': { en: 'My Services', ne: 'मेरो सेवाहरू' },
+  'worker.services.add': { en: '+ Add Service', ne: '+ सेवा थप्नुहोस्' },
+  'worker.services.name': { en: 'Service Name', ne: 'सेवाको नाम' },
+  'worker.services.category': { en: 'Category', ne: 'श्रेणी' },
+  'worker.services.price': { en: 'Price (Rs)', ne: 'मूल्य (रु)' },
+  'worker.services.active': { en: 'Active', ne: 'सक्रिय' },
+  'worker.services.smallJob': { en: 'Small Job', ne: 'सानो काम' },
+  'worker.services.mediumJob': { en: 'Medium Job', ne: 'मध्यम काम' },
+  'worker.services.largeJob': { en: 'Large Job', ne: 'ठूलो काम' },
+
+    'city.available': { en: 'Available Now', ne: 'अहिले उपलब्ध' },
+  'city.comingSoon': { en: 'Coming Soon', ne: 'चाँडै आउँदै' },
+    'city.kathmandu': { en: 'Kathmandu', ne: 'काठमाडौं' },
+  'city.lalitpur': { en: 'Lalitpur', ne: 'ललितपुर' },
+  'city.bhaktapur': { en: 'Bhaktapur', ne: 'भक्तपुर' },
+    'city.pokhara': { en: 'Pokhara', ne: 'पोखरा' },
+  'city.chitwan': { en: 'Chitwan', ne: 'चितवन' },
+    'worker.apply.ageError': { en: 'You must be 18 or older to apply.', ne: 'आवेदन दिन १८ वर्ष वा माथिको हुनुपर्छ।' },
+      'worker.welcomeTitle': { en: '🎉 Congratulations!', ne: '🎉 बधाई छ!' },
+  'worker.welcomeMsg': { en: 'Welcome to Sajilo family. Be your own entrepreneur, work on your own schedule and earn.', ne: 'Sajilo परिवारमा स्वागत छ। आफ्नै उद्यमी बन्नुहोस्, आफ्नै समयमा काम गर्नुहोस् र कमाउनुहोस्।' },
+  'worker.proceedToLogin': { en: 'Proceed to Login', ne: 'लगइन गर्न अगाडि बढ्नुहोस्' },
+  'worker.seeReview': { en: 'See Review', ne: 'समीक्षा हेर्नुहोस्' },
+    'worker.jobs.all': { en: 'All', ne: 'सबै' },
+  'worker.jobs.active': { en: 'Active', ne: 'सक्रिय' },
+  }
 
 export default contentRegistry

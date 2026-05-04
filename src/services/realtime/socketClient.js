@@ -11,20 +11,25 @@ export function getSocket() {
   const token = localStorage.getItem('sajilo_token')
   if (!token) return null
   
-  if (!socket || !socket.connected) {
-    if (socket) {
-      socket.disconnect()
-      socket = null
-    }
-    
-    socket = io(SOCKET_URL, { 
-      auth: { token },
-      transports: ['websocket', 'polling'],
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-    })
+  // Return existing connected socket
+  if (socket?.connected) return socket
+  
+  // Clean up dead socket
+  if (socket) {
+    socket.removeAllListeners()
+    socket.disconnect()
+    socket = null
   }
+  
+  socket = io(SOCKET_URL, { 
+    auth: { token },
+    transports: ['websocket', 'polling'],
+    reconnection: true,
+    reconnectionAttempts: Infinity,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+  })
+  
   return socket
 }
 

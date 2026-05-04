@@ -13,10 +13,8 @@ export default function SignupScreen({ navigate, t, onLogin }) {
   const cardRef = useRef(null)
   const [{ y }, api] = useSpring(() => ({ y: 0 }))
 
-  // Animation from admin config
   const { style: animStyle } = useAnimation('SignupScreen', 'card')
 
-  // Lock body scroll on auth page — remove on leave
   useEffect(() => {
     document.documentElement.classList.add('auth-locked')
     return () => document.documentElement.classList.remove('auth-locked')
@@ -27,13 +25,6 @@ export default function SignupScreen({ navigate, t, onLogin }) {
     setLoading(true)
     try {
       const result = await registerUser(email, password, role, name)
-
-      console.log("🔍 SIGNUP RESULT:", { 
-        success: result.success,
-        email: result.user?.email,
-        role: result.user?.role,
-        status: result.user?.status 
-      })
 
       if (result.success) {
         localStorage.setItem('sajilo_user', JSON.stringify(result.user))
@@ -49,13 +40,11 @@ export default function SignupScreen({ navigate, t, onLogin }) {
         setLoading(false)
       }
     } catch (err) {
-      console.error("🔍 SIGNUP ERROR:", err)
       setError(err.message || 'Signup failed. Please try again.')
       setLoading(false)
     }
   }
 
-  // Drag handling — only on the card header, not the form
   const startY = useRef(0)
   const isDragging = useRef(false)
 
@@ -63,7 +52,6 @@ export default function SignupScreen({ navigate, t, onLogin }) {
     const tag = e.target.tagName?.toLowerCase()
     const isInteractive = ['input', 'button', 'select', 'a', 'span', 'label'].includes(tag)
     if (isInteractive) return
-
     isDragging.current = true
     startY.current = e.touches ? e.touches[0].clientY : e.clientY
     cardRef.current?.setPointerCapture?.(e.pointerId)
@@ -79,9 +67,8 @@ export default function SignupScreen({ navigate, t, onLogin }) {
   const handlePointerUp = () => {
     if (!isDragging.current) return
     isDragging.current = false
-    const finalY = y.get()
     api.start({ y: 0 })
-    if (finalY >= 150) window.location.reload()
+    if (y.get() >= 150) window.location.reload()
   }
 
   return (

@@ -36,28 +36,150 @@ const worker = {
     color: 'var(--text-secondary)',
   },
 
+    // Calendar / Datepicker styles
+  calendar: {
+    input: {
+      width: '100%',
+      padding: '12px',
+      borderRadius: 'var(--radius-md)',
+      border: '1px solid var(--border)',
+      background: 'var(--bg-surface2)',
+      fontSize: 'var(--font-body)',
+      cursor: 'pointer',
+      outline: 'none',
+    },
+    label: {
+      fontSize: '12px',
+      fontWeight: 600,
+      display: 'block',
+      marginBottom: '4px',
+    },
+    note: {
+      fontSize: '11px',
+      color: 'var(--text-secondary)',
+      marginTop: '4px',
+    },
+  },
+
+  
+  // ── DASHBOARD: Map Card (Phase 15) ──────────────────
+  dashboard: {
+     mapCard: {
+  width: '90%',
+  maxWidth: '350px',
+  height: '350px',
+      background: 'var(--bg-surface2)',
+      border: '2px dashed var(--border)',
+      borderRadius: 'var(--radius-lg)',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: '16px',
+      marginLeft: 'auto',
+      marginRight: 'auto',
+      icon: { fontSize: '40px', opacity: 0.3 },
+      title: { fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)', marginTop: '8px' },
+      active: { border: '2px solid var(--accent-blue)', background: 'var(--accent-blue-light)' },
+    },
+
+    // ── DASHBOARD: Online Toggle Card (Phase 15) ──────
+    toggleCard: {
+      background: 'var(--bg-surface)',
+      borderRadius: 'var(--radius-lg)',
+      padding: '20px',
+      textAlign: 'center',
+      marginBottom: '16px',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+      toggleArea: {
+        display: 'flex',
+        justifyContent: 'center',
+        marginBottom: '8px',
+      },
+      label: {
+        fontSize: 'var(--font-body-sm)',
+        color: 'var(--text-secondary)',
+      },
+    },
+
+    // ── DASHBOARD: Analytics Section (Phase 15) ───────
+    analytics: {
+      background: 'var(--bg-surface)',
+      borderRadius: 'var(--radius-lg)',
+      padding: '20px',
+      marginBottom: '16px',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+      header: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '16px',
+      },
+      title: {
+        fontSize: 'var(--font-title)',
+        fontWeight: 700,
+        color: 'var(--text-primary)',
+      },
+      // Tab buttons for chart type + period
+      tabs: {
+        display: 'flex',
+        gap: '6px',
+        marginBottom: '12px',
+      },
+      tab: {
+        padding: '6px 12px',
+        borderRadius: 'var(--radius-sm)',
+        border: '1px solid var(--border)',
+        background: 'transparent',
+        fontSize: 'var(--font-caption)',
+        fontWeight: 500,
+        color: 'var(--text-secondary)',
+        cursor: 'pointer',
+      },
+      tabActive: {
+        background: 'var(--accent-blue)',
+        color: '#fff',
+        borderColor: 'var(--accent-blue)',
+      },
+      chartArea: {
+        height: '180px',
+        display: 'flex',
+        alignItems: 'flex-end',
+        gap: '4px',
+        padding: '8px 0',
+      },
+      // Bar chart colors (from theme palette)
+      chartColors: ['var(--accent-blue)', 'var(--accent-green)', 'var(--accent-orange)', '#8B5CF6', '#EC4899'],
+    },
+  },
   // ── DASHBOARD: Stats Bar ──────────────────────────────
-  statsBar: {
+    statsBar: {
     display: 'flex',
-    gap: '10px',
-    marginBottom: '20px',
+    gap: '8px',
+    marginBottom: '14px',
+    padding: '0 4px',
+    width: '90%',
+    maxWidth: '350px',
+    marginLeft: 'auto',
+    marginRight: 'auto',
   },
   statCard: {
     flex: 1,
     background: 'var(--bg-surface)',
-    padding: '14px',
+    padding: '10px 6px',
     textAlign: 'center',
     borderRadius: 'var(--radius-md)',
+    boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
   },
   statValue: {
-    fontSize: '20px',
+    fontSize: '18px',
     fontWeight: 800,
     color: 'var(--accent-blue)',
   },
   statLabel: {
-    fontSize: '10px',
+    fontSize: '9px',
     color: 'var(--text-secondary)',
-    marginTop: '4px',
+    marginTop: '2px',
   },
 
   // ── DASHBOARD: Active Task Card ───────────────────────
@@ -182,6 +304,29 @@ const worker = {
       textAlign: 'center',
       padding: '40px',
       color: 'var(--text-secondary)',
+    },
+        filters: {
+      display: 'flex',
+      gap: '6px',
+      marginBottom: '16px',
+      overflowX: 'auto',
+      padding: '4px 0',
+    },
+    filterTab: {
+      padding: '8px 16px',
+      borderRadius: '20px',
+      border: '1px solid var(--border)',
+      background: 'transparent',
+      fontSize: 'var(--font-body-sm)',
+      fontWeight: 500,
+      color: 'var(--text-secondary)',
+      cursor: 'pointer',
+      whiteSpace: 'nowrap',
+    },
+    filterTabActive: {
+      background: 'var(--accent-blue)',
+      color: '#fff',
+      borderColor: 'var(--accent-blue)',
     },
   },
 

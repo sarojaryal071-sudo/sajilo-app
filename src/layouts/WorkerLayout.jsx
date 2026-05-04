@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { getToken } from '../services/api.js'
-import { getSocket } from '../services/realtime/socketClient.js'
+import { useSocket } from '../hooks/useSocket.js'
 import workerNavigation from '../config/workerNavigation.js'
 import OnlineToggle from '../components/worker/OnlineToggle.jsx'
 import WorkerMobileDrawer from './WorkerMobileDrawer.jsx'
@@ -29,12 +29,13 @@ function WorkerLayoutInner({ children, onLogout }) {
   const primaryItems = workerNavigation.filter(n => n.priority === 'primary')
   const secondaryItems = workerNavigation.filter(n => n.priority === 'secondary')
 
+    const { socket } = useSocket()
+
   useEffect(() => {
-    const socket = getSocket()
     if (!socket) return
-    socket.on('connected', (data) => console.log('🔍 SOCKET: Worker connected:', data))
     socket.on('booking.created', () => loadAll())
-  }, [])
+    return () => { socket.off('booking.created') }
+  }, [socket, loadAll])
 
   const handleLogout = () => {
     localStorage.removeItem('sajilo_user')
@@ -47,26 +48,36 @@ function WorkerLayoutInner({ children, onLogout }) {
   return (
     <div data-theme={dark ? 'dark' : 'light'} style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)', fontFamily: 'var(--font-family)' }}>
       
+            {/* ── MOBILE ONLINE TOGGLE (hidden on desktop) ── */}
+      <div className="worker-mobile-online" style={{
+        display: 'flex',
+        justifyContent: 'flex-end',
+        padding: '8px 20px',
+        background: 'transparent',
+        flexShrink: 0,
+      }}>
+      </div>
+
+
       {/* ── DESKTOP NAVBAR (hidden on mobile) ── */}
       <div className="worker-desktop-navbar" style={{
         height: w.desktop?.navbar?.height || '56px',
         background: w.desktop?.navbar?.background || 'var(--bg-surface)',
         borderBottom: w.desktop?.navbar?.borderBottom || '1px solid var(--border)',
-        display: 'none',
+        /* display: 'none', */
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: w.desktop?.navbar?.padding || '0 24px',
         flexShrink: 0,
       }}>
         {/* Left: Online toggle + name */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {isApproved && <OnlineToggle isOnline={profile?.is_online || false} onToggle={toggleOnline} />}
-          {showTopbarName && (
-            <span style={{ fontSize: 'var(--font-body)', fontWeight: 600, color: 'var(--text-primary)' }}>
-              {profile?.name || 'Worker'}
-            </span>
-          )}
-        </div>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+  {showTopbarName && (
+    <span style={{ fontSize: 'var(--font-body)', fontWeight: 600, color: 'var(--text-primary)' }}>
+      {profile?.name || 'Worker'}
+    </span>
+  )}
+</div>
 
         {/* Right: Controls */}
         <div style={{ display: 'flex', alignItems: 'center', gap: w.desktop?.navbar?.gap || '12px' }}>
@@ -269,15 +280,18 @@ function WorkerLayoutInner({ children, onLogout }) {
 
       <WorkerMobileDrawer isOpen={showDrawer} onClose={() => setShowDrawer(false)} navigate={navigate} lang={lang} setLang={setLang} dark={dark} setDark={setDark} onLogout={handleLogout} />
 
-            <style>{`
+                  <style>{`
+        /* Hide desktop navbar by default */
+        .worker-desktop-navbar { display: none; }
         /* Desktop: show navbar + sidebar, hide mobile bottom nav */
-        @media (min-width: ${w.desktop?.breakpoint || '768px'}) {
+        @media (min-width: 1024px) {
           .worker-desktop-navbar { display: flex !important; }
           .worker-bottom-nav { display: none !important; }
           .worker-content { padding-bottom: 24px !important; }
+          .worker-mobile-online { display: none !important; }
         }
-        /* Mobile: hide desktop navbar, show bottom nav */
-        @media (max-width: 767px) {
+        /* Mobile: hide desktop navbar, sidebar; show bottom nav */
+        @media (max-width: 1023px) {
           .worker-sidebar { display: none !important; }
           .worker-bottom-nav { display: flex !important; }
         }

@@ -147,12 +147,19 @@ export default function LoginForm({ onSubmit, loading, error, success, navigate 
       </AuthSection>
 
       <AuthSection>
-        <p style={{ fontSize: 12, color: 'var(--text-secondary)', textAlign: 'center' }}>
-          {useContent('auth.login.signupText')}{' '}
-          <span onClick={() => navigate('/signup')} style={{ color: 'var(--accent-blue)', cursor: 'pointer', fontWeight: 600 }}>
-            {useContent('auth.login.signupLink')}
-          </span>
+        <p style={{ fontSize: 12, color: 'var(--text-secondary)', textAlign: 'center', marginBottom: 8 }}>
+          {useContent('auth.login.signupText')}
         </p>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button type="button" onClick={() => navigate('/signup')}
+            style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+            🛒 Customer
+          </button>
+          <button type="button" onClick={() => navigate('/worker/apply')}
+            style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+            🔧 Worker
+          </button>
+        </div>
       </AuthSection>
 
     </form>

@@ -157,6 +157,39 @@ const componentDictionary = {
     styleRef: 'flexColumn',
     renderAs: 'flexColumn',
   },
+
+    // Chart types for analytics
+  barChart: {
+    type: 'chart',
+    chartType: 'bar',
+    accepts: 'array of { label, value }',
+    renderAs: 'barChart',
+    styleRef: 'analytics.chart',
+  },
+  lineChart: {
+    type: 'chart',
+    chartType: 'line',
+    accepts: 'array of { label, value }',
+    renderAs: 'lineChart',
+    styleRef: 'analytics.chart',
+  },
+  pieChart: {
+    type: 'chart',
+    chartType: 'pie',
+    accepts: 'array of { label, value, color }',
+    renderAs: 'pieChart',
+    styleRef: 'analytics.chart',
+  },
+
+    // Calendar date picker — dropdown only, no typing
+  datepicker: {
+    type: 'input',
+    inputType: 'datepicker',
+    accepts: 'date selection only',
+    validation: { minAge: 18 },
+    renderAs: 'datepicker',
+    styleRef: 'calendar',
+  },
 }
 
 export function getComponent(type) {
@@ -174,5 +207,7 @@ export function getDisplayComponents() {
     .filter(([_, def]) => def.type === 'display' || def.type === 'container' || def.type === 'button')
     .map(([key, def]) => ({ key, ...def }))
 }
+
+
 
 export default componentDictionary
