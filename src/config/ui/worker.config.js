@@ -980,6 +980,113 @@ const worker = {
     // Breakpoint
     breakpoint: '768px',
   },
+
+    // Client Bookings Tracking
+  bookings: {
+    trackCard: {
+      background: 'var(--bg-surface)',
+      border: '1px solid var(--border)',
+      borderRadius: 'var(--radius-lg)',
+      padding: '16px',
+      marginBottom: '12px',
+    },
+    trackHeader: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      marginBottom: '12px',
+    },
+    trackTitle: {
+      fontSize: 'var(--font-body)',
+      fontWeight: 600,
+      color: 'var(--text-primary)',
+    },
+    trackStages: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      marginBottom: '14px',
+      position: 'relative',
+    },
+    trackLine: {
+      position: 'absolute',
+      top: '12px',
+      left: '12px',
+      right: '12px',
+      height: '2px',
+      background: 'var(--border)',
+      zIndex: 0,
+    },
+    trackLineDone: {
+      background: 'var(--accent-blue)',
+    },
+    trackDot: {
+      width: '24px',
+      height: '24px',
+      borderRadius: '50%',
+      background: 'var(--bg-surface2)',
+      border: '2px solid var(--border)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontSize: '10px',
+      zIndex: 1,
+      flexShrink: 0,
+    },
+    trackDotDone: {
+      background: 'var(--accent-blue)',
+      borderColor: 'var(--accent-blue)',
+      color: '#fff',
+    },
+    trackDotCurrent: {
+      background: '#fff',
+      borderColor: 'var(--accent-blue)',
+      borderWidth: '3px',
+    },
+    trackLabel: {
+      fontSize: '8px',
+      color: 'var(--text-secondary)',
+      textAlign: 'center',
+      marginTop: '4px',
+      maxWidth: '40px',
+    },
+    trackLabelActive: {
+      color: 'var(--accent-blue)',
+      fontWeight: 600,
+    },
+    trackChat: {
+      borderTop: '1px solid var(--border)',
+      paddingTop: '10px',
+      marginTop: '10px',
+      display: 'flex',
+      gap: '8px',
+    },
+    trackChatInput: {
+      flex: 1,
+      padding: '10px 14px',
+      borderRadius: '20px',
+      border: '1px solid var(--border)',
+      background: 'var(--bg-surface2)',
+      fontSize: 'var(--font-body-sm)',
+      outline: 'none',
+    },
+    trackChatSend: {
+      padding: '10px 16px',
+      borderRadius: '20px',
+      border: 'none',
+      background: 'var(--accent-blue)',
+      color: '#fff',
+      fontSize: 'var(--font-body-sm)',
+      fontWeight: 600,
+      cursor: 'pointer',
+    },
+    trackEmpty: {
+      textAlign: 'center',
+      padding: '60px',
+      color: 'var(--text-secondary)',
+      background: 'var(--bg-surface)',
+      borderRadius: 'var(--radius-lg)',
+      border: '1px solid var(--border)',
+    },
+  },
 }
 
 export default worker

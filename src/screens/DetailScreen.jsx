@@ -1,7 +1,8 @@
-import { useState } from 'react'
-import { workers } from '../config/data.js'
+import { useState, useEffect } from 'react'
+// import { workers } from '../config/data.js'
 import Calendar from '../components/Calendar.jsx'
 import { useContent } from '../hooks/useContent.js'
+import { api } from '../services/api.js'
 
 const jobSizes = [
   { id: 'small', labelKey: 'detail.small', descKey: 'detail.smallDesc', price: 'Rs 500-1500' },
@@ -21,6 +22,26 @@ export default function DetailScreen({ navigate, workerId }) {
   const [isAM, setIsAM] = useState(true)
   const [showCalendar, setShowCalendar] = useState(false)
 
+  const [booking, setBooking] = useState(false)
+
+const handleBook = async () => {
+  const token = localStorage.getItem('sajilo_token')
+  if (!token) { navigate('/login'); return }
+  setBooking(true)
+  try {
+    await api.createBooking({
+      workerId: worker.id,
+      serviceName: worker.job || 'General Service',
+      jobSize: selectedJob,
+      urgency,
+    })
+    navigate('/bookings')
+  } catch (err) {
+    alert('Booking failed. Try again.')
+  }
+  setBooking(false)
+}
+
   const txt = {
     back: useContent('auth.signup.loginLink'),
     selectJob: useContent('detail.selectJob'),
@@ -34,7 +55,15 @@ export default function DetailScreen({ navigate, workerId }) {
     date: useContent('auth.login.identifier.placeholder'),
   }
 
-  const worker = workers.find(w => w.id === workerId)
+  const [worker, setWorker] = useState(null)
+
+useEffect(() => {
+  fetch(`http://localhost:5000/api/workers/${workerId}`, {
+    headers: { 'Authorization': `Bearer ${localStorage.getItem('sajilo_token')}` }
+  }).then(r => r.json()).then(d => {
+    if (d.success) setWorker(d.data)
+  })
+}, [workerId])
 
   const formatDate = (dateStr) => {
     if (!dateStr) return ''
@@ -116,8 +145,8 @@ export default function DetailScreen({ navigate, workerId }) {
         💳 Pay via eSewa, Khalti, or cash · Platform fee 15%
       </div>
 
-      <button onClick={() => navigate(`/tracking/${worker.id}`)} style={{ width: '100%', background: 'var(--accent-orange)', color: '#fff', border: 'none', borderRadius: 'var(--radius-md)', padding: 14, fontSize: 'var(--font-title)', fontWeight: 700, cursor: 'pointer' }}>
-        {txt.book} ({jobSizes.find(j => j.id === selectedJob)?.price || 'Rs 1500-4000'})
+      <button onClick={handleBook} disabled={booking} style={{ width: '100%', background: 'var(--accent-orange)', color: '#fff', border: 'none', borderRadius: 'var(--radius-md)', padding: 14, fontSize: 'var(--font-title)', fontWeight: 700, cursor: 'pointer' }}>
+        {booking ? 'Booking...' : `${txt.book} (${jobSizes.find(j => j.id === selectedJob)?.price || 'Rs 1500-4000'})`}
       </button>
     </div>
   )

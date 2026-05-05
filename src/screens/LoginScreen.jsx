@@ -95,6 +95,13 @@ export default function LoginScreen({ navigate, t, onLogin }) {
         </Animated.div>
       </div>
       <style>{`
+              @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-6px); }
+          50% { transform: translateX(6px); }
+          75% { transform: translateX(-4px); }
+        }
+          
         .auth-page, .auth-page .form-side, .auth-page .form-side * { --bg-primary: #f0f2f6 !important; --bg-surface: #ffffff !important; --bg-surface2: #f7f8fa !important; --text-primary: #1a1d23 !important; --text-secondary: #6b7280 !important; --border: #e5e7eb !important; --accent-blue: #1A6FD4 !important; --accent-blue-light: #EBF3FF !important; }
         @media (max-width: 768px) {
           .brand-side { position: absolute !important; inset: 0 !important; opacity: 1 !important; pointer-events: none !important; }

@@ -1,9 +1,12 @@
-import { useState } from 'react'
-import { workers } from '../config/data.js'
+import { useState, useEffect } from 'react'
+import { api } from '../services/api.js'
 import { useContent } from '../hooks/useContent.js'
 
-export default function SearchScreen({ navigate, t }) {
+export default function SearchScreen({ navigate }) {
+  const [workers, setWorkers] = useState([])
+  const [loading, setLoading] = useState(true)
   const [activeFilter, setActiveFilter] = useState('all')
+  const [searchTerm, setSearchTerm] = useState('')
 
   const txt = {
     title: useContent('search.title'),
@@ -25,54 +28,87 @@ export default function SearchScreen({ navigate, t }) {
     { key: 'priceLow', label: txt.priceLow },
   ]
 
-  const approvedWorkers = workers.filter(w => w.approved)
+  useEffect(() => {
+    const fetchWorkers = async () => {
+      try {
+        const result = await api.searchWorkers()
+        setWorkers(result.data || [])
+      } catch (err) {
+        console.error('Search failed:', err)
+      }
+      setLoading(false)
+    }
+    fetchWorkers()
+  }, [])
+
+  let filtered = workers
+  if (activeFilter === 'available') filtered = workers.filter(w => w.is_online)
+  if (activeFilter === 'topRated') filtered = [...workers].sort((a, b) => (b.completed_jobs || 0) - (a.completed_jobs || 0))
+  if (searchTerm) {
+    const term = searchTerm.toLowerCase()
+    filtered = workers.filter(w => 
+      (w.name || '').toLowerCase().includes(term) ||
+      (w.skills || []).some(s => s.toLowerCase().includes(term))
+    )
+  }
 
   return (
     <div>
-      <h2 style={{ fontSize: 'var(--font-heading)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>
-        {txt.title}
-      </h2>
+      <h2 style={{ fontSize: 'var(--font-heading)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>{txt.title}</h2>
+      
+      <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
+        placeholder={txt.placeholder}
+        style={{ width: '100%', padding: '12px 14px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)', fontSize: 'var(--font-body)', outline: 'none', marginBottom: 16 }} />
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-surface2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '10px 14px', marginBottom: 14 }}>
-        <span style={{ fontSize: 14 }}>🔍</span>
-        <input placeholder={txt.placeholder} style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontSize: 'var(--font-body)', color: 'var(--text-primary)' }} />
-      </div>
-
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
-        {filters.map((f) => (
-          <button key={f.key} onClick={() => setActiveFilter(f.key)} style={{
-            padding: '6px 14px', borderRadius: 20, fontSize: 'var(--font-body-sm)', fontWeight: 500, cursor: 'pointer',
-            border: activeFilter === f.key ? '1px solid var(--accent-blue)' : '1px solid var(--border)',
-            background: activeFilter === f.key ? 'var(--accent-blue)' : 'var(--bg-surface)',
-            color: activeFilter === f.key ? '#fff' : 'var(--text-secondary)',
-          }}>{f.label}</button>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20, overflowX: 'auto' }}>
+        {filters.map(f => (
+          <button key={f.key} onClick={() => setActiveFilter(f.key)}
+            style={{
+              padding: '8px 16px', borderRadius: '20px', border: '1px solid var(--border)',
+              background: activeFilter === f.key ? 'var(--accent-blue)' : 'transparent',
+              color: activeFilter === f.key ? '#fff' : 'var(--text-secondary)',
+              fontSize: 'var(--font-body-sm)', fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap',
+            }}>
+            {f.label}
+          </button>
         ))}
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {approvedWorkers.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-secondary)' }}>{txt.noResults}</div>
-        ) : (
-          approvedWorkers.map((worker) => (
-            <div key={worker.id} onClick={() => navigate(`/detail/${worker.id}`)} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 16, display: 'flex', gap: 14, cursor: 'pointer' }}>
-              <div style={{ width: 58, height: 58, borderRadius: 10, background: worker.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, fontWeight: 700, color: 'var(--text-primary)', flexShrink: 0 }}>
-                {worker.name.split(' ').map(n => n[0]).join('')}
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-secondary)' }}>Loading...</div>
+      ) : filtered.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-secondary)' }}>{txt.noResults}</div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {filtered.map(worker => (
+            <div key={worker.id} onClick={() => navigate(`/detail/${worker.id}`)}
+              style={{
+                background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)',
+                padding: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14,
+              }}>
+              <div style={{
+                width: 48, height: 48, borderRadius: '50%', background: 'var(--accent-blue-light)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 20, fontWeight: 700, color: 'var(--accent-blue)', flexShrink: 0,
+              }}>
+                {worker.name?.charAt(0)?.toUpperCase() || 'W'}
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 'var(--font-body-lg)', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>{worker.name}</div>
-                <div style={{ fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)', marginBottom: 8 }}>{worker.role} · {worker.location} · {worker.distance}</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 'var(--font-body-sm)', fontWeight: 600, color: 'var(--text-primary)' }}>★ {worker.rating}</span>
-                  {worker.verified && <span style={{ fontSize: 'var(--font-caption)', fontWeight: 600, color: 'var(--accent-green)' }}>{txt.verified}</span>}
+                <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 'var(--font-body)' }}>
+                  {worker.name}
+                  {worker.is_online && <span style={{ color: 'var(--accent-green)', marginLeft: 6, fontSize: 12 }}>● Online</span>}
+                </div>
+                <div style={{ fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)' }}>
+                  {(worker.skills || []).join(', ') || 'General Service'} · {worker.completed_jobs || 0} jobs
                 </div>
               </div>
-              <div style={{ flexShrink: 0, alignSelf: 'center' }}>
-                <span style={{ fontSize: 'var(--font-caption)', fontWeight: 700, color: 'var(--accent-blue)', background: 'var(--accent-blue-light)', padding: '3px 9px', borderRadius: 20 }}>{worker.eta}</span>
-              </div>
+              <span style={{ color: 'var(--accent-blue)', fontSize: 'var(--font-body-sm)', fontWeight: 600 }}>
+                Rs {worker.hourly_rate || 500}/hr
+              </span>
             </div>
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

@@ -13,7 +13,6 @@ export async function loginUser(email, password) {
 export async function registerUser(email, password, role, name) {
   try {
     const result = await api.register({ email, password, role, name })
-    setToken(result.data.token)
     return { success: true, user: result.data.user }
   } catch (err) {
     return { success: false, error: err.message }

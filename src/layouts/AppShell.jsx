@@ -17,6 +17,7 @@ import AdminLayout from './AdminLayout.jsx'
 import { WorkerProvider } from '../contexts/WorkerContext.jsx'
 import CommunicationCenter from '../components/chat/CommunicationCenter.jsx'
 import { reconnectSocket } from '../services/realtime/socketClient.js'
+import { BookingProvider } from '../contexts/BookingContext.jsx'
 
 
 export default function AppShell() {
@@ -117,9 +118,16 @@ export default function AppShell() {
     const route = routes.find(r => r.path === '/worker/pending')
     if (route) {
       const Component = route.component
-      return <Component navigate={navigate} t={t} onLogin={handleLogin} />
+      return (
+        <>
+          <Component navigate={navigate} t={t} onLogin={handleLogin} />
+          {localStorage.getItem('sajilo_worker_application') && <CommunicationCenter />}
+        </>
+      )
     }
   }
+
+  
 
   if (user && user.role === 'worker' && user.status === 'pending' && location.pathname === '/worker/apply') {
     const route = routes.find(r => r.path === '/worker/apply')
@@ -143,7 +151,7 @@ export default function AppShell() {
         })}
       </Routes>
     </main>
-    <CommunicationCenter />
+    {(user || location.pathname === '/worker/pending' || localStorage.getItem('sajilo_worker_application')) && <CommunicationCenter />}
   </WorkerLayout>
 )
   }

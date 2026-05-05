@@ -16,6 +16,9 @@ import visualIdentityRegistry from "../config/visualIdentityRegistry.js";
 import config from "../config/ui/configResolver.js";
 import { useStyle } from "../hooks/useStyle.js";
 import { useContent } from "../hooks/useContent.js";
+import { resolveBookingActions } from '../utils/bookingActionResolver.js'
+import ActionButtonGroup from './renderers/ActionButtonGroup.jsx'
+
 
 const ElementRenderer = ({ elementId, overrideData = {} }) => {
 
@@ -300,8 +303,6 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
     case "jobCard": {
       const bookings = overrideData?.bookings || [];
       const statusBadgeKeys = elementConfig.content?.statusBadgeKeys || {};
-      const actionButtons = elementConfig.content?.actionButtons || {};
-
       if (bookings.length === 0) {
         const emptyMsg = useContent("empty.noBookings", "No job requests yet.");
         return (
@@ -324,7 +325,6 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
           {bookings.map((booking) => {
             const statusKey = statusBadgeKeys[booking.status];
             const statusLabel = useContent(statusKey, booking.status);
-            const buttons = actionButtons[booking.status] || [];
             const onAction = overrideData?.onAction;
 
             return (
@@ -372,43 +372,31 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
                   Customer: {booking.customer_name} | {booking.job_size}
                 </div>
 
-                {/* Action buttons */}
-                {buttons.length > 0 && (
-                  <div style={{ display: 'flex', gap: w.jobs?.actions?.gap || '8px' }}>
-                    {buttons.map((btn, i) => {
-                      const btnLabel = useContent(btn.labelKey, btn.action);
-                      const isAccept = btn.action === 'accept';
-                      const isReject = btn.action === 'reject';
-                      const isComplete = btn.action === 'completed';
-                      return (
-                        <button
-                          key={i}
-                          onClick={() => onAction && onAction(booking.id, btn.action)}
-                          style={{
-                            padding: w.btnAccept?.padding || '8px 16px',
-                            borderRadius: w.btnAccept?.borderRadius || r.sm || '8px',
-                            border: isReject
-                              ? (w.btnReject?.border || `1px solid ${c.border}`)
-                              : 'none',
-                            background: isAccept || isComplete
-                              ? (w.btnAccept?.background || c.accentGreen)
-                              : isReject
-                                ? (w.btnReject?.background || 'transparent')
-                                : (w.btnAction?.background || c.accentBlue),
-                            color: isReject
-                              ? (w.btnReject?.color || c.textSecondary)
-                              : '#fff',
-                            cursor: 'pointer',
-                            fontSize: w.btnAccept?.fontSize || f.bodySm || '14px',
-                            fontWeight: w.btnAccept?.fontWeight || 600,
-                          }}
-                        >
-                          {btnLabel}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
+                                {/* Action buttons */}
+                <div style={{ display: 'flex', gap: w.jobs?.actions?.gap || '8px' }}>
+                  {resolveBookingActions(booking).map((btn, i) => {
+                    const onAction = overrideData?.onAction
+                    return (
+                      <button
+                        key={btn.id}
+                        onClick={() => onAction && onAction(booking.id, btn.action)}
+                        style={{
+                          padding: '8px 16px',
+                          borderRadius: '8px',
+                          border: btn.variant === 'danger' ? '1px solid var(--border)' : 'none',
+                          background: btn.variant === 'success' ? 'var(--accent-green)' :
+                                       btn.variant === 'danger' ? 'transparent' : 'var(--accent-blue)',
+                          color: btn.variant === 'danger' ? 'var(--text-secondary)' : '#fff',
+                          cursor: 'pointer',
+                          fontSize: '14px',
+                          fontWeight: 600,
+                        }}
+                      >
+                        {btn.label}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
             );
           })}
@@ -1521,6 +1509,168 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
               {useContent(tab.labelKey, tab.id)}
             </button>
           ))}
+        </div>
+      )
+    }
+            case "bookingTrackCard": {
+      const bookings = overrideData?.bookings || []
+      const stages = elementConfig.content?.stages || []
+      const wb = w.bookings || {}
+      const stageOrder = stages.map(s => s.key)
+      const chatAfter = elementConfig.content?.chatEnabledAfter || 'accepted'
+      const chatAfterIdx = stageOrder.indexOf(chatAfter)
+      const emptyMsg = useContent("bookings.noBookings", "No bookings yet")
+
+      // Pre-compute all stage labels — hooks at top, NOT inside map
+      const stageLabels = {}
+      stages.forEach(s => { stageLabels[s.key] = useContent(s.labelKey, s.key) })
+
+      if (bookings.length === 0) {
+        return (
+          <div style={{
+            textAlign: wb.trackEmpty?.textAlign || 'center',
+            padding: wb.trackEmpty?.padding || '60px',
+            color: wb.trackEmpty?.color || 'var(--text-secondary)',
+            background: wb.trackEmpty?.background || 'var(--bg-surface)',
+            borderRadius: wb.trackEmpty?.borderRadius || 'var(--radius-lg)',
+            border: wb.trackEmpty?.border || '1px solid var(--border)',
+          }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>📋</div>
+            <p style={{ fontSize: 'var(--font-body)' }}>{emptyMsg}</p>
+          </div>
+        )
+      }
+
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {bookings.map(booking => {
+            const currentIdx = stageOrder.indexOf(booking.status)
+            const chatVisible = currentIdx >= chatAfterIdx
+
+            return (
+              <div key={booking.id} style={{
+                background: wb.trackCard?.background || 'var(--bg-surface)',
+                border: wb.trackCard?.border || '1px solid var(--border)',
+                borderRadius: wb.trackCard?.borderRadius || 'var(--radius-lg)',
+                padding: wb.trackCard?.padding || '16px',
+                marginBottom: wb.trackCard?.marginBottom || '12px',
+              }}>
+                {/* Header */}
+                <div style={{
+                  display: 'flex', justifyContent: 'space-between', marginBottom: '12px',
+                }}>
+                  <span style={{ fontSize: 'var(--font-body)', fontWeight: 600, color: 'var(--text-primary)' }}>
+                    {booking.service_name || 'Service'}
+                  </span>
+                  <span style={{
+                    fontSize: 'var(--font-caption)', fontWeight: 700, padding: '3px 9px', borderRadius: 20,
+                    background: 'var(--accent-blue-light)', color: 'var(--accent-blue)',
+                  }}>
+                    {stageLabels[booking.status] || booking.status}
+                  </span>
+                </div>
+
+                {/* Status Timeline */}
+                <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', marginBottom: '14px', padding: '0 6px' }}>
+                  <div style={{
+                    position: 'absolute', top: '11px', left: '18px', right: '18px', height: '2px',
+                    background: 'var(--border)', zIndex: 0,
+                  }} />
+                  {stages.map((stage, i) => {
+                    const isDone = i <= currentIdx
+                    const isCurrent = i === currentIdx
+                    return (
+                      <div key={stage.key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 1 }}>
+                        <div style={{
+                          width: '24px', height: '24px', borderRadius: '50%',
+                          background: isDone ? 'var(--accent-blue)' : 'var(--bg-surface2)',
+                          border: isCurrent ? '3px solid var(--accent-blue)' : isDone ? '2px solid var(--accent-blue)' : '2px solid var(--border)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: '10px', color: isDone ? '#fff' : 'var(--text-secondary)',
+                        }}>
+                          {stage.icon}
+                        </div>
+                        <span style={{
+                          fontSize: '8px', color: isCurrent ? 'var(--accent-blue)' : 'var(--text-secondary)',
+                          fontWeight: isCurrent ? 600 : 400, textAlign: 'center', marginTop: '4px', maxWidth: '40px',
+                        }}>
+                          {stageLabels[stage.key]}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {/* Worker info + price */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '10px', borderTop: '1px solid var(--border)' }}>
+                  <span style={{ fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)' }}>
+                    👤 {booking.worker_name || 'Worker'} · Rs {booking.price || 0}
+                  </span>
+                </div>
+
+                {/* Chat placeholder */}
+                {chatVisible && (
+                  <div style={{
+                    borderTop: '1px solid var(--border)', paddingTop: '10px', marginTop: '10px', textAlign: 'center',
+                  }}>
+                    <span style={{ fontSize: 'var(--font-caption)', color: 'var(--text-secondary)' }}>
+                      💬 Chat available here
+                    </span>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )
+    }
+
+        case "dataTable": {
+      const columns = (elementConfig.content?.columns || []).filter(c => c.visible).sort((a, b) => a.order - b.order)
+      const data = overrideData?.data || []
+      const onAction = overrideData?.onAction
+
+      return (
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--font-body-sm)' }}>
+            <thead>
+              <tr style={{ borderBottom: '2px solid var(--border)' }}>
+                {columns.map(col => (
+                  <th key={col.id} style={{ padding: '10px 12px', textAlign: 'left', color: 'var(--text-secondary)', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                    {useContent(col.labelKey, col.id)}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {data.map((row, i) => (
+                <tr key={row.id || i} style={{ borderBottom: '1px solid var(--border)' }}>
+                  {columns.map(col => (
+                    <td key={col.id} style={{ padding: '10px 12px', color: 'var(--text-primary)' }}>
+                      {col.type === 'actions' ? (
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          {row.status === 'pending' && (
+                            <>
+                              <button onClick={() => onAction?.('approve', row)} style={{ padding: '4px 10px', borderRadius: 4, border: 'none', background: 'var(--accent-green)', color: '#fff', cursor: 'pointer', fontSize: 12 }}>Approve</button>
+                              <button onClick={() => onAction?.('reject', row)} style={{ padding: '4px 10px', borderRadius: 4, border: 'none', background: 'var(--accent-red)', color: '#fff', cursor: 'pointer', fontSize: 12 }}>Reject</button>
+                            </>
+                          )}
+                          {row.status === 'active' && (
+                            <span style={{ color: 'var(--accent-green)', fontWeight: 600 }}>Active</span>
+                          )}
+                          {row.status === 'rejected' && (
+                            <span style={{ color: 'var(--accent-red)', fontWeight: 600 }}>Rejected</span>
+                          )}
+                        </div>
+                      ) : (
+                        row[col.id] || '—'
+                      )}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )
     }

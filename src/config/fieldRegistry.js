@@ -9,6 +9,15 @@ const fieldRegistry = {
     { name: 'bio', type: 'textarea', labelKey: 'field.bio', placeholderKey: 'field.bioPlaceholder', required: false },
   ],
 
+    // Customer signup fields (for validation only)
+  signupCustomer: [
+    { name: 'name', type: 'text', labelKey: 'auth.signup.name.label', required: true },
+    { name: 'email', type: 'email', labelKey: 'auth.signup.email.label', required: true },
+    { name: 'password', type: 'password', labelKey: 'auth.signup.password.label', required: true },
+    { name: 'confirmPassword', type: 'password', labelKey: 'auth.signup.confirmPassword.label', required: true },
+    { name: 'phone', type: 'text', labelKey: 'field.phone', required: false },
+  ],
+
     workerApplyCards: [
     {
       id: 'identity',

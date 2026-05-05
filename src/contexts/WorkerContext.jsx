@@ -55,17 +55,20 @@ export function WorkerProvider({ children }) {
     await loadAll()
   }
 
-  const acceptBooking = async (id) => {
+    const acceptBooking = async (id) => {
+    setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'accepted' } : b))
     await api.acceptBooking(id)
     await loadAll()
   }
 
   const rejectBooking = async (id) => {
+    setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'rejected' } : b))
     await api.rejectBooking(id)
     await loadAll()
   }
 
   const updateBookingStatus = async (id, status) => {
+    setBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b))
     await api.updateBookingStatus(id, status)
     await loadAll()
   }

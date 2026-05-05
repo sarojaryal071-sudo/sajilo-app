@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import fieldRegistry from '../../config/fieldRegistry.js'
 import contentRegistry from '../../config/contentRegistry.js'
 import { allRequiredFilled } from '../../utils/validateFields.js'
+import { adminAnimationConfig } from '../../config/adminAnimations.js'
+
 
 function getContent(key, fallback = '') {
   const lang = localStorage.getItem('sajilo_lang') || 'en'
@@ -22,6 +24,8 @@ export default function WorkerApply() {
   const [secondaryRoles, setSecondaryRoles] = useState([])
   const [notifyLater, setNotifyLater] = useState(false)
   const [showPasswords, setShowPasswords] = useState({})
+  const shake = adminAnimationConfig?.shakeError || {}
+  const errBorder = (val) => showErrors && !val ? `1px solid ${shake.borderColor || 'var(--accent-red)'}` : '1px solid var(--border)'
 
   const currentCard = CARDS[currentCardIndex] || { titleKey: '', fields: [] }
   const cardTitle = getContent(currentCard.titleKey, 'Worker Application')
@@ -73,28 +77,48 @@ export default function WorkerApply() {
     setShowErrors(false)
   }
 
-      const handleSubmit = async () => {
+       const handleSubmit = async () => {
     const finalData = { ...formData, secondaryRoles }
     
-    // Save application data
-    localStorage.setItem('sajilo_worker_application', JSON.stringify(finalData))
-    
-    // Create pending worker user session
-    localStorage.setItem('sajilo_user', JSON.stringify({
-      id: Date.now(),
-      email: formData.email,
-      role: 'worker',
-      status: 'pending',
-      name: formData.fullName || formData.displayName || 'Applicant',
-      application_submitted: true,
-      phone: formData.phone,
-      primaryRole: formData.primaryRole,
-    }))
-    
-    // Set a fake token so WorkerContext can initialize
-    localStorage.setItem('sajilo_token', JSON.stringify({ pending: true, ts: Date.now() }))
-    
-    navigate('/worker/pending')
+    try {
+      const { api } = await import("../../services/api.js")
+      
+      // Register worker account with pending status
+      const result = await api.register({
+        email: formData.email,
+        password: formData.password,
+        role: 'worker',
+        name: formData.fullName || formData.displayName,
+        phone: formData.phone,
+      })
+
+      // Submit application details
+      await api.submitWorkerApplication(finalData)
+
+      // Create pending session
+      localStorage.setItem('sajilo_user', JSON.stringify({
+        id: result.data?.id || result.user?.id || Date.now(),
+        email: formData.email,
+        role: 'worker',
+        status: 'pending',
+        name: formData.fullName || formData.displayName || 'Applicant',
+        application_submitted: true,
+        phone: formData.phone,
+      }))
+      localStorage.setItem('sajilo_worker_application', JSON.stringify(finalData))
+      navigate('/worker/pending')
+      
+    } catch (err) {
+      console.error('Submit failed:', err)
+      // Fallback to localStorage
+      localStorage.setItem('sajilo_worker_application', JSON.stringify(finalData))
+      localStorage.setItem('sajilo_user', JSON.stringify({
+        id: Date.now(), email: formData.email, role: 'worker',
+        status: 'pending', name: formData.fullName || formData.displayName || 'Applicant',
+        application_submitted: true, phone: formData.phone,
+      }))
+      navigate('/worker/pending')
+    }
   }
     
 
@@ -114,11 +138,17 @@ export default function WorkerApply() {
         Step {currentCardIndex + 1} of {CARDS.length || 1}
       </p>
 
-            {showErrors && (
+      {showErrors && (
         <div style={{
-          background: '#fee2e2', color: '#DC2626', padding: '10px 14px',
-          borderRadius: 'var(--radius-md)', fontSize: 13, fontWeight: 500,
-          marginBottom: 16, textAlign: 'center', animation: 'shake 0.4s ease'
+          background: shake.background,
+          color: shake.color,
+          padding: shake.padding,
+          borderRadius: shake.borderRadius,
+          fontSize: shake.fontSize,
+          fontWeight: shake.fontWeight,
+          marginBottom: 16,
+          textAlign: 'center',
+          animation: shake.animation,
         }}>
           {showErrors === 'age' 
             ? getContent('worker.apply.ageError', 'You must be 18 or older to apply.')
@@ -396,6 +426,28 @@ export default function WorkerApply() {
           {currentCardIndex === CARDS.length - 1 ? 'Submit' : nextLabel} →
         </button>
       </div>
+
+            {currentCardIndex === 0 && (
+        <div style={{ textAlign: 'center', marginTop: 12 }}>
+          <button
+            type="button"
+            onClick={() => navigate('/login')}
+            style={{
+              width: '100%',
+              padding: '12px',
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid var(--border)',
+              background: 'var(--bg-surface2)',
+              color: 'var(--text-secondary)',
+              fontSize: 'var(--font-body)',
+              fontWeight: 500,
+              cursor: 'pointer',
+            }}
+          >
+            {getContent('worker.apply.loginPrompt', 'Already have an account? Log in')}
+          </button>
+        </div>
+      )}
 
       <style>{`
         @keyframes shake {

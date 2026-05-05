@@ -727,6 +727,50 @@ const visualIdentityRegistry = {
     },
     visible: true,
   },
+
+    // Booking tracking card (client panel)
+  bookingTrackCard: {
+    type: "bookingTrackCard",
+    screen: "BookingsScreen",
+    layout: { width: "full", position: 1 },
+    style: { variant: "trackingCard", styleRef: "bookings.trackCard" },
+    content: {
+      stages: [
+        { key: "pending", labelKey: "booking.status.pending", icon: "📋" },
+        { key: "accepted", labelKey: "booking.status.accepted", icon: "✅" },
+        { key: "onway", labelKey: "booking.status.onway", icon: "🚗" },
+        { key: "working", labelKey: "booking.status.working", icon: "🔧" },
+        { key: "completed", labelKey: "booking.status.completed", icon: "🎉" },
+      ],
+      chatEnabledAfter: "accepted",
+      dataSource: "api.getMyBookings",
+    },
+    behavior: { clickable: true, action: "expandBooking" },
+    responsive: { mobile: "full", desktop: "full" },
+    visible: true,
+  },
+    // Admin Workers Table
+  adminWorkersTable: {
+    type: "dataTable",
+    screen: "AdminWorkers",
+    layout: { width: "full" },
+    style: { variant: "adminTable", styleRef: "admin.table" },
+    content: {
+      columns: [
+        { id: "display_id", labelKey: "admin.workerId", visible: true, order: 1 },
+        { id: "name", labelKey: "admin.name", visible: true, order: 2 },
+        { id: "email", labelKey: "admin.email", visible: true, order: 3 },
+        { id: "status", labelKey: "admin.status", visible: true, order: 4 },
+        { id: "primary_skill", labelKey: "admin.profession", visible: true, order: 5 },
+        { id: "completed_jobs", labelKey: "admin.jobs", visible: true, order: 6 },
+        { id: "actions", labelKey: "admin.actions", visible: true, order: 7, type: "actions" },
+      ],
+      dataSource: "api.getAdminWorkers",
+    },
+    behavior: { clickable: true },
+    responsive: { mobile: "scrollable", desktop: "table" },
+    visible: true,
+  },
 };
 
 export default visualIdentityRegistry;

@@ -62,6 +62,10 @@ export const api = {
   sendNotification: (body) => request('/notifications', { method: 'POST', body: JSON.stringify(body) }),
   getNotifications: () => request('/notifications'),
     submitWorkerApplication: (body) => request('/auth/worker/apply', { method: 'POST', body: JSON.stringify(body) }),
-}
+  searchWorkers: (params = {}) => {
+    const query = new URLSearchParams(params).toString()
+    return request(`/workers/search${query ? '?' + query : ''}`)
+  },
+  }
 
 export { setToken, removeToken, getToken }

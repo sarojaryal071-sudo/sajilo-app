@@ -3,12 +3,14 @@ import { useFeatureFlag } from '../../hooks/useFeatureFlag.js'
 import { useContent } from '../../hooks/useContent.js'
 import AuthSection from './AuthSection.jsx'
 import { useStyle } from '../../hooks/useStyle.js'
+import { adminAnimationConfig } from '../../config/adminAnimations.js'
 
 export default function LoginForm({ onSubmit, loading, error, success, navigate }) {
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [rememberMe, setRememberMe] = useState(false)
+  const shakeError = adminAnimationConfig?.shakeError || {}
 
   const showGoogle = useFeatureFlag('googleLogin')
   const showApple = useFeatureFlag('appleLogin')
@@ -81,10 +83,22 @@ export default function LoginForm({ onSubmit, loading, error, success, navigate 
       </AuthSection>
 
       {error && (
-        <AuthSection>
-          <div className="error-shake" style={{ fontSize: 12, color: 'var(--accent-red)', fontWeight: 500 }}>{error}</div>
-        </AuthSection>
-      )}
+  <AuthSection>
+    <div style={{
+      background: shakeError.background,
+      color: shakeError.color,
+      padding: shakeError.padding,
+      borderRadius: shakeError.borderRadius,
+      fontSize: shakeError.fontSize,
+      fontWeight: shakeError.fontWeight,
+      textAlign: 'center',
+      animation: shakeError.animation,
+    }}>
+      {error}
+    </div>
+  </AuthSection>
+)}
+
 
       {success && (
         <AuthSection>

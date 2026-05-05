@@ -1,14 +1,22 @@
 import { useState, useEffect, useRef } from 'react'
 import { registerUser } from '../config/auth.js'
+import { allRequiredFilled } from '../utils/validateFields.js'
+import fieldRegistry from '../config/fieldRegistry.js'
 import BrandPanel from '../components/BrandPanel.jsx'
 import SignupForm from '../components/auth/SignupForm.jsx'
 import { useSpring, animated } from '@react-spring/web'
 import { useAnimation } from '../hooks/useAnimation.js'
+import { useNavigate } from 'react-router-dom'
 
-export default function SignupScreen({ navigate, t, onLogin }) {
+
+
+export default function SignupScreen({ t, onLogin }) {
+  const navigate = useNavigate()
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState('')
+  const [errorKey, setErrorKey] = useState(0)
+  
 
   const cardRef = useRef(null)
   const [{ y }, api] = useSpring(() => ({ y: 0 }))
@@ -20,27 +28,32 @@ export default function SignupScreen({ navigate, t, onLogin }) {
     return () => document.documentElement.classList.remove('auth-locked')
   }, [])
 
-  const handleSubmit = async ({ name, email, password, role }) => {
+      const handleSubmit = async ({ name, email, password, confirmPassword, phone, role }) => {
     setError('')
     setLoading(true)
+
+    const signupFields = fieldRegistry.signupCustomer
+    if (!allRequiredFilled(signupFields, { name, email, password, confirmPassword, phone })) {
+      setError('Please fill all required fields.')
+      setErrorKey(prev => prev + 1)
+      setLoading(false)
+      return
+    }
+
     try {
       const result = await registerUser(email, password, role, name)
 
       if (result.success) {
-        localStorage.setItem('sajilo_user', JSON.stringify(result.user))
-        if (result.token) localStorage.setItem('sajilo_token', result.token)
-        setSuccess('Account created! Welcome to Sajilo.')
-        if (onLogin) onLogin(result.user)
-
-        setTimeout(() => {
-          navigate(result.user.role === 'worker' ? '/worker/apply' : '/home')
-        }, 1000)
+        setSuccess('Account created! Redirecting to login...')
+        setTimeout(() => navigate('/login'), 1500)
       } else {
         setError(result.error || 'Signup failed')
+        setErrorKey(prev => prev + 1)
         setLoading(false)
       }
     } catch (err) {
       setError(err.message || 'Signup failed. Please try again.')
+      setErrorKey(prev => prev + 1)
       setLoading(false)
     }
   }
@@ -111,11 +124,18 @@ export default function SignupScreen({ navigate, t, onLogin }) {
         >
           <h2 style={{ fontSize: 'var(--font-large)', fontWeight: 800, color: 'var(--text-primary)', marginBottom: 4 }}>Create Account</h2>
           <p style={{ fontSize: 'var(--font-body)', color: 'var(--text-secondary)', marginBottom: 24 }}>Join Sajilo today</p>
-          <SignupForm onSubmit={handleSubmit} loading={loading} error={error} success={success} navigate={navigate} />
+          <SignupForm onSubmit={handleSubmit} loading={loading} error={error} errorKey={errorKey} success={success} navigate={navigate} />
         </animated.div>
       </div>
 
       <style>{`
+              @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-6px); }
+          50% { transform: translateX(6px); }
+          75% { transform: translateX(-4px); }
+        }
+
         .auth-page, .auth-page .form-side, .auth-page .form-side * {
           --bg-primary: #f0f2f6 !important;
           --bg-surface: #ffffff !important;

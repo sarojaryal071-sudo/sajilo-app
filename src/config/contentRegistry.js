@@ -486,6 +486,14 @@ const contentRegistry = {
   'worker.seeReview': { en: 'See Review', ne: 'समीक्षा हेर्नुहोस्' },
     'worker.jobs.all': { en: 'All', ne: 'सबै' },
   'worker.jobs.active': { en: 'Active', ne: 'सक्रिय' },
+
+    'admin.workerId': { en: 'Worker ID', ne: 'कामदार आईडी' },
+  'admin.name': { en: 'Name', ne: 'नाम' },
+  'admin.email': { en: 'Email', ne: 'ईमेल' },
+  'admin.status': { en: 'Status', ne: 'स्थिति' },
+  'admin.profession': { en: 'Profession', ne: 'पेशा' },
+  'admin.jobs': { en: 'Jobs', ne: 'कामहरू' },
+  'admin.actions': { en: 'Actions', ne: 'कार्यहरू' },
   }
 
 export default contentRegistry
