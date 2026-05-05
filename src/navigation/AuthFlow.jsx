@@ -6,6 +6,7 @@ import { Routes, Route, useNavigate } from 'react-router-dom'
 import LoginScreen from '../screens/LoginScreen.jsx'
 import SignupScreen from '../screens/SignupScreen.jsx'
 import WorkerApply from '../screens/worker/WorkerApply.jsx'
+import WelcomeScreen from '../screens/WelcomeScreen.jsx'
 
 export default function AuthFlow({ onLogin }) {
   const navigate = useNavigate()
@@ -31,6 +32,7 @@ export default function AuthFlow({ onLogin }) {
       <Route path="/login" element={<LoginScreen navigate={navigate} onLogin={handleLogin} />} />
       <Route path="/signup" element={<SignupScreen navigate={navigate} onLogin={handleLogin} />} />
       <Route path="/worker/apply" element={<WorkerApply navigate={navigate} />} />
+      <Route path="/welcome" element={<WelcomeScreen />} />
     </Routes>
   )
 }

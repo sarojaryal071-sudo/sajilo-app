@@ -49,7 +49,10 @@ export const api = {
   acceptBooking: (id) => request(`/bookings/${id}/accept`, { method: 'PUT' }),
   rejectBooking: (id) => request(`/bookings/${id}/reject`, { method: 'PUT' }),
   updateBookingStatus: (id, status) => request(`/bookings/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
-  getAdminWorkers: () => request('/admin/workers'),
+  getAdminWorkers: (params = {}) => {
+  const query = new URLSearchParams(params).toString()
+  return request(`/admin/workers${query ? '?' + query : ''}`)
+},
   getAdminCustomers: () => request('/admin/customers'),
   approveWorker: (id) => request(`/admin/workers/${id}/approve`, { method: 'PUT' }),
   rejectWorker: (id) => request(`/admin/workers/${id}/reject`, { method: 'PUT' }),

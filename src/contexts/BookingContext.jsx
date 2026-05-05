@@ -20,7 +20,10 @@ export function BookingProvider({ children }) {
     }
   }, [])
 
-  useEffect(() => { fetchBookings() }, [fetchBookings])
+  useEffect(() => {
+    const token = localStorage.getItem('sajilo_token')
+    if (token) fetchBookings()
+  }, [fetchBookings])
 
   // ── Socket lifecycle sync ──
   useEffect(() => {

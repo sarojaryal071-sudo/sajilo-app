@@ -7,17 +7,17 @@ export default function AdminApprovals() {
   const [search, setSearch] = useState('')
 
   useEffect(() => { 
-    api.getAdminWorkers().then(r => {
-      setWorkers((r.data || []).filter(w => w.status === 'pending'))
-    })
-  }, [])
+  api.getAdminWorkers({ status: 'pending' }).then(r => {
+    setWorkers(r.data || [])
+  })
+}, [])
 
-  const handleAction = async (action, worker) => {
-    if (action === 'approve') await api.approveWorker(worker.id)
-    else await api.rejectWorker(worker.id)
-    const r = await api.getAdminWorkers()
-    setWorkers((r.data || []).filter(w => w.status === 'pending'))
-  }
+const handleAction = async (action, worker) => {
+  if (action === 'approve') await api.approveWorker(worker.id)
+  else await api.rejectWorker(worker.id)
+  const r = await api.getAdminWorkers({ status: 'pending' })
+  setWorkers(r.data || [])
+}
 
   let filtered = workers
   if (search) {

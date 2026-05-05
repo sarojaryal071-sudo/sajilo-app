@@ -15,8 +15,8 @@ export default function AdminWorkers() {
   const [search, setSearch] = useState('')
 
   useEffect(() => { 
-    api.getAdminWorkers().then(r => setWorkers(r.data || []))
-  }, [])
+  api.getAdminWorkers({ status: 'active,rejected,suspended' }).then(r => setWorkers(r.data || []))
+}, [])
 
   const handleAction = async (action, worker) => {
     if (action === 'approve') await api.approveWorker(worker.id)

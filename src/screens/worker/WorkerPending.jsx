@@ -4,6 +4,7 @@ import BrandPanel from '../../components/BrandPanel.jsx'
 import { useAnimation } from '../../hooks/useAnimation.js'
 import { useContent } from '../../hooks/useContent.js'
 import { useStyle } from '../../hooks/useStyle.js'
+import { getSocket } from '../../services/realtime/socketClient'
 
 const DEFAULT_STAGES = [
   { key: 'submitted', labelKey: 'worker.stage.submitted', descKey: 'worker.stage.submittedDesc', iconKey: 'worker.stage.submittedIcon' },
@@ -75,6 +76,33 @@ export default function WorkerPending() {
     if (saved) setAppData({ ...JSON.parse(saved), user })
   }, [navigate])
 
+    // Real‑time listener for admin approval
+  useEffect(() => {
+    const socket = getSocket()
+    if (!socket) return
+
+    const handleApproved = (data) => {
+      // Update the stored user status and display_id
+      const userStr = localStorage.getItem('sajilo_user')
+      if (userStr) {
+        const user = JSON.parse(userStr)
+        user.status = data.status || 'active'
+        if (data.display_id) user.display_id = data.display_id
+        localStorage.setItem('sajilo_user', JSON.stringify(user))
+      }
+
+      // Re‑read the application data so the approved screen appears immediately
+      const saved = localStorage.getItem('sajilo_worker_application')
+      if (saved) {
+        const updatedUser = JSON.parse(localStorage.getItem('sajilo_user'))
+        setAppData({ ...JSON.parse(saved), user: updatedUser })
+      }
+    }
+
+    socket.on('worker:approved', handleApproved)
+    return () => socket.off('worker:approved', handleApproved)
+  }, [])
+
   const profile = appData?.user || {}
   const STAGES = DEFAULT_STAGES
   const stage = profile?.verification_status || 'submitted'
@@ -138,19 +166,42 @@ export default function WorkerPending() {
     )
   }
 
-  // ── APPROVED ──
+    // ── APPROVED ──
   if (appData?.user?.status === 'active') {
     const handleProceed = () => {
       localStorage.setItem('sajilo_worker_welcomed', 'true')
       localStorage.removeItem('sajilo_worker_application')
       navigate('/login', { replace: true })
     }
+    // Gather data for display
+    const workerName = appData?.fullName || appData?.displayName || profile?.name || ''
+    const profession = appData?.primaryRole || ''
+    const workerId = profile?.display_id || ''
+
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--bg-primary)' }}>
         <div style={{ maxWidth: 430, width: '90%', background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)', padding: 40, boxShadow: '0 4px 24px rgba(0,0,0,0.08)', textAlign: 'center' }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>🎉</div>
           <h2 style={{ fontSize: 'var(--font-large)', fontWeight: 800, color: 'var(--text-primary)', marginBottom: 12 }}>{welcomeTitle}</h2>
-          <p style={{ fontSize: 'var(--font-body)', color: 'var(--text-secondary)', marginBottom: 24, lineHeight: 1.6 }}>{welcomeMsg}</p>
+          <p style={{ fontSize: 'var(--font-body)', color: 'var(--text-secondary)', marginBottom: 8, lineHeight: 1.6 }}>{welcomeMsg}</p>
+
+          {/* Worker details */}
+          {workerName && (
+            <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>
+              {workerName}
+            </p>
+          )}
+          {profession && (
+            <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 4 }}>
+              {profession}
+            </p>
+          )}
+          {workerId && (
+            <p style={{ fontSize: 18, fontWeight: 700, color: 'var(--accent-blue)', marginBottom: 24 }}>
+              {workerId}
+            </p>
+          )}
+
           <button onClick={handleProceed} style={{ width: '100%', padding: 14, borderRadius: 'var(--radius-md)', border: 'none', background: 'var(--accent-blue)', color: '#fff', fontSize: 'var(--font-body)', fontWeight: 600, cursor: 'pointer' }}>
             {proceedLabel}
           </button>

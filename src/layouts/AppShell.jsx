@@ -18,7 +18,7 @@ import { WorkerProvider } from '../contexts/WorkerContext.jsx'
 import CommunicationCenter from '../components/chat/CommunicationCenter.jsx'
 import { reconnectSocket } from '../services/realtime/socketClient.js'
 import { BookingProvider } from '../contexts/BookingContext.jsx'
-
+import AuthFlow from '../navigation/AuthFlow.jsx'
 
 export default function AppShell() {
   const [dark, setDark] = useState(() => {
@@ -169,8 +169,15 @@ export default function AppShell() {
     )
   }
 
-  const isAdminOrWorker = user && user.role === 'admin'
+   const isAdminOrWorker = user && user.role === 'admin'
   const showLayout = user && !isAdminOrWorker && location.pathname !== '/login' && location.pathname !== '/signup' && location.pathname !== '/welcome'
+
+  // Public routes (login, signup, worker/apply) when user is not authenticated
+  if (!showLayout) {
+    return <AuthFlow onLogin={handleLogin} />
+  }
+
+  // Authenticated main layout (customer only—admin/worker handled earlier)
   return (
     <div className="app-shell" data-theme={dark ? 'dark' : 'light'} style={{
       height: '100vh', width: '100vw', background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column', fontFamily: 'var(--font-family)',
