@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { api } from '../services/api.js'
+import { getSocket } from '../services/realtime/socketClient'
+import { dispatchBookingCommand } from '../utils/bookingCommandDispatcher.js'
 
 const WorkerContext = createContext()
 
@@ -40,6 +42,27 @@ export function WorkerProvider({ children }) {
     loadAll()
   }, [loadAll])
 
+    // Listen for new booking requests via real‑time socket
+   useEffect(() => {
+    const socket = getSocket()
+    if (!socket) return
+
+    const handleRefresh = () => loadAll()
+
+    socket.on('booking.created', handleRefresh)
+
+    const lifecycleEvents = [
+      'booking.accepted', 'booking.rejected', 'booking.onway',
+      'booking.working', 'booking.completed', 'booking.cancelled'
+    ]
+    lifecycleEvents.forEach(event => socket.on(event, handleRefresh))
+
+    return () => {
+      socket.off('booking.created', handleRefresh)
+      lifecycleEvents.forEach(event => socket.off(event, handleRefresh))
+    }
+  }, [loadAll])
+
   const toggleOnline = async () => {
     const newStatus = !profile?.is_online
     setProfile(prev => ({ ...prev, is_online: newStatus }))
@@ -55,22 +78,29 @@ export function WorkerProvider({ children }) {
     await loadAll()
   }
 
-    const acceptBooking = async (id) => {
-    setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'accepted' } : b))
-    await api.acceptBooking(id)
-    await loadAll()
+      const acceptBooking = async (id) => {
+    try {
+      await dispatchBookingCommand({ action: 'accept', bookingId: id })
+    } catch (err) {
+      console.error('Accept failed:', err)
+    }
+    // Backend persistence succeeded → socket will trigger loadAll()
   }
 
   const rejectBooking = async (id) => {
-    setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'rejected' } : b))
-    await api.rejectBooking(id)
-    await loadAll()
+    try {
+      await dispatchBookingCommand({ action: 'reject', bookingId: id })
+    } catch (err) {
+      console.error('Reject failed:', err)
+    }
   }
 
-  const updateBookingStatus = async (id, status) => {
-    setBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b))
-    await api.updateBookingStatus(id, status)
-    await loadAll()
+    const updateBookingStatus = async (id, status) => {
+    try {
+      await dispatchBookingCommand({ action: status, bookingId: id })
+    } catch (err) {
+      console.error('Status update failed:', err)
+    }
   }
 
   const saveSchedule = async (newSchedule) => {

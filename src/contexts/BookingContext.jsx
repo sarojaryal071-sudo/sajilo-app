@@ -25,7 +25,7 @@ export function BookingProvider({ children }) {
     if (token) fetchBookings()
   }, [fetchBookings])
 
-  // ── Socket lifecycle sync ──
+    // ── Socket lifecycle sync ──
   useEffect(() => {
     if (!socket) return
 
@@ -35,26 +35,23 @@ export function BookingProvider({ children }) {
     ]
 
     lifecycleEvents.forEach(event => {
-      socket.on(event, (data) => {
-        setBookings(prev => prev.map(b =>
-          b.id === data.bookingId ? { ...b, status: data.status, updated_at: data.updatedAt } : b
-        ))
-        // Also update active booking if it matches
-        setActiveBooking(prev => prev?.id === data.bookingId ? { ...prev, status: data.status } : prev)
+      socket.on(event, () => {
+        // Re‑fetch all bookings so the UI always matches the server
+        fetchBookings()
       })
     })
 
-    // New booking created (for worker)
-    socket.on('booking.created', (booking) => {
-      setBookings(prev => [booking, ...prev])
+    // New booking created (for customer)
+    socket.on('booking.created', () => {
+      fetchBookings()
     })
 
     return () => {
       lifecycleEvents.forEach(event => socket.off(event))
       socket.off('booking.created')
     }
-  }, [socket])
-
+  }, [socket, fetchBookings])
+  
   // ── Create booking ──
   const createBooking = useCallback(async (bookingData) => {
     setLoading(true)

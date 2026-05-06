@@ -19,6 +19,81 @@ import { useContent } from "../hooks/useContent.js";
 import { resolveBookingActions } from '../utils/bookingActionResolver.js'
 import ActionButtonGroup from './renderers/ActionButtonGroup.jsx'
 
+function JobRow({ booking, statusBadgeKeys, onAction, w, c, r, s, overrideStyles }) {
+  const statusKey = statusBadgeKeys[booking.status]
+  const statusLabel = useContent(statusKey, booking.status)
+
+  return (
+    <div key={booking.id} style={{
+      background: w.jobs?.card?.background || c.bgSurface,
+      border: w.jobs?.card?.border || `1px solid ${c.border}`,
+      borderRadius: w.jobs?.card?.borderRadius || r.md || '12px',
+      padding: w.jobs?.card?.padding || s.md || '16px',
+      ...overrideStyles,
+    }}>
+      {/* Header: name + badge */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        marginBottom: w.jobs?.header?.marginBottom || '8px',
+      }}>
+        <span style={{
+          fontWeight: w.jobs?.serviceName?.fontWeight || 600,
+          color: w.jobs?.serviceName?.color || c.textPrimary,
+        }}>
+          {booking.service_name}
+        </span>
+        <span style={{
+          fontSize: w.statusBadge?.fontSize || 'var(--font-body-sm)',
+          fontWeight: w.statusBadge?.fontWeight || 700,
+          padding: w.statusBadge?.padding || '2px 10px',
+          borderRadius: w.statusBadge?.borderRadius || '12px',
+          background: booking.status === 'pending'
+            ? (w.statusPending?.background || '#FED7AA')
+            : (w.statusOther?.background || '#DBEAFE'),
+          color: booking.status === 'pending'
+            ? (w.statusPending?.color || c.accentOrange)
+            : (w.statusOther?.color || c.accentBlue),
+        }}>
+          {statusLabel}
+        </span>
+      </div>
+
+      {/* Info */}
+      <div style={{
+        fontSize: w.jobs?.info?.fontSize || 'var(--font-body-sm)',
+        color: w.jobs?.info?.color || c.textSecondary,
+        marginBottom: w.jobs?.info?.marginBottom || '12px',
+      }}>
+        Customer: {booking.customer_name} | {booking.job_size}
+      </div>
+
+      {/* Action buttons */}
+      <div style={{ display: 'flex', gap: w.jobs?.actions?.gap || '8px' }}>
+        {resolveBookingActions(booking).map((btn, i) => (
+          <button
+            key={btn.id}
+                        onClick={() => onAction?.(booking.id, btn.action)}
+            style={{
+              padding: '8px 16px',
+              borderRadius: '8px',
+              border: btn.variant === 'danger' ? '1px solid var(--border)' : 'none',
+              background: btn.variant === 'success' ? 'var(--accent-green)' :
+                           btn.variant === 'danger' ? 'transparent' : 'var(--accent-blue)',
+              color: btn.variant === 'danger' ? 'var(--text-secondary)' : '#fff',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: 600,
+            }}
+          >
+            {btn.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 
 const ElementRenderer = ({ elementId, overrideData = {} }) => {
 
@@ -239,65 +314,7 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
       );
     }
 
-    // ──────────────────────────────────────────────
-    // NOTIFICATION CARD (Dashboard)
-    // ──────────────────────────────────────────────
-    case "notificationCard": {
-      const txt = overrideData?.txt || {};
-      const cardStyle = overrideData?.cardStyle || {};
-      const title = txt.notifications || useContent(elementConfig.content?.titleKey, "Notifications");
-      const emptyText = txt.noNotifications || useContent(elementConfig.content?.emptyKey, "No new notifications");
-
-      return (
-        <div style={{
-          background: w.notificationsCard?.background || c.bgSurface,
-          border: w.notificationsCard?.border || `1px solid ${c.border}`,
-          padding: w.notificationsCard?.padding || s.md || '16px',
-          borderRadius: w.notificationsCard?.borderRadius || r.md || '12px',
-          ...cardStyle,
-          ...overrideStyles,
-        }}>
-          <div style={{
-            fontSize: w.notificationsTitle?.fontSize || f.bodySm || '14px',
-            fontWeight: w.notificationsTitle?.fontWeight || 600,
-            color: w.notificationsTitle?.color || c.textPrimary,
-            marginBottom: w.notificationsTitle?.marginBottom || '8px',
-          }}>
-            {title}
-          </div>
-          <div style={{
-            textAlign: 'center',
-            padding: w.notificationsEmpty?.padding || s.md || '16px',
-            color: w.notificationsEmpty?.color || c.textSecondary,
-            fontSize: w.notificationsEmpty?.fontSize || f.caption || '12px',
-          }}>
-            {emptyText}
-          </div>
-        </div>
-      );
-    }
-
-    // ──────────────────────────────────────────────
-    // SCREEN HEADING (Jobs, Earnings, Schedule)
-    // ──────────────────────────────────────────────
-    case "screenHeading": {
-      const title = useContent(elementConfig.content?.titleKey, "");
-      const ws = w.jobs?.heading || w.earnings?.heading || w.schedule?.heading || {};
-
-      return (
-        <h2 style={{
-          fontSize: ws.fontSize || f.heading || '24px',
-          fontWeight: ws.fontWeight || 700,
-          color: ws.color || c.textPrimary,
-          marginBottom: ws.marginBottom || '20px',
-          ...overrideStyles,
-        }}>
-          {title}
-        </h2>
-      );
-    }
-
-    // ──────────────────────────────────────────────
+        // ──────────────────────────────────────────────
     // JOB CARD (Jobs Screen)
     // ──────────────────────────────────────────────
     case "jobCard": {
@@ -322,85 +339,42 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
           flexDirection: 'column',
           gap: w.jobs?.list?.gap || '12px',
         }}>
-          {bookings.map((booking) => {
-            const statusKey = statusBadgeKeys[booking.status];
-            const statusLabel = useContent(statusKey, booking.status);
-            const onAction = overrideData?.onAction;
-
-            return (
-              <div key={booking.id} style={{
-                background: w.jobs?.card?.background || c.bgSurface,
-                border: w.jobs?.card?.border || `1px solid ${c.border}`,
-                borderRadius: w.jobs?.card?.borderRadius || r.md || '12px',
-                padding: w.jobs?.card?.padding || s.md || '16px',
-                ...overrideStyles,
-              }}>
-                {/* Header: name + badge */}
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  marginBottom: w.jobs?.header?.marginBottom || '8px',
-                }}>
-                  <span style={{
-                    fontWeight: w.jobs?.serviceName?.fontWeight || 600,
-                    color: w.jobs?.serviceName?.color || c.textPrimary,
-                  }}>
-                    {booking.service_name}
-                  </span>
-                  <span style={{
-                    fontSize: w.statusBadge?.fontSize || f.caption || '12px',
-                    fontWeight: w.statusBadge?.fontWeight || 700,
-                    padding: w.statusBadge?.padding || '2px 10px',
-                    borderRadius: w.statusBadge?.borderRadius || '12px',
-                    background: booking.status === 'pending'
-                      ? (w.statusPending?.background || '#FED7AA')
-                      : (w.statusOther?.background || '#DBEAFE'),
-                    color: booking.status === 'pending'
-                      ? (w.statusPending?.color || c.accentOrange)
-                      : (w.statusOther?.color || c.accentBlue),
-                  }}>
-                    {statusLabel}
-                  </span>
-                </div>
-
-                {/* Info */}
-                <div style={{
-                  fontSize: w.jobs?.info?.fontSize || f.bodySm || '14px',
-                  color: w.jobs?.info?.color || c.textSecondary,
-                  marginBottom: w.jobs?.info?.marginBottom || '12px',
-                }}>
-                  Customer: {booking.customer_name} | {booking.job_size}
-                </div>
-
-                                {/* Action buttons */}
-                <div style={{ display: 'flex', gap: w.jobs?.actions?.gap || '8px' }}>
-                  {resolveBookingActions(booking).map((btn, i) => {
-                    const onAction = overrideData?.onAction
-                    return (
-                      <button
-                        key={btn.id}
-                        onClick={() => onAction && onAction(booking.id, btn.action)}
-                        style={{
-                          padding: '8px 16px',
-                          borderRadius: '8px',
-                          border: btn.variant === 'danger' ? '1px solid var(--border)' : 'none',
-                          background: btn.variant === 'success' ? 'var(--accent-green)' :
-                                       btn.variant === 'danger' ? 'transparent' : 'var(--accent-blue)',
-                          color: btn.variant === 'danger' ? 'var(--text-secondary)' : '#fff',
-                          cursor: 'pointer',
-                          fontSize: '14px',
-                          fontWeight: 600,
-                        }}
-                      >
-                        {btn.label}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            );
-          })}
+          
+{bookings.map((booking) => (
+                        <JobRow
+              key={booking.id}
+              booking={booking}
+              statusBadgeKeys={statusBadgeKeys}
+              onAction={overrideData?.onAction}
+              w={w}
+              c={c}
+              r={r}
+              s={s}
+              overrideStyles={overrideStyles}
+            />
+          ))}
         </div>
+      );
+    }
+
+
+    // ──────────────────────────────────────────────
+    // SCREEN HEADING (Jobs, Earnings, Schedule)
+    // ──────────────────────────────────────────────
+    case "screenHeading": {
+      const title = useContent(elementConfig.content?.titleKey, "");
+      const ws = w.jobs?.heading || w.earnings?.heading || w.schedule?.heading || {};
+
+      return (
+        <h2 style={{
+          fontSize: ws.fontSize || f.heading || '24px',
+          fontWeight: ws.fontWeight || 700,
+          color: ws.color || c.textPrimary,
+          marginBottom: ws.marginBottom || '20px',
+          ...overrideStyles,
+        }}>
+          {title}
+        </h2>
       );
     }
 
