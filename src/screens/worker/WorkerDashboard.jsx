@@ -6,7 +6,7 @@ import { useContent } from '../../hooks/useContent.js'
 
 export default function WorkerDashboard() {
   const navigate = useNavigate()
-  const { profile, earnings, bookings, loading, toggleOnline } = useWorker()
+  const { profile, earnings, bookings, loading, toggleOnline, activeJob } = useWorker()
   const { activeBooking } = useBooking()
   const isOnline = profile?.is_online || false
 
@@ -40,12 +40,19 @@ export default function WorkerDashboard() {
 
   return (
     <div>
+      {/* Blinking animation for the map card */}
+      <style>{`
+        @keyframes blink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.3; }
+        }
+      `}</style>
 
       {/* 1. Status Banner */}
       <ElementRenderer elementId="workerStatusBanner" overrideData={{ isOnline, txt }} />
 
       {/* 2. Map — square, centered */}
-      <ElementRenderer elementId="dashboardMapCard" overrideData={{ activeBooking }} />
+      <ElementRenderer elementId="dashboardMapCard" overrideData={{ activeBooking: activeJob }} />
 
       {/* 3. Online Toggle — centered below map */}
       <ElementRenderer elementId="dashboardOnlineToggle" overrideData={{ isOnline, txt, onToggle: toggleOnline }} />
