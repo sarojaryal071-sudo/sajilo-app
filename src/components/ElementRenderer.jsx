@@ -18,6 +18,8 @@ import { useStyle } from "../hooks/useStyle.js";
 import { useContent } from "../hooks/useContent.js";
 import { resolveBookingActions } from '../utils/bookingActionResolver.js'
 import ActionButtonGroup from './renderers/ActionButtonGroup.jsx'
+import { dispatchBookingCommand } from '../utils/bookingCommandDispatcher.js';
+
 
 function JobRow({ booking, statusBadgeKeys, onAction, w, c, r, s, overrideStyles }) {
   const statusKey = statusBadgeKeys[booking.status]
@@ -73,7 +75,15 @@ function JobRow({ booking, statusBadgeKeys, onAction, w, c, r, s, overrideStyles
         {resolveBookingActions(booking).map((btn, i) => (
           <button
             key={btn.id}
-                        onClick={() => onAction?.(booking.id, btn.action)}
+                        // TEMPORARY – bypass prop chain, call dispatcher directly (same as all other working buttons)
+            // Old: onClick={() => onAction?.(booking.id, btn.action)}
+            onClick={async () => {
+              try {
+                await dispatchBookingCommand({ action: btn.action, bookingId: booking.id });
+              } catch (err) {
+                alert(err.message || 'Action failed');
+              }
+            }}
             style={{
               padding: '8px 16px',
               borderRadius: '8px',
