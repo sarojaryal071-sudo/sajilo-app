@@ -1,8 +1,8 @@
-import { useState } from 'react'
-import { services, workers } from '../config/data.js'
+import { useState, useEffect } from 'react'
+import { services } from '../config/data.js'
+import { api } from '../services/api.js'
 import ConfigContainer from '../components/ConfigContainer.jsx'
 import BannerCarousel from '../components/BannerCarousel.jsx'
-import WorkerList from '../components/WorkerList.jsx'
 import WorkerCard from '../components/WorkerCard.jsx'
 import { useContent } from '../hooks/useContent.js'
 import { useStyle } from '../hooks/useStyle.js'
@@ -14,7 +14,23 @@ const secondaryServices = services.slice(6)
 export default function HomeScreen({ navigate, t }) {
   const [stackedCategory, setStackedCategory] = useState(null)
   const [selectedCategory, setSelectedCategory] = useState(null)
+  const [workers, setWorkers] = useState([])   // ← real workers from backend
+  const [loading, setLoading] = useState(true)
   const isMobile = useIsMobile()
+
+  // Fetch all online workers on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await api.searchWorkers()
+        setWorkers(data.data || [])
+      } catch (err) {
+        console.error('Failed to load workers', err)
+      } finally {
+        setLoading(false)
+      }
+    })()
+  }, [])
 
   const txt = {
     welcome: useContent('home.welcome'),
@@ -34,12 +50,15 @@ export default function HomeScreen({ navigate, t }) {
   const iconStyle = useStyle('homeServiceIcon')
   const labelStyle = useStyle('homeServiceLabel')
 
-  const approvedWorkers = workers.filter(w => w.approved && w.status === 'active')
-
+  // ── Filter workers for the currently stacked category ──
   const stackedWorkers = stackedCategory
-    ? approvedWorkers.filter(w => {
+    ? workers.filter(w => {
         const cat = services.find(s => s.id === stackedCategory)
-        return cat && w.role?.toLowerCase() === cat.name?.toLowerCase()
+        if (!cat) return false
+        const catName = cat.name?.toLowerCase()
+        const primary = (w.primary_skill || '').toLowerCase()
+        const secondary = (w.secondary_roles || []).map(s => s.toLowerCase())
+        return primary === catName || secondary.includes(catName)
       })
     : []
 
@@ -57,9 +76,9 @@ export default function HomeScreen({ navigate, t }) {
         <div
           key={service.id}
           onClick={() => {
-  setStackedCategory(service.id)
-  setSelectedCategory(service.id)
-}}
+            setStackedCategory(service.id)
+            setSelectedCategory(service.id)
+          }}
           style={{
             ...cardStyle,
             display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer',
@@ -92,7 +111,6 @@ export default function HomeScreen({ navigate, t }) {
         }}>← {txt.back}</button>
 
         <div style={{ display: 'flex', gap: 20, flex: 1, minHeight: 0 }}>
-          {/* Category Stack — ONLY THIS SCROLLS */}
           <div style={{
             width: 220, flexShrink: 0,
             overflowY: 'auto',
@@ -118,7 +136,6 @@ export default function HomeScreen({ navigate, t }) {
             </div>
           </div>
 
-          {/* Worker List — NOT scrollable, fills space */}
           <div style={{ flex: 1, overflowY: 'auto' }}>
             <h3 style={sectionTitleStyle}>
               {services.find(s => s.id === stackedCategory)?.name} — {txt.nearbyWorkers}
@@ -173,7 +190,22 @@ export default function HomeScreen({ navigate, t }) {
       )}
 
       <h3 style={sectionTitleStyle}>{txt.nearbyWorkers}</h3>
-      <WorkerList workers={approvedWorkers} navigate={navigate} />
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: 20 }}>Loading workers…</div>
+      ) : workers.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-secondary)' }}>
+          <div style={{ fontSize: 40, marginBottom: 8 }}>👷</div>
+          <p>{txt.noWorkers}</p>
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+          {workers.map(worker => (
+            <div key={worker.id} onClick={() => navigate(`/detail/${worker.id}`)} style={{ cursor: 'pointer' }}>
+              <WorkerCard worker={worker} />
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

@@ -68,6 +68,9 @@ function JobRow({ booking, statusBadgeKeys, onAction, w, c, r, s, overrideStyles
         marginBottom: w.jobs?.info?.marginBottom || '12px',
       }}>
         Customer: {booking.customer_name} | {booking.job_size}
+        <div style={{ fontSize: '10px', opacity: 0.7, marginTop: 2 }}>
+          Booking #{booking.id}
+        </div>
       </div>
 
       {/* Action buttons */}
@@ -196,9 +199,9 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
                   fontWeight: w.statValue?.fontWeight || 800,
                   color: w.statValue?.color || c.accentBlue,
                 }}>
-                  {typeof value === 'number' && stat.labelKey !== 'worker.rating'
-                    ? `Rs ${value.toLocaleString()}`
-                    : value}
+                                {typeof value === 'number' && stat.labelKey !== 'worker.rating' && stat.labelKey !== 'worker.jobsToday'
+                ? `Rs ${value.toLocaleString()}`
+                : value}
                 </div>
                 <div style={{
                   fontSize: w.statLabel?.fontSize || f.caption || '10px',
@@ -327,11 +330,16 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
         // ──────────────────────────────────────────────
     // JOB CARD (Jobs Screen)
     // ──────────────────────────────────────────────
-    case "jobCard": {
+        // ──────────────────────────────────────────────
+    // JOB CARD (Jobs Screen)
+    // ──────────────────────────────────────────────
+        case "jobCard": {
       const bookings = overrideData?.bookings || [];
       const statusBadgeKeys = elementConfig.content?.statusBadgeKeys || {};
+      // Hook called at TOP LEVEL — always executed, regardless of bookings count
+      const emptyMsg = useContent("empty.noBookings", "No job requests yet.");
+
       if (bookings.length === 0) {
-        const emptyMsg = useContent("empty.noBookings", "No job requests yet.");
         return (
           <div style={{
             textAlign: 'center',
@@ -349,9 +357,8 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
           flexDirection: 'column',
           gap: w.jobs?.list?.gap || '12px',
         }}>
-          
-{bookings.map((booking) => (
-                        <JobRow
+          {bookings.map((booking) => (
+            <JobRow
               key={booking.id}
               booking={booking}
               statusBadgeKeys={statusBadgeKeys}
@@ -366,7 +373,6 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
         </div>
       );
     }
-
 
     // ──────────────────────────────────────────────
     // SCREEN HEADING (Jobs, Earnings, Schedule)
@@ -1307,7 +1313,7 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
         // ──────────────────────────────────────────────
     // MAP PLACEHOLDER (Dashboard — Phase 15)
     // ──────────────────────────────────────────────
-                case "mapPlaceholder": {
+             case "mapPlaceholder": {
       const activeJob = overrideData?.activeBooking
       const wd = w.dashboard?.mapCard || {}
       const title = useContent("worker.mapPreview", "Service Map")
@@ -1363,6 +1369,32 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
                 }}>
                   Customer: {activeJob.customer_name || '…'}
                 </span>
+
+                {/* Action button – directly calls dispatcher, same pattern as other working buttons */}
+                <button
+                  onClick={async (e) => {
+                    e.stopPropagation()
+                    try {
+                      const nextStatus = activeJob.status === 'accepted' ? 'onway' : 'completed'
+                      await dispatchBookingCommand({ action: nextStatus, bookingId: activeJob.id })
+                    } catch (err) {
+                      alert(err.message || 'Action failed')
+                    }
+                  }}
+                  style={{
+                    marginTop: 8,
+                    padding: '6px 14px',
+                    borderRadius: 'var(--radius-sm)',
+                    border: 'none',
+                    background: 'var(--accent-blue)',
+                    color: '#fff',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {activeJob.status === 'accepted' ? 'Start Travel' : 'Complete Job'}
+                </button>
               </>
             ) : (
               <>
@@ -1419,11 +1451,11 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
     // ──────────────────────────────────────────────
     // ANALYTICS CHART (Dashboard — Phase 15)
     // ──────────────────────────────────────────────
-                    case "analyticsChart": {
+                         case "analyticsChart": {
       const wd = w.dashboard?.analytics || {}
       const title = useContent("worker.analytics", "Analytics")
-      const earnings = overrideData?.earnings || {}
-      const hasData = (earnings?.total_earnings || 0) > 0
+      const weeklyData = overrideData?.weeklyEarnings || []
+      const hasData = weeklyData.length > 0 && weeklyData.some(v => v > 0)
       const [chartType, setChartType] = React.useState('bar')
       const chartColors = wd.chartColors || ['var(--accent-blue)', 'var(--accent-green)', 'var(--accent-orange)', '#8B5CF6', '#EC4899']
 
@@ -1451,66 +1483,104 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
             </div>
           </div>
 
-                    <div style={{ height: '140px', position: 'relative' }}>
-            {/* BAR CHART */}
-            {chartType === 'bar' && (
-              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: '100%', padding: '4px 0' }}>
-                {[40, 70, 30, 90, 50, 60, 80].map((h, i) => (
-                  <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
-                    <div style={{
-                      width: '100%', height: `${h}%`,
-                      background: hasData ? chartColors[i % chartColors.length] : 'var(--border)',
-                      borderRadius: '4px 4px 0 0', minHeight: 2,
-                    }} />
-                    <span style={{ fontSize: '9px', color: 'var(--text-secondary)', marginTop: 4 }}>
-                      {['M','T','W','T','F','S','S'][i]}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
+          {/* Empty state */}
+          {!hasData ? (
+            <div style={{
+              height: '140px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--text-secondary)',
+              fontSize: 'var(--font-body-sm)',
+            }}>
+              No earnings data yet
+            </div>
+          ) : (
+            <div style={{ height: '140px', position: 'relative' }}>
+              {/* BAR CHART */}
+              {chartType === 'bar' && (
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: '100%', padding: '4px 0' }}>
+                  {weeklyData.map((h, i) => {
+                    const maxVal = Math.max(...weeklyData, 1) // prevent division by zero
+                    const heightPct = (h / maxVal) * 100
+                    return (
+                      <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
+                        <div style={{
+                          width: '100%',
+                          height: `${heightPct}%`,
+                          background: chartColors[i % chartColors.length],
+                          borderRadius: '4px 4px 0 0',
+                          minHeight: h > 0 ? 2 : 0,
+                        }} />
+                        <span style={{ fontSize: '9px', color: 'var(--text-secondary)', marginTop: 4 }}>
+                          {['M','T','W','T','F','S','S'][i]}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
 
-            {/* LINE CHART */}
-            {chartType === 'line' && (
-              <svg width="100%" height="100%" viewBox="0 0 300 140" preserveAspectRatio="none">
-                <polyline fill="none" stroke={hasData ? chartColors[0] : 'var(--border)'} strokeWidth="3"
-                  points={[40,70,30,90,50,60,80].map((v, i) => `${(i/6)*300},${140-(v/100)*140}`).join(' ')} />
-                {[40,70,30,90,50,60,80].map((v, i) => (
-                  <circle key={i} cx={(i/6)*300} cy={140-(v/100)*140} r="4" fill={hasData ? chartColors[i % chartColors.length] : 'var(--border)'} />
-                ))}
-              </svg>
-            )}
-
-            {/* PIE CHART */}
-            {chartType === 'pie' && (
-              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                <svg width="120" height="120" viewBox="0 0 100 100">
-                  {[40,70,30,90,50,60,80].reduce((acc, val, i) => {
-                    const total = [40,70,30,90,50,60,80].reduce((s, x) => s + x, 0)
-                    const slice = (val / total) * 360
-                    const start = acc.offset
-                    const end = start + slice
-                    const x1 = 50 + 40 * Math.cos((start - 90) * Math.PI / 180)
-                    const y1 = 50 + 40 * Math.sin((start - 90) * Math.PI / 180)
-                    const x2 = 50 + 40 * Math.cos((end - 90) * Math.PI / 180)
-                    const y2 = 50 + 40 * Math.sin((end - 90) * Math.PI / 180)
-                    const large = slice > 180 ? 1 : 0
-                    return {
-                      offset: end,
-                      elements: [...acc.elements,
-                        <path key={i} d={`M50,50 L${x1},${y1} A40,40 0 ${large},1 ${x2},${y2} Z`}
-                          fill={hasData ? chartColors[i % chartColors.length] : 'var(--border)'} />
-                      ]
-                    }
-                  }, { offset: 0, elements: [] }).elements}
-                  <circle cx="50" cy="50" r="20" fill="var(--bg-surface)" />
+              {/* LINE CHART */}
+              {chartType === 'line' && (
+                <svg width="100%" height="100%" viewBox="0 0 300 140" preserveAspectRatio="none">
+                  <polyline
+                    fill="none"
+                    stroke={chartColors[0]}
+                    strokeWidth="3"
+                    points={weeklyData.map((v, i) => {
+                      const maxVal = Math.max(...weeklyData, 1)
+                      const x = (i / (weeklyData.length - 1 || 1)) * 300
+                      const y = 140 - ((v / maxVal) * 100)
+                      return `${x},${y}`
+                    }).join(' ')}
+                  />
+                  {weeklyData.map((v, i) => {
+                    const maxVal = Math.max(...weeklyData, 1)
+                    const x = (i / (weeklyData.length - 1 || 1)) * 300
+                    const y = 140 - ((v / maxVal) * 100)
+                    return <circle key={i} cx={x} cy={y} r="4" fill={chartColors[i % chartColors.length]} />
+                  })}
                 </svg>
-              </div>
-            )}
-          </div>
+              )}
+
+              {/* PIE CHART */}
+              {chartType === 'pie' && (
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                  <svg width="120" height="120" viewBox="0 0 100 100">
+                    {weeklyData.reduce((acc, val, i) => {
+                      const total = weeklyData.reduce((s, x) => s + x, 0)
+                      if (total === 0) return acc
+                      const slice = (val / total) * 360
+                      const start = acc.offset
+                      const end = start + slice
+                      const x1 = 50 + 40 * Math.cos((start - 90) * Math.PI / 180)
+                      const y1 = 50 + 40 * Math.sin((start - 90) * Math.PI / 180)
+                      const x2 = 50 + 40 * Math.cos((end - 90) * Math.PI / 180)
+                      const y2 = 50 + 40 * Math.sin((end - 90) * Math.PI / 180)
+                      const large = slice > 180 ? 1 : 0
+                      return {
+                        offset: end,
+                        elements: [
+                          ...acc.elements,
+                          <path
+                            key={i}
+                            d={`M50,50 L${x1},${y1} A40,40 0 ${large},1 ${x2},${y2} Z`}
+                            fill={chartColors[i % chartColors.length]}
+                          />,
+                        ],
+                      }
+                    }, { offset: 0, elements: [] }).elements}
+                    <circle cx="50" cy="50" r="20" fill="var(--bg-surface)" />
+                  </svg>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )
     }
+
 
         case "filterTabs": {
       const tabs = elementConfig.content?.tabs || []

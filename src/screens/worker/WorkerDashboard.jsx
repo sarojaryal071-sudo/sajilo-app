@@ -22,6 +22,30 @@ export default function WorkerDashboard() {
     goOnline: goOnlineContent || 'Go online to receive job requests',
   }
 
+  const dashboardBookings = (bookings || []).filter(b => b.status !== 'completed')
+  const activeBookingForMap = activeJob   // onway / working
+
+  // Compute real weekly earnings for the last 7 days (no backend change needed)
+        const weeklyEarnings = (() => {
+    const days = []
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today)
+      d.setDate(d.getDate() - i)
+      const dateStr = d.toISOString().split('T')[0]
+      const dayCount = (bookings || [])
+        .filter(b => {
+          if (b.status !== 'completed') return false
+          const bd = new Date(b.updated_at)
+          return bd.toISOString().startsWith(dateStr)
+        }).length
+      days.push(dayCount)
+    }
+    return days.every(v => v === 0) ? [] : days   // show empty if truly no jobs
+  })()
+
   if (loading) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -38,9 +62,10 @@ export default function WorkerDashboard() {
     )
   }
 
+    console.log('Analytics data:', { earnings, weeklyEarnings })
+
   return (
     <div>
-      {/* Blinking animation for the map card */}
       <style>{`
         @keyframes blink {
           0%, 100% { opacity: 1; }
@@ -48,16 +73,10 @@ export default function WorkerDashboard() {
         }
       `}</style>
 
-      {/* 1. Status Banner */}
       <ElementRenderer elementId="workerStatusBanner" overrideData={{ isOnline, txt }} />
-
-      {/* 2. Map — square, centered */}
-      <ElementRenderer elementId="dashboardMapCard" overrideData={{ activeBooking: activeJob }} />
-
-      {/* 3. Online Toggle — centered below map */}
+      <ElementRenderer elementId="dashboardMapCard" overrideData={{ activeBooking: activeBookingForMap }} />
       <ElementRenderer elementId="dashboardOnlineToggle" overrideData={{ isOnline, txt, onToggle: toggleOnline }} />
 
-      {/* 4. Stats Bar — compact */}
       <ElementRenderer
         elementId="workerStatsBar"
         overrideData={{
@@ -67,15 +86,11 @@ export default function WorkerDashboard() {
         }}
       />
 
-      {/* 5. Active / Upcoming Jobs */}
-      <ElementRenderer
-        elementId="jobCard"
-        overrideData={{ bookings: bookings || [] }}
-      />
+      {/* Only pending requests show up as cards */}
+      <ElementRenderer elementId="jobCard" overrideData={{ bookings: dashboardBookings }} />
 
-      {/* 6. Analytics — below everything, chart toggle */}
-      <ElementRenderer elementId="dashboardAnalytics" overrideData={{ earnings }} />
-
+      {/* Analytics chart now receives real weekly earnings */}
+      <ElementRenderer elementId="dashboardAnalytics" overrideData={{ earnings, weeklyEarnings }} />
     </div>
   )
 }

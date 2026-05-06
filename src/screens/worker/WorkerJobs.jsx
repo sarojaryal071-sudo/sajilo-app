@@ -16,21 +16,17 @@ export default function WorkerJobs() {
     else await updateBookingStatus(id, action)
   }
 
-  // Filter bookings
-  let filteredBookings = bookings || []
-  if (filter === 'pending') filteredBookings = filteredBookings.filter(b => b.status === 'pending')
-  else if (filter === 'accepted') filteredBookings = filteredBookings.filter(b => b.status === 'accepted')
-  else if (filter === 'active') filteredBookings = filteredBookings.filter(b => ['accepted', 'onway', 'working'].includes(b.status))
-  else if (filter === 'completed') filteredBookings = filteredBookings.filter(b => b.status === 'completed')
+  let filtered = bookings || []
+  if (filter === 'pending') filtered = filtered.filter(b => b.status === 'pending')
+  else if (filter === 'accepted') filtered = filtered.filter(b => b.status === 'accepted')
+  else if (filter === 'active') filtered = filtered.filter(b => ['accepted', 'onway', 'working'].includes(b.status))
+  else if (filter === 'completed') filtered = filtered.filter(b => b.status === 'completed')
 
   return (
     <div>
       <ElementRenderer elementId="jobsHeading" overrideData={{}} />
-          
-      <ElementRenderer
-        elementId="jobCard"
-        overrideData={{ bookings: filteredBookings, onAction: handleAction }}
-      />
+      <ElementRenderer elementId="jobsFilterTabs" overrideData={{ onFilter: setFilter }} />
+      <ElementRenderer elementId="jobCard" overrideData={{ bookings: filtered, onAction: handleAction }} />
     </div>
   )
 }
