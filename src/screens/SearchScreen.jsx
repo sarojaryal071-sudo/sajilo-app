@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { api } from '../services/api.js'
 import { useContent } from '../hooks/useContent.js'
+import { getSocket } from '../services/realtime/socketClient'
 
 export default function SearchScreen({ navigate }) {
   const [workers, setWorkers] = useState([])
@@ -39,6 +40,24 @@ export default function SearchScreen({ navigate }) {
       setLoading(false)
     }
     fetchWorkers()
+  }, [])
+
+    // Live update when a worker toggles online/offline
+  useEffect(() => {
+    const socket = getSocket()
+    if (!socket) return
+
+    const handleStatusChange = () => {
+      // Re‑fetch the worker list
+      setLoading(true)
+      api.searchWorkers()
+        .then(result => setWorkers(result.data || []))
+        .catch(console.error)
+        .finally(() => setLoading(false))
+    }
+
+    socket.on('worker:statusChanged', handleStatusChange)
+    return () => socket.off('worker:statusChanged', handleStatusChange)
   }, [])
 
   let filtered = workers
@@ -81,27 +100,41 @@ export default function SearchScreen({ navigate }) {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {filtered.map(worker => (
-            <div key={worker.id} onClick={() => navigate(`/detail/${worker.id}`)}
+                        <div key={worker.id} onClick={() => navigate(`/detail/${worker.id}`)}
               style={{
                 background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)',
                 padding: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14,
               }}>
+              {/* Worker photo */}
               <div style={{
-                width: 48, height: 48, borderRadius: '50%', background: 'var(--accent-blue-light)',
+                width: 48, height: 48, borderRadius: '50%', overflow: 'hidden',
+                background: worker.photo_url ? 'transparent' : 'var(--accent-blue-light)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 20, fontWeight: 700, color: 'var(--accent-blue)', flexShrink: 0,
               }}>
-                {worker.name?.charAt(0)?.toUpperCase() || 'W'}
+                {worker.photo_url ? (
+                  <img src={worker.photo_url} alt="Worker" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  worker.name?.charAt(0)?.toUpperCase() || 'W'
+                )}
               </div>
+
+              {/* Name, professions, worker ID */}
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 'var(--font-body)' }}>
                   {worker.name}
                   {worker.is_online && <span style={{ color: 'var(--accent-green)', marginLeft: 6, fontSize: 12 }}>● Online</span>}
                 </div>
                 <div style={{ fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)' }}>
-                  {(worker.skills || []).join(', ') || 'General Service'} · {worker.completed_jobs || 0} jobs
+                  {worker.primary_skill || 'General Service'}
+                  {worker.secondary_roles?.length > 0 && ` + ${worker.secondary_roles.join(', ')}`}
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--accent-blue)', fontWeight: 600, marginTop: 2 }}>
+                  {worker.client_id}
                 </div>
               </div>
+
+              {/* Hourly rate */}
               <span style={{ color: 'var(--accent-blue)', fontSize: 'var(--font-body-sm)', fontWeight: 600 }}>
                 Rs {worker.hourly_rate || 500}/hr
               </span>

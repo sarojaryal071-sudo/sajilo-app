@@ -283,39 +283,43 @@ export default function WorkerApply({ onUserRefresh }) {
           )
         }
 
-                // ── Datepicker (full button, no typing) ──
+                // ── Datepicker (mobile‑friendly) ──
         if (field.type === 'datepicker') {
           const maxDate = new Date()
           maxDate.setFullYear(maxDate.getFullYear() - 18)
           const maxDateStr = maxDate.toISOString().split('T')[0]
-          const dateInputId = `date-${field.name}`
           
           return (
             <div key={field.name} style={{ marginBottom: 14 }}>
               <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4, color: hasError ? 'var(--accent-red)' : 'var(--text-primary)' }}>
                 {label}{field.required && <span style={{ color: 'var(--accent-red)', marginLeft: 2 }}>★</span>}
               </label>
-              <div style={{ position: 'relative' }}>
-                <input id={dateInputId} type="date" value={val} onChange={e => handleFieldChange(field.name, e.target.value)}
-                  max={maxDateStr} required={field.required}
-                  style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', width: 0, height: 0 }} />
-                <button type="button" onClick={() => document.getElementById(dateInputId)?.showPicker()}
-                  style={{
-                    width: '100%', padding: 12, borderRadius: 'var(--radius-md)',
-                    border: `1px solid ${hasError ? 'var(--accent-red)' : 'var(--border)'}`,
-                    background: 'var(--bg-surface2)', cursor: 'pointer',
-                    fontSize: 'var(--font-body)', textAlign: 'left',
-                    color: val ? 'var(--text-primary)' : 'var(--text-secondary)',
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'center'
-                  }}>
-                  <span>{val || 'Select date...'}</span>
-                  <span>📅</span>
-                </button>
+              <input
+                type="date"
+                value={val}
+                onChange={e => handleFieldChange(field.name, e.target.value)}
+                max={maxDateStr}
+                required={field.required}
+                style={{
+                  width: '100%',
+                  padding: 12,
+                  borderRadius: 'var(--radius-md)',
+                  border: `1px solid ${hasError ? 'var(--accent-red)' : 'var(--border)'}`,
+                  background: 'var(--bg-surface2)',
+                  fontSize: 'var(--font-body)',
+                  color: val ? 'var(--text-primary)' : 'var(--text-secondary)',
+                  outline: 'none',
+                  WebkitAppearance: 'none',  // ensures consistent styling on iOS
+                }}
+              />
+              <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 4 }}>
+                {getContent('worker.apply.ageRequirement', 'Must be 18+')}
               </div>
-              <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 4 }}>{getContent('worker.apply.ageRequirement', 'Must be 18+')}</div>
             </div>
           )
         }
+
+        
         // ── Photo (square tile + gender avatar) ──
         if (field.type === 'photo' || field.type === 'imageUpload') {
           return (

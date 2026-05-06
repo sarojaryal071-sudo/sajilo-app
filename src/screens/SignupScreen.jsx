@@ -28,6 +28,22 @@ export default function SignupScreen({ t, onLogin }) {
     return () => document.documentElement.classList.remove('auth-locked')
   }, [])
 
+    // Reset scroll position when keyboard closes (mobile viewport resize)
+  useEffect(() => {
+    let timeout
+    const handleResize = () => {
+      clearTimeout(timeout)
+      timeout = setTimeout(() => {
+        window.scrollTo(0, 0)
+      }, 100) // small delay so the keyboard finish animating
+    }
+    window.addEventListener('resize', handleResize)
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      clearTimeout(timeout)
+    }
+  }, [])
+
       const handleSubmit = async ({ name, email, password, confirmPassword, phone, role }) => {
     setError('')
     setLoading(true)
