@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useContent } from '../../hooks/useContent.js'
+import { useSearchParams } from 'react-router-dom'
+
 
 export default function SignupForm({ onSubmit, loading, error, success, navigate }) {
   const [name, setName] = useState('')
@@ -12,6 +14,8 @@ export default function SignupForm({ onSubmit, loading, error, success, navigate
   // ─── Soft‑coded animation replay without remounting ───
   const [errorAnimTime, setErrorAnimTime] = useState(0)
   const errorRef = useRef(null)
+    const [searchParams] = useSearchParams()
+  const roleFromUrl = searchParams.get('role') || 'customer'
 
   // Each time `error` string changes → restart animation
   useEffect(() => {
@@ -43,12 +47,14 @@ export default function SignupForm({ onSubmit, loading, error, success, navigate
   const confirmPlaceholder = useContent('auth.signup.confirmPassword.placeholder', 'Re-enter your password')
   const createAccountBtn = useContent('auth.signup.button', 'Create Account')
   const creatingAccountText = useContent('auth.signup.button.loading', 'Creating account...')
+    const workerProceedBtn = useContent('auth.signup.workerButton', 'Proceed to Application')
+  const workerCreatingText = useContent('auth.signup.workerButton.loading', 'Creating account...')
   const loginText = useContent('auth.signup.loginText', 'Already have an account?')
   const loginLink = useContent('auth.signup.loginLink', 'Log in')
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    onSubmit({ name, email, password, confirmPassword, phone, role: 'customer' })
+    onSubmit({ name, email, password, confirmPassword, phone, role: roleFromUrl })
   }
 
   return (
@@ -126,7 +132,10 @@ export default function SignupForm({ onSubmit, loading, error, success, navigate
       {success && <div style={{color:'var(--accent-green)',fontSize:13,textAlign:'center'}}>{success}</div>}
 
       <button type="submit" disabled={loading} style={{...btn, opacity:loading?0.6:1}}>
-        {loading ? creatingAccountText : createAccountBtn}
+        {loading
+          ? (roleFromUrl === 'worker' ? workerCreatingText : creatingAccountText)
+          : (roleFromUrl === 'worker' ? workerProceedBtn : createAccountBtn)
+        }
       </button>
 
       <div style={{textAlign:'center',fontSize:13,color:'var(--text-secondary)'}}>

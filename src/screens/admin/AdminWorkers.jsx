@@ -32,7 +32,7 @@ export default function AdminWorkers() {
   else if (filter === 'suspended') filtered = workers.filter(w => w.status === 'suspended')
   if (search) {
     const s = search.toLowerCase()
-    filtered = filtered.filter(w => (w.name || '').toLowerCase().includes(s) || (w.email || '').toLowerCase().includes(s) || (w.display_id || '').toLowerCase().includes(s))
+    filtered = filtered.filter(w => (w.name || '').toLowerCase().includes(s) || (w.email || '').toLowerCase().includes(s) || (w.client_id || '').toLowerCase().includes(s))
   }
 
   return (

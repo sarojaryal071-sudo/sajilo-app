@@ -77,19 +77,19 @@ export default function AppShell() {
     }
   }, [user, authChecked, location.pathname, navigate])
 
-  useEffect(() => {
-    if (!user || !authChecked) return
-    if (user.role === 'worker' && user.status === 'pending') {
-      const hasApplied = user.application_submitted || user.phone
-      if (hasApplied && location.pathname !== '/worker/pending') {
-        console.log("🔍 REDIRECT: Pending (applied) → /worker/pending")
-        navigate('/worker/pending', { replace: true })
-      } else if (!hasApplied && location.pathname !== '/worker/apply') {
-        console.log("🔍 REDIRECT: Pending (no app) → /worker/apply")
-        navigate('/worker/apply', { replace: true })
-      }
-    }
-  }, [user, authChecked, location.pathname, navigate])
+    // useEffect(() => {
+  //   if (!user || !authChecked) return
+  //   if (user.role === 'worker' && user.status === 'pending') {
+  //     const hasApplied = user.application_submitted || user.phone
+  //     if (hasApplied && location.pathname !== '/worker/pending') {
+  //       console.log("🔍 REDIRECT: Pending (applied) → /worker/pending")
+  //       navigate('/worker/pending', { replace: true })
+  //     } else if (!hasApplied && location.pathname !== '/worker/apply') {
+  //       console.log("🔍 REDIRECT: Pending (no app) → /worker/apply")
+  //       navigate('/worker/apply', { replace: true })
+  //     }
+  //   }
+  // }, [user, authChecked, location.pathname, navigate])
 
   const handleLogout = () => {
     console.log("🔍 LOGOUT: Clearing user")

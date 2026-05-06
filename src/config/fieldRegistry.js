@@ -23,10 +23,8 @@ const fieldRegistry = {
       id: 'identity',
       titleKey: 'worker.apply.cardIdentity',
       fields: [
-        { name: 'fullName', type: 'text', labelKey: 'auth.signup.name.label', placeholderKey: 'auth.signup.name.placeholder', required: true },
         { name: 'displayName', type: 'text', labelKey: 'worker.apply.displayName', placeholderKey: 'worker.apply.displayNamePlaceholder', required: false, noteKey: 'worker.apply.displayNameNote' },
         { name: 'phone', type: 'text', labelKey: 'field.phone', placeholderKey: 'field.phonePlaceholder', required: true },
-        { name: 'email', type: 'email', labelKey: 'auth.signup.email.label', placeholderKey: 'auth.signup.email.placeholder', required: true },
         { name: 'dob', type: 'datepicker', labelKey: 'worker.apply.dob', placeholderKey: '', required: true, minAge: 18 },
       ],
     },
@@ -70,7 +68,7 @@ const fieldRegistry = {
       titleKey: 'worker.apply.cardVerification',
       fields: [
         { name: 'govId', type: 'text', labelKey: 'worker.apply.govId', placeholderKey: 'worker.apply.govIdPlaceholder', required: true },
-        { name: 'selfie', type: 'photo', labelKey: 'worker.apply.selfie', placeholderKey: '', required: true },
+        { name: 'selfie', type: 'photo', labelKey: 'worker.apply.selfie', placeholderKey: '', required: false },
       ],
     },
     {
@@ -92,8 +90,6 @@ const fieldRegistry = {
       id: 'terms',
       titleKey: 'worker.apply.cardTerms',
       fields: [
-        { name: 'password', type: 'password', labelKey: 'auth.signup.password.label', placeholderKey: 'auth.signup.password.placeholder', required: true },
-        { name: 'confirmPassword', type: 'password', labelKey: 'auth.signup.confirmPassword.label', placeholderKey: 'auth.signup.confirmPassword.placeholder', required: true },
         { name: 'acceptTerms', type: 'checkbox', labelKey: 'worker.apply.acceptTerms', required: true },
         { name: 'backgroundCheck', type: 'checkbox', labelKey: 'worker.apply.backgroundCheck', required: true },
         { name: 'safetyAgreement', type: 'checkbox', labelKey: 'worker.apply.safetyAgreement', required: true },

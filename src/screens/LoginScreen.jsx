@@ -42,17 +42,10 @@ export default function LoginScreen({ navigate, t, onLogin }) {
     const roleMessages = { customer: 'Welcome back! Find trusted workers near you.', worker: 'Ready to work? Check your dashboard for new jobs.', admin: 'Welcome back, Admin.' }
     setSuccess(roleMessages[result.user.role] || 'Welcome back!')
     setTimeout(() => {
-  onLogin(result.user)
-  localStorage.setItem('sajilo_user', JSON.stringify(result.user))
-  if (result.user.role === 'admin') navigate('/admin/dashboard')
-  else if (result.user.role === 'worker') {
-    if (result.user.status === 'pending') navigate('/worker/pending')
-    else navigate('/worker/dashboard')
+      onLogin(result.user)
+      localStorage.setItem('sajilo_user', JSON.stringify(result.user))
+    }, 800)
   }
-  else navigate('/home')
-}, 800)
-  }
-
   const onPointerDown = (e) => {
     setIsDragging(true)
     dragStart.current = e.clientY - dragY

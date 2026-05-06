@@ -62,19 +62,39 @@ export default function WorkerPending() {
   const [dark, setDark] = useState(() => localStorage.getItem('sajilo_theme') === 'dark')
   const [lang, setLang] = useState(() => localStorage.getItem('sajilo_lang') || 'en')
 
-  useEffect(() => {
-    const saved = localStorage.getItem('sajilo_worker_application')
-    const userStr = localStorage.getItem('sajilo_user')
-    const user = userStr ? JSON.parse(userStr) : null
-    const isWelcomed = localStorage.getItem('sajilo_worker_welcomed') === 'true'
+        useEffect(() => {
+    let cancelled = false
 
-    if (user?.status === 'active' && isWelcomed) {
-      navigate('/login', { replace: true })
-      return
+    async function fetchApplication() {
+      try {
+        const token = localStorage.getItem('sajilo_token')
+        if (!token) return
+
+        const res = await fetch('http://localhost:5000/api/users/worker/application', {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const json = await res.json()
+
+        if (!cancelled && json.success && json.data) {
+          const combined = {
+            ...(json.data.application || {}),
+            user: json.data.user,
+          }
+          setAppData(combined)
+        } else if (!cancelled) {
+          // Even if no application data, still set the user (approved/rejected cards)
+          setAppData({ user: json?.data?.user || null })
+        }
+      } catch (err) {
+        console.error('Failed to fetch application:', err)
+        if (!cancelled) setAppData({ user: null })
+      }
     }
 
-    if (saved) setAppData({ ...JSON.parse(saved), user })
-  }, [navigate])
+    fetchApplication()
+    return () => { cancelled = true }
+  }, [])
+
 
     // Real‑time listener for admin approval
   useEffect(() => {
@@ -82,20 +102,26 @@ export default function WorkerPending() {
     if (!socket) return
 
     const handleApproved = (data) => {
-      // Update the stored user status and display_id
+      // Update the current appData with new status and client_id
+      setAppData(prev => {
+        if (!prev) return prev
+        return {
+          ...prev,
+          user: {
+            ...prev.user,
+            status: data.status || 'active',
+            client_id: data.client_id || prev.user?.client_id,
+          },
+        }
+      })
+
+      // Also update the user in localStorage so the rest of the app stays in sync
       const userStr = localStorage.getItem('sajilo_user')
       if (userStr) {
         const user = JSON.parse(userStr)
         user.status = data.status || 'active'
-        if (data.display_id) user.display_id = data.display_id
+        if (data.client_id) user.client_id = data.client_id
         localStorage.setItem('sajilo_user', JSON.stringify(user))
-      }
-
-      // Re‑read the application data so the approved screen appears immediately
-      const saved = localStorage.getItem('sajilo_worker_application')
-      if (saved) {
-        const updatedUser = JSON.parse(localStorage.getItem('sajilo_user'))
-        setAppData({ ...JSON.parse(saved), user: updatedUser })
       }
     }
 
@@ -169,14 +195,16 @@ export default function WorkerPending() {
     // ── APPROVED ──
   if (appData?.user?.status === 'active') {
     const handleProceed = () => {
-      localStorage.setItem('sajilo_worker_welcomed', 'true')
-      localStorage.removeItem('sajilo_worker_application')
-      navigate('/login', { replace: true })
-    }
+  localStorage.setItem('sajilo_worker_welcomed', 'true')
+  localStorage.removeItem('sajilo_worker_application')
+  // Update the global user state to active (already active) and client_id
+  // Then go directly to the dashboard – no need to re‑authenticate
+  navigate('/worker/dashboard', { replace: true })
+}
     // Gather data for display
     const workerName = appData?.fullName || appData?.displayName || profile?.name || ''
     const profession = appData?.primaryRole || ''
-    const workerId = profile?.display_id || ''
+    const workerId = profile?.client_id || ''
 
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--bg-primary)' }}>

@@ -14,7 +14,7 @@ function getContent(key, fallback = '') {
   return fallback || key
 }
 
-export default function WorkerApply() {
+export default function WorkerApply({ onUserRefresh }) {
   const navigate = useNavigate()
   const CARDS = Array.isArray(fieldRegistry.workerApplyCards) ? fieldRegistry.workerApplyCards : []
   const [currentCardIndex, setCurrentCardIndex] = useState(0)
@@ -24,6 +24,7 @@ export default function WorkerApply() {
   const [secondaryRoles, setSecondaryRoles] = useState([])
   const [notifyLater, setNotifyLater] = useState(false)
   const [showPasswords, setShowPasswords] = useState({})
+  const [showConfirm, setShowConfirm] = useState(false)
   const shake = adminAnimationConfig?.shakeError || {}
   const errBorder = (val) => showErrors && !val ? `1px solid ${shake.borderColor || 'var(--accent-red)'}` : '1px solid var(--border)'
 
@@ -68,7 +69,8 @@ export default function WorkerApply() {
         setShowErrors(true)
         return
       }
-      handleSubmit()
+      // Show confirmation instead of immediately submitting
+      setShowConfirm(true)
     }
   }
 
@@ -77,46 +79,41 @@ export default function WorkerApply() {
     setShowErrors(false)
   }
 
-       const handleSubmit = async () => {
-    const finalData = { ...formData, secondaryRoles }
-    
+               const handleSubmit = async () => {
     try {
       const { api } = await import("../../services/api.js")
-      
-      // Register worker account with pending status
-      const result = await api.register({
-        email: formData.email,
-        password: formData.password,
-        role: 'worker',
-        name: formData.fullName || formData.displayName,
-        phone: formData.phone,
-      })
 
-      // Submit application details
+      // 1. Fetch the latest user profile from the server
+      const profileRes = await api.getMe()
+      const user = profileRes?.data?.user || profileRes?.data || {}
+      const workerName = user.name || user.email || ''
+
+      // 2. Build final application data
+      const finalData = {
+        ...formData,
+        secondaryRoles,
+        fullName: workerName,
+      }
+
+      // 3. Submit the application
       await api.submitWorkerApplication(finalData)
 
-      // Create pending session
-      localStorage.setItem('sajilo_user', JSON.stringify({
-        id: result.data?.id || result.user?.id || Date.now(),
-        email: formData.email,
-        role: 'worker',
-        status: 'pending',
-        name: formData.fullName || formData.displayName || 'Applicant',
-        application_submitted: true,
-        phone: formData.phone,
-      }))
+      // 4. Refresh user state (so application_submitted becomes true)
+      const refreshed = await api.getMe()
+      const updatedUser = refreshed?.data?.user || refreshed?.data
+      if (updatedUser) {
+        localStorage.setItem('sajilo_user', JSON.stringify(updatedUser))
+        if (onUserRefresh) onUserRefresh(updatedUser)
+      }
+
+      // 5. Save a local copy for the pending screen to show
       localStorage.setItem('sajilo_worker_application', JSON.stringify(finalData))
+
+      // 6. Go straight to the pending page – AppShell will stay out of it
       navigate('/worker/pending')
-      
     } catch (err) {
       console.error('Submit failed:', err)
-      // Fallback to localStorage
-      localStorage.setItem('sajilo_worker_application', JSON.stringify(finalData))
-      localStorage.setItem('sajilo_user', JSON.stringify({
-        id: Date.now(), email: formData.email, role: 'worker',
-        status: 'pending', name: formData.fullName || formData.displayName || 'Applicant',
-        application_submitted: true, phone: formData.phone,
-      }))
+      // Even on error, go to pending so the user isn't stuck
       navigate('/worker/pending')
     }
   }
@@ -130,6 +127,52 @@ export default function WorkerApply() {
 
   return (
     <div style={{ maxWidth: 500, margin: '40px auto', padding: 24, background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)', boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }}>
+            {/* ── Confirmation step ── */}
+      {showConfirm && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 1000, animation: 'fadeIn 0.3s ease',
+        }}>
+          <div style={{
+            background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)',
+            padding: 32, maxWidth: 400, width: '90%', textAlign: 'center',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+            animation: 'scaleIn 0.25s ease',
+          }}>
+            <div style={{ fontSize: 40, marginBottom: 16 }}>📝</div>
+            <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12, color: 'var(--text-primary)' }}>
+              {getContent('worker.apply.confirmTitle', 'Ready to submit your application?')}
+            </h3>
+            <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 24 }}>
+              {getContent('worker.apply.confirmMessage', 
+                'Once submitted, you cannot make changes. You will need to wait for admin to allow edits if errors are found.')}
+            </p>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button
+                onClick={() => setShowConfirm(false)}
+                style={{
+                  flex: 1, padding: 12, borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--border)', background: 'var(--bg-surface2)',
+                  color: 'var(--text-primary)', fontSize: 14, fontWeight: 500, cursor: 'pointer',
+                }}
+              >
+                {getContent('worker.apply.confirmBack', 'Go Back')}
+              </button>
+              <button
+                onClick={handleSubmit}
+                style={{
+                  flex: 1, padding: 12, borderRadius: 'var(--radius-md)',
+                  border: 'none', background: 'var(--accent-blue)', color: '#fff',
+                  fontSize: 14, fontWeight: 600, cursor: 'pointer',
+                }}
+              >
+                {getContent('worker.apply.confirmSubmit', 'Confirm')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div style={{ textAlign: 'center', marginBottom: 16 }}>
         <span style={{ fontSize: 22, fontWeight: 800, color: 'var(--accent-blue)' }}>Sajilo</span>
       </div>
@@ -455,6 +498,14 @@ export default function WorkerApply() {
           25% { transform: translateX(-6px); }
           50% { transform: translateX(6px); }
           75% { transform: translateX(-4px); }
+        }
+                  @keyframes fadeIn {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
+        @keyframes scaleIn {
+          from { opacity: 0; transform: scale(0.92); }
+          to   { opacity: 1; transform: scale(1); }
         }
       `}</style>
     </div>

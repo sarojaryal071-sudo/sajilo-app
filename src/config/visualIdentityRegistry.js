@@ -757,7 +757,7 @@ const visualIdentityRegistry = {
     style: { variant: "adminTable", styleRef: "admin.table" },
     content: {
       columns: [
-        { id: "display_id", labelKey: "admin.workerId", visible: true, order: 1 },
+        { id: "client_id", labelKey: "admin.workerId", visible: true, order: 1 },
         { id: "name", labelKey: "admin.name", visible: true, order: 2 },
         { id: "email", labelKey: "admin.email", visible: true, order: 3 },
         { id: "status", labelKey: "admin.status", visible: true, order: 4 },

@@ -1,7 +1,3 @@
-// sajilo-app/src/navigation/AuthFlow.jsx
-// Central auth navigation — Login, Signup, WorkerApply
-// All visual components unchanged, just wired together here
-
 import { Routes, Route, useNavigate } from 'react-router-dom'
 import LoginScreen from '../screens/LoginScreen.jsx'
 import SignupScreen from '../screens/SignupScreen.jsx'
@@ -13,14 +9,21 @@ export default function AuthFlow({ onLogin }) {
 
   const handleLogin = (user) => {
     if (onLogin) onLogin(user)
-    // Route based on role
+
     if (user.role === 'worker') {
-      if (user.status === 'pending' && !user.application_submitted) {
-        navigate('/worker/apply')
-      } else if (user.status === 'pending') {
+      if (user.status === 'pending') {
+        if (user.application_submitted) {
+          navigate('/worker/pending')
+        } else {
+          navigate('/worker/apply')
+        }
+      } else if (user.status === 'rejected') {
         navigate('/worker/pending')
+      } else if (user.status === 'active') {
+        const welcomed = localStorage.getItem('sajilo_worker_welcomed') === 'true'
+        navigate(welcomed ? '/worker/dashboard' : '/worker/pending')
       } else {
-        navigate('/worker')
+        navigate('/worker/dashboard')
       }
     } else {
       navigate('/home')
@@ -29,10 +32,10 @@ export default function AuthFlow({ onLogin }) {
 
   return (
     <Routes>
+      <Route path="/welcome" element={<WelcomeScreen />} />
       <Route path="/login" element={<LoginScreen navigate={navigate} onLogin={handleLogin} />} />
       <Route path="/signup" element={<SignupScreen navigate={navigate} onLogin={handleLogin} />} />
-      <Route path="/worker/apply" element={<WorkerApply navigate={navigate} />} />
-      <Route path="/welcome" element={<WelcomeScreen />} />
+      <Route path="/worker/apply" element={<WorkerApply onUserRefresh={onLogin} />} />
     </Routes>
   )
 }
