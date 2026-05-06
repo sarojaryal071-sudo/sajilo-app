@@ -10,14 +10,16 @@ import { BookingProvider } from '../contexts/BookingContext.jsx'
 import { useFeatureFlag } from '../hooks/useFeatureFlag.js'
 import { useNotification } from '../contexts/NotificationContext.jsx'
 import workerConfig from '../config/ui/worker.config.js'
+import EmergencyModal from '../components/EmergencyModal.jsx'
 
-function WorkerLayoutInner({ children, onLogout }) {
+function WorkerLayoutInner({ children, onLogout, onSOS }) {
   const navigate = useNavigate()
   const location = useLocation()
   const { profile, toggleOnline, loadAll } = useWorker()
   const [dark, setDark] = useState(() => localStorage.getItem('sajilo_theme') === 'dark')
   const [lang, setLang] = useState(() => localStorage.getItem('sajilo_lang') || 'en')
   const [showDrawer, setShowDrawer] = useState(false)
+  const [showSOS, setShowSOS] = useState(false)
   const w = workerConfig
 
   const isApproved = profile?.status === 'active'
@@ -267,7 +269,7 @@ function WorkerLayoutInner({ children, onLogout }) {
           )}
         </button>
         {sosEnabled && (
-          <button onClick={() => {}} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, border: 'none', background: 'transparent', cursor: 'pointer', padding: '8px 4px', color: '#D92B2B' }}>
+          <button onClick={() => setShowSOS(true)} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, border: 'none', background: 'transparent', cursor: 'pointer', padding: '8px 4px', color: '#D92B2B' }}>
             <span style={{ fontSize: 18 }}>🆘</span>
             <span style={{ fontSize: 10, fontWeight: 700 }}>SOS</span>
           </button>
@@ -297,10 +299,11 @@ function WorkerLayoutInner({ children, onLogout }) {
         }
         .worker-card { border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
       `}</style>
+            {showSOS && <EmergencyModal onClose={() => setShowSOS(false)} />}
     </div>
   )
 }
 
-export default function WorkerLayout({ children, onLogout }) {
-  return <WorkerProvider><BookingProvider><WorkerLayoutInner onLogout={onLogout}>{children}</WorkerLayoutInner></BookingProvider></WorkerProvider>
+export default function WorkerLayout({ children, onLogout, onSOS }) {
+  return <WorkerProvider><BookingProvider><WorkerLayoutInner onLogout={onLogout} onSOS={onSOS}>{children}</WorkerLayoutInner></BookingProvider></WorkerProvider>
 }

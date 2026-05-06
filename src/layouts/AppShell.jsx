@@ -142,7 +142,7 @@ export default function AppShell() {
     console.log("🔍 WORKER ROUTES:", { status: user.status, totalRoutes: workerRoutes.length, paths: workerRoutes.map(r => r.path) })
 
     return (
-  <WorkerLayout user={user} onLogout={handleLogout}>
+  <WorkerLayout user={user} onLogout={handleLogout}  onSOS={() => setShowSOS(true)}>
     <main style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-primary)', padding: 0 }}>
       <Routes>
         {workerRoutes.map(route => {
