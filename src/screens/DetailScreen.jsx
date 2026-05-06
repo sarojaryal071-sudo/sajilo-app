@@ -24,23 +24,23 @@ export default function DetailScreen({ navigate, workerId }) {
 
   const [booking, setBooking] = useState(false)
 
-const handleBook = async () => {
-  const token = localStorage.getItem('sajilo_token')
-  if (!token) { navigate('/login'); return }
-  setBooking(true)
-  try {
-    await api.createBooking({
-      workerId: worker.id,
-      serviceName: worker.job || 'General Service',
-      jobSize: selectedJob,
-      urgency,
-    })
-    navigate('/bookings')
-  } catch (err) {
-    alert('Booking failed. Try again.')
+  const handleBook = async () => {
+    const token = localStorage.getItem('sajilo_token')
+    if (!token) { navigate('/login'); return }
+    setBooking(true)
+    try {
+      await api.createBooking({
+        workerId: worker.id,
+        serviceName: worker.job || 'General Service',
+        jobSize: selectedJob,
+        urgency,
+      })
+      navigate('/bookings')
+    } catch (err) {
+      alert('Booking failed. Try again.')
+    }
+    setBooking(false)
   }
-  setBooking(false)
-}
 
   const txt = {
     back: useContent('auth.signup.loginLink'),
@@ -57,13 +57,12 @@ const handleBook = async () => {
 
   const [worker, setWorker] = useState(null)
 
-useEffect(() => {
-  fetch(`http://localhost:5000/api/workers/${workerId}`, {
-    headers: { 'Authorization': `Bearer ${localStorage.getItem('sajilo_token')}` }
-  }).then(r => r.json()).then(d => {
-    if (d.success) setWorker(d.data)
-  })
-}, [workerId])
+  // ✅ FIXED: uses api.getWorkerById instead of hardcoded localhost fetch
+  useEffect(() => {
+    api.getWorkerById(workerId).then(d => {
+      if (d.success) setWorker(d.data)
+    })
+  }, [workerId])
 
   const formatDate = (dateStr) => {
     if (!dateStr) return ''

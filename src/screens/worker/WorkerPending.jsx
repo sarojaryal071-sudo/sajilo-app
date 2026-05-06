@@ -5,6 +5,7 @@ import { useAnimation } from '../../hooks/useAnimation.js'
 import { useContent } from '../../hooks/useContent.js'
 import { useStyle } from '../../hooks/useStyle.js'
 import { getSocket } from '../../services/realtime/socketClient'
+import { api } from '../../services/api.js'
 
 const DEFAULT_STAGES = [
   { key: 'submitted', labelKey: 'worker.stage.submitted', descKey: 'worker.stage.submittedDesc', iconKey: 'worker.stage.submittedIcon' },
@@ -62,7 +63,7 @@ export default function WorkerPending() {
   const [dark, setDark] = useState(() => localStorage.getItem('sajilo_theme') === 'dark')
   const [lang, setLang] = useState(() => localStorage.getItem('sajilo_lang') || 'en')
 
-        useEffect(() => {
+  useEffect(() => {
     let cancelled = false
 
     async function fetchApplication() {
@@ -70,10 +71,7 @@ export default function WorkerPending() {
         const token = localStorage.getItem('sajilo_token')
         if (!token) return
 
-        const res = await fetch('http://localhost:5000/api/users/worker/application', {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        const json = await res.json()
+        const json = await api.getMyWorkerApplication()
 
         if (!cancelled && json.success && json.data) {
           const combined = {
@@ -95,8 +93,7 @@ export default function WorkerPending() {
     return () => { cancelled = true }
   }, [])
 
-
-    // Real‑time listener for admin approval
+  // Real‑time listener for admin approval
   useEffect(() => {
     const socket = getSocket()
     if (!socket) return
@@ -177,30 +174,24 @@ export default function WorkerPending() {
     return descs[s.key] || ''
   }
 
-  // ── No application found ──
+  // ── Loading state – wait for fetch or socket update ──
   if (!appData) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--bg-primary)' }}>
         <div style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
-          <div style={{ fontSize: 40, marginBottom: 16 }}>📋</div>
-          <p>No application found.</p>
-          <button onClick={() => navigate('/worker/apply')} style={{ marginTop: 12, padding: '10px 20px', borderRadius: 'var(--radius-md)', border: 'none', background: 'var(--accent-blue)', color: '#fff', cursor: 'pointer' }}>
-            Apply Now
-          </button>
+          <div style={{ fontSize: 24 }}>Loading your application…</div>
         </div>
       </div>
     )
   }
 
-    // ── APPROVED ──
+  // ── APPROVED ──
   if (appData?.user?.status === 'active') {
-    const handleProceed = () => {
-  localStorage.setItem('sajilo_worker_welcomed', 'true')
-  localStorage.removeItem('sajilo_worker_application')
-  // Update the global user state to active (already active) and client_id
-  // Then go directly to the dashboard – no need to re‑authenticate
-  navigate('/worker/dashboard', { replace: true })
-}
+      const handleProceed = async () => {
+      await api.setWelcomed()
+      localStorage.removeItem('sajilo_worker_application')
+      navigate('/worker/dashboard', { replace: true })
+    }
     // Gather data for display
     const workerName = appData?.fullName || appData?.displayName || profile?.name || ''
     const profession = appData?.primaryRole || ''

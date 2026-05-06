@@ -5,14 +5,12 @@ import { useContent } from '../../hooks/useContent.js'
 import { useStyle } from '../../hooks/useStyle.js'
 import { useSocket } from '../../hooks/useSocket.js'
 import conversationState from '../../services/chat/ConversationStateManager.js'
-
+import { API_URL } from '../../services/api.js'
 
 const SUPPORT_ID = 32  // localhost admin (A001)
 // const SUPPORT_ID = 6  // Render admin  
 // Admin user ID for support chat — messages route to this user
 
-const API_URL = 'http://localhost:5000/api'
-// const API_URL = 'https://sajilo-backend-c7mi.onrender.com/api'  // PRODUCTION
 
 export default function CommunicationCenter() {
   const [showChat, setShowChat] = useState(false)

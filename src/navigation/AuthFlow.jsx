@@ -20,8 +20,7 @@ export default function AuthFlow({ onLogin }) {
       } else if (user.status === 'rejected') {
         navigate('/worker/pending')
       } else if (user.status === 'active') {
-        const welcomed = localStorage.getItem('sajilo_worker_welcomed') === 'true'
-        navigate(welcomed ? '/worker/dashboard' : '/worker/pending')
+        navigate(user.welcomed ? '/worker/dashboard' : '/worker/pending')
       } else {
         navigate('/worker/dashboard')
       }

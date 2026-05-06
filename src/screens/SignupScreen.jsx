@@ -59,9 +59,13 @@ export default function SignupScreen({ t, onLogin }) {
     try {
       const result = await registerUser(email, password, role, name, phone)
 
-                          if (result.success) {
-        setSuccess('Account created! Please log in again to complete your application.')
-        setTimeout(() => navigate('/login'), 2500)   // longer delay so user can read
+                                if (result.success) {
+        if (role === 'worker') {
+          setSuccess('Account created! Please log in to complete your application.')
+        } else {
+          setSuccess('Account created! Redirecting to login...')
+        }
+        setTimeout(() => navigate('/login'), 2500)   // slightly longer so the message is read
       } else {
         setError(result.error || 'Signup failed')
         setErrorKey(prev => prev + 1)

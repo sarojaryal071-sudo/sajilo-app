@@ -1,6 +1,7 @@
 ﻿// AdminChat v2 — test version with direct receiver ID from conversation data
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { useSocket } from '../../hooks/useSocket.js'
+import { API_URL } from '../../services/api.js'
 
 export default function AdminChat() {
   const [conversations, setConversations] = useState([])
@@ -11,8 +12,6 @@ export default function AdminChat() {
   const activeConvRef = useRef(null)
 
   const token = localStorage.getItem('sajilo_token')
-  const apiUrl = 'http://localhost:5000'
-// const apiUrl = 'https://sajilo-backend-c7mi.onrender.com'  // PRODUCTION
   const { socket } = useSocket()
 
   useEffect(() => {

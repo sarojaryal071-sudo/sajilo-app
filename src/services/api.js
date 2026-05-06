@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.PROD 
+export const API_URL = import.meta.env.PROD 
   ? 'https://sajilo-backend-c7mi.onrender.com/api'
   : 'http://localhost:5000/api'
 
@@ -58,6 +58,8 @@ export const api = {
   rejectWorker: (id) => request(`/admin/workers/${id}/reject`, { method: 'PUT' }),
   getAdminStats: () => request('/admin/stats'),
   getWorkerProfile: () => request('/users/worker/me'),
+  getMyWorkerApplication: () => request('/users/worker/application'),
+    setWelcomed: () => request('/users/worker/welcomed', { method: 'PUT' }),
   updateWorkerProfile: (body) => request('/users/worker/me', { method: 'PUT', body: JSON.stringify(body) }),
   getWorkerEarnings: () => request('/users/worker/earnings'),
   getWorkerSchedule: () => request('/users/worker/schedule'),
@@ -69,6 +71,7 @@ export const api = {
     const query = new URLSearchParams(params).toString()
     return request(`/workers/search${query ? '?' + query : ''}`)
   },
+    getWorkerById: (id) => request(`/workers/${id}`),
   }
 
 export { setToken, removeToken, getToken }
