@@ -25,6 +25,7 @@ export default function WorkerApply({ onUserRefresh }) {
   const [notifyLater, setNotifyLater] = useState(false)
   const [showPasswords, setShowPasswords] = useState({})
   const [showConfirm, setShowConfirm] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
   const shake = adminAnimationConfig?.shakeError || {}
   const errBorder = (val) => showErrors && !val ? `1px solid ${shake.borderColor || 'var(--accent-red)'}` : '1px solid var(--border)'
 
@@ -79,7 +80,8 @@ export default function WorkerApply({ onUserRefresh }) {
     setShowErrors(false)
   }
 
-               const handleSubmit = async () => {
+                const handleSubmit = async () => {
+    setSubmitting(true)
     try {
       const { api } = await import("../../services/api.js")
 
@@ -109,12 +111,13 @@ export default function WorkerApply({ onUserRefresh }) {
       // 5. Save a local copy for the pending screen to show
       localStorage.setItem('sajilo_worker_application', JSON.stringify(finalData))
 
-      // 6. Go straight to the pending page – AppShell will stay out of it
+      // 6. Go straight to the pending page
       navigate('/worker/pending')
     } catch (err) {
       console.error('Submit failed:', err)
-      // Even on error, go to pending so the user isn't stuck
       navigate('/worker/pending')
+    } finally {
+      setSubmitting(false)
     }
   }
     
@@ -159,15 +162,16 @@ export default function WorkerApply({ onUserRefresh }) {
               >
                 {getContent('worker.apply.confirmBack', 'Go Back')}
               </button>
-              <button
+                            <button
                 onClick={handleSubmit}
+                disabled={submitting}
                 style={{
                   flex: 1, padding: 12, borderRadius: 'var(--radius-md)',
-                  border: 'none', background: 'var(--accent-blue)', color: '#fff',
-                  fontSize: 14, fontWeight: 600, cursor: 'pointer',
+                  border: 'none', background: submitting ? '#94a3b8' : 'var(--accent-blue)', color: '#fff',
+                  fontSize: 14, fontWeight: 600, cursor: submitting ? 'wait' : 'pointer',
                 }}
               >
-                {getContent('worker.apply.confirmSubmit', 'Confirm')}
+                {submitting ? 'Submitting...' : getContent('worker.apply.confirmSubmit', 'Confirm')}
               </button>
             </div>
           </div>
@@ -319,7 +323,7 @@ export default function WorkerApply({ onUserRefresh }) {
           )
         }
 
-        
+
         // ── Photo (square tile + gender avatar) ──
         if (field.type === 'photo' || field.type === 'imageUpload') {
           return (
