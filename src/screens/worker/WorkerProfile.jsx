@@ -1,90 +1,79 @@
-﻿// sajilo-app/src/screens/worker/WorkerProfile.jsx
-
-import { useState } from 'react';
-import { useWorker } from '../../contexts/WorkerContext.jsx';
-import ElementRenderer from '../../components/ElementRenderer.jsx';
+﻿import { useState, useEffect } from 'react'
+import { useWorker } from '../../contexts/WorkerContext.jsx'
+import ElementRenderer from '../../components/ElementRenderer.jsx'
 
 export default function WorkerProfile() {
-  const { profile, updateProfile } = useWorker();
-  const [editing, setEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [bio, setBio] = useState('');
-  const [skills, setSkills] = useState('');
-  const [hourlyRate, setHourlyRate] = useState('');
+  const { profile, updateProfile } = useWorker()
+  const [editing, setEditing] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [name, setName] = useState('')
+  const [phone, setPhone] = useState('')
+  const [bio, setBio] = useState('')
+  const [skills, setSkills] = useState('')
+  const [hourlyRate, setHourlyRate] = useState('')
+  const [photoUrl, setPhotoUrl] = useState('')
+
+  const [showLocationModal, setShowLocationModal] = useState(false)
+  const [selectedLocation, setSelectedLocation] = useState('')
+  const [locationReason, setLocationReason] = useState('')
+  const [locationPassword, setLocationPassword] = useState('')
+  const [locationConfirmPassword, setLocationConfirmPassword] = useState('')
+  const [locations, setLocations] = useState([])
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const resp = await fetch('http://localhost:5000/api/locations')
+        const json = await resp.json()
+        if (json.success) setLocations(json.data || [])
+      } catch (err) { /* ignore */ }
+    })()
+  }, [])
 
   if (!profile) {
-    return (
-      <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-secondary)' }}>
-        Loading...
-      </div>
-    );
+    return <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-secondary)' }}>Loading...</div>
   }
 
   const startEdit = () => {
-    setName(profile?.name || '');
-    setPhone(profile?.phone || '');
-    setBio(profile?.bio || '');
-    setSkills((profile?.skills || []).join(', '));
-    setHourlyRate(profile?.hourly_rate || '');
-    setEditing(true);
-  };
+    setName(profile?.name || '')
+    setPhone(profile?.phone || '')
+    setBio(profile?.bio || '')
+    setSkills((profile?.skills || []).join(', '))
+    setHourlyRate(profile?.hourly_rate || '')
+    setPhotoUrl(profile?.photo_url || '')
+    setEditing(true)
+  }
 
   const handleSave = async () => {
-    setSaving(true);
+    setSaving(true)
     await updateProfile({
       name,
       phone,
       bio,
       skills: skills.split(',').map(s => s.trim()).filter(Boolean),
       hourly_rate: parseInt(hourlyRate) || 500,
-    });
-    setSaving(false);
-    setEditing(false);
-  };
+      photo_url: photoUrl,
+    })
+    setSaving(false)
+    setEditing(false)
+  }
 
   const displayProfile = editing
-    ? { ...profile, name, phone, bio, skills: skills.split(',').map(s => s.trim()).filter(Boolean), hourly_rate: parseInt(hourlyRate) || 500 }
-    : profile;
+    ? { ...profile, name, phone, bio, skills: skills.split(',').map(s => s.trim()).filter(Boolean), hourly_rate: parseInt(hourlyRate) || 500, photo_url: photoUrl }
+    : profile
+
+  const primaryProfession = profile?.primary_skill || 'Not set'
+  const secondaryProfessions = profile?.secondary_roles || []
+
+  const handleLocationChangeSubmit = (e) => {
+    e.preventDefault()
+    alert('Location change request feature coming soon.')
+    setShowLocationModal(false)
+  }
 
   return (
     <div>
-      <ElementRenderer
-        elementId="profileHeader"
-        overrideData={{
-          isEditing: editing,
-          isSaving: saving,
-          onEdit: startEdit,
-          onSave: handleSave,
-        }}
-      />
-
-      <div style={{
-        background: 'var(--bg-surface)',
-        border: '1px solid var(--border)',
-        borderRadius: 'var(--radius-lg)',
-        padding: 20,
-        marginBottom: 16,
-      }}>
-        <ElementRenderer
-          elementId="profileAvatar"
-          overrideData={{ profile: displayProfile }}
-        />
-        <ElementRenderer
-          elementId="profileFieldGroup"
-          overrideData={{
-            profile: displayProfile,
-            isEditing: editing,
-          }}
-        />
-      </div>
-
-      <ElementRenderer
-        elementId="profileStatsRow"
-        overrideData={{ profile }}
-      />
-            {/* Worker identity card – name, profession, worker ID, photo */}
+      {/* Worker identity card */}
       <div style={{
         background: 'var(--bg-surface)',
         border: '1px solid var(--border)',
@@ -113,14 +102,96 @@ export default function WorkerProfile() {
             {profile.name || 'Worker'}
           </div>
           <div style={{ fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)', marginTop: 4 }}>
-            {profile.primary_skill || 'General Service'}
-            {profile.secondary_roles?.length > 0 && ` + ${profile.secondary_roles.join(', ')}`}
+            {primaryProfession}
+            {secondaryProfessions.length > 0 && ` + ${secondaryProfessions.join(', ')}`}
           </div>
           <div style={{ fontSize: 12, color: 'var(--accent-blue)', fontWeight: 600, marginTop: 4 }}>
             {profile.client_id || ''}
           </div>
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>
+            📍 {profile.service_area || 'Not set'}
+            <button onClick={() => setShowLocationModal(true)} style={{
+              marginLeft: 8, padding: '2px 8px', borderRadius: 4, border: '1px solid var(--border)',
+              background: 'var(--bg-surface2)', color: 'var(--accent-blue)', fontSize: 11, cursor: 'pointer'
+            }}>Change Location</button>
+          </div>
         </div>
       </div>
+
+      {/* Location Change Modal */}
+      {showLocationModal && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
+        }}>
+          <div style={{ background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)', padding: 24, maxWidth: 400, width: '90%' }}>
+            <h3 style={{ marginBottom: 16 }}>Request Location Change</h3>
+            <form onSubmit={handleLocationChangeSubmit}>
+              <div style={{ marginBottom: 12 }}>
+                <label style={{ fontSize: 13, fontWeight: 600 }}>New City</label>
+                <select value={selectedLocation} onChange={e => setSelectedLocation(e.target.value)} required
+                  style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg-surface2)' }}>
+                  <option value="">Select...</option>
+                  {locations.map(loc => (
+                    <option key={loc.value} value={loc.value}>{loc.label} ({loc.status})</option>
+                  ))}
+                </select>
+              </div>
+              <div style={{ marginBottom: 12 }}>
+                <label style={{ fontSize: 13, fontWeight: 600 }}>Reason</label>
+                <textarea value={locationReason} onChange={e => setLocationReason(e.target.value)} rows={2} required
+                  style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg-surface2)' }} />
+              </div>
+              <div style={{ marginBottom: 12 }}>
+                <label style={{ fontSize: 13, fontWeight: 600 }}>Password</label>
+                <input type="password" value={locationPassword} onChange={e => setLocationPassword(e.target.value)} required
+                  style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg-surface2)' }} />
+              </div>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ fontSize: 13, fontWeight: 600 }}>Confirm Password</label>
+                <input type="password" value={locationConfirmPassword} onChange={e => setLocationConfirmPassword(e.target.value)} required
+                  style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg-surface2)' }} />
+              </div>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button type="button" onClick={() => setShowLocationModal(false)} style={{ flex: 1, padding: 10, borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg-surface2)', cursor: 'pointer' }}>Cancel</button>
+                <button type="submit" style={{ flex: 1, padding: 10, borderRadius: 6, border: 'none', background: 'var(--accent-blue)', color: '#fff', cursor: 'pointer' }}>Submit Request</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Editable profile section (rendered by ElementRenderer) */}
+      <div style={{
+        background: 'var(--bg-surface)', border: '1px solid var(--border)',
+        borderRadius: 'var(--radius-lg)', padding: 20, marginBottom: 16,
+      }}>
+        <ElementRenderer
+          elementId="profileAvatar"
+          overrideData={{ profile: displayProfile }}
+        />
+        <ElementRenderer
+          elementId="profileFieldGroup"
+          overrideData={{
+            profile: displayProfile,
+            isEditing: editing,
+          }}
+        />
+        <div style={{ marginTop: 8 }}>
+          <button onClick={editing ? handleSave : startEdit} disabled={saving} style={{
+            padding: '10px 20px', borderRadius: 8, border: 'none',
+            background: editing ? (saving ? '#94a3b8' : 'var(--accent-green)') : 'var(--accent-blue)',
+            color: '#fff', fontWeight: 600, cursor: 'pointer'
+          }}>
+            {editing ? (saving ? 'Saving...' : 'Save Changes') : 'Edit Profile'}
+          </button>
+        </div>
+      </div>
+
+      <ElementRenderer
+        elementId="profileStatsRow"
+        overrideData={{ profile }}
+      />
     </div>
-  );
+  )
 }

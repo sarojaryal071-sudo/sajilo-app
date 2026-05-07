@@ -2,6 +2,19 @@ import { useState, useEffect } from 'react'
 import { api } from '../services/api.js'
 import { useContent } from '../hooks/useContent.js'
 
+// ── Helper: calculate points based on job size ──
+const JOB_SIZE_POINTS = {
+  small: 2,
+  medium: 5,
+  large: 15,
+}
+
+function calcRewardPoints(bookings) {
+  return bookings
+    .filter(b => b.status === 'completed')
+    .reduce((total, b) => total + (JOB_SIZE_POINTS[b.job_size] || 0), 0)
+}
+
 // ── Helper component – one per menu row, hooks stay stable ──
 function MenuRow({ item, navigate }) {
   const label = useContent(item.labelKey, item.labelKey)
@@ -40,9 +53,11 @@ const menuItems = [
 export default function ProfileScreen({ navigate }) {
   const [user, setUser] = useState(null)
   const [bookingsCount, setBookingsCount] = useState(0)
+  const [rewardPoints, setRewardPoints] = useState(0)
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
+  const [photoUrl, setPhotoUrl] = useState('')
   const [saving, setSaving] = useState(false)
 
   // Fetch user data on mount
@@ -55,11 +70,13 @@ export default function ProfileScreen({ navigate }) {
           setUser(u)
           setName(u.name || '')
           setPhone(u.phone || '')
+          setPhotoUrl(u.photo_url || '')
         }
 
         const bookingsRes = await api.getMyBookings()
         const bookings = bookingsRes?.data || []
         setBookingsCount(bookings.length)
+        setRewardPoints(calcRewardPoints(bookings))
       } catch (err) {
         console.error('Failed to load profile', err)
       }
@@ -68,7 +85,7 @@ export default function ProfileScreen({ navigate }) {
 
   const txt = {
     title: useContent('profile.title'),
-    wallet: useContent('profile.wallet'),
+    rewardPoints: useContent('profile.rewardPoints') || 'Reward Points',
     memberSince: useContent('profile.memberSince'),
     jobsBooked: useContent('profile.jobsBooked'),
     editProfile: useContent('profile.editProfile'),
@@ -79,8 +96,8 @@ export default function ProfileScreen({ navigate }) {
   const handleSave = async () => {
     setSaving(true)
     try {
-      await api.updateUserProfile({ name, phone })
-      setUser(prev => ({ ...prev, name, phone }))
+      await api.updateUserProfile({ name, phone, photo_url: photoUrl })
+      setUser(prev => ({ ...prev, name, phone, photo_url: photoUrl }))
       setEditing(false)
     } catch (err) {
       alert('Failed to update profile. Please try again.')
@@ -89,10 +106,7 @@ export default function ProfileScreen({ navigate }) {
     }
   }
 
-  // Loading state – must be after ALL hooks to keep order stable
-  if (!user) {
-    return <div style={{ textAlign: 'center', padding: 40 }}>Loading profile...</div>
-  }
+  if (!user) return <div style={{ textAlign: 'center', padding: 40 }}>Loading profile...</div>
 
   const memberSince = user.created_at
     ? new Date(user.created_at).toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: '2-digit' })
@@ -100,7 +114,7 @@ export default function ProfileScreen({ navigate }) {
 
   return (
     <div style={{ maxWidth: 760, margin: '0 auto' }}>
-      {/* Profile Header */}
+      {/* Profile Header with Avatar */}
       <div style={{
         background: 'linear-gradient(135deg, var(--accent-blue), #2377D8)',
         borderRadius: 'var(--radius-lg)', padding: 28, marginBottom: 20,
@@ -108,11 +122,17 @@ export default function ProfileScreen({ navigate }) {
       }}>
         <div style={{
           width: 76, height: 76, borderRadius: '50%',
-          background: 'rgba(255,255,255,0.2)', border: '3px solid rgba(255,255,255,0.5)',
+          background: user.photo_url ? 'transparent' : 'rgba(255,255,255,0.2)',
+          border: '3px solid rgba(255,255,255,0.5)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: 36, flexShrink: 0,
+          overflow: 'hidden'
         }}>
-          {user.name?.charAt(0)?.toUpperCase() || '👤'}
+          {user.photo_url ? (
+            <img src={user.photo_url} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          ) : (
+            user.name?.charAt(0)?.toUpperCase() || '👤'
+          )}
         </div>
         <div>
           <div style={{ fontSize: 'var(--font-large)', fontWeight: 800, color: '#fff', marginBottom: 4 }}>
@@ -124,21 +144,27 @@ export default function ProfileScreen({ navigate }) {
           <div style={{ fontSize: 'var(--font-body-sm)', color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>
             {user.client_id || ''}
           </div>
+          <div style={{ fontSize: 'var(--font-body-sm)', color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>
+            📍 {user.location || 'Location not available'}
+          </div>
         </div>
       </div>
 
-      {/* Wallet — static placeholder for now */}
+      {/* Reward Points Card */}
       <div style={{
         background: 'var(--bg-surface)', border: '1px solid var(--border)',
         borderRadius: 'var(--radius-lg)', padding: 22, marginBottom: 20,
       }}>
-        <div style={{ fontSize: 'var(--font-body-sm)', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 6 }}>{txt.wallet}</div>
-        <div style={{ fontSize: 'var(--font-xxl)', fontWeight: 800, color: 'var(--text-primary)', marginBottom: 4 }}>Rs 0</div>
-        <div style={{ fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)', marginBottom: 16 }}>No transactions yet</div>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button style={{ flex: 1, padding: '10px 8px', borderRadius: 'var(--radius-sm)', fontSize: 'var(--font-body-sm)', fontWeight: 600, cursor: 'pointer', border: 'none', background: 'var(--accent-blue)', color: '#fff' }}>Top Up</button>
-          <button style={{ flex: 1, padding: '10px 8px', borderRadius: 'var(--radius-sm)', fontSize: 'var(--font-body-sm)', fontWeight: 600, cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)' }}>Transactions</button>
-          <button style={{ flex: 1, padding: '10px 8px', borderRadius: 'var(--radius-sm)', fontSize: 'var(--font-body-sm)', fontWeight: 600, cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)' }}>Withdraw</button>
+        <div style={{ fontSize: 'var(--font-body-sm)', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 6 }}>
+          {txt.rewardPoints}
+        </div>
+        <div style={{ fontSize: 'var(--font-xxl)', fontWeight: 800, color: 'var(--accent-green)', marginBottom: 4 }}>
+          {rewardPoints} pts
+        </div>
+        <div style={{ fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)' }}>
+          {rewardPoints === 0
+            ? 'Complete bookings to earn reward points'
+            : `${rewardPoints} point${rewardPoints > 1 ? 's' : ''} = Rs ${rewardPoints}`}
         </div>
       </div>
 
@@ -153,15 +179,13 @@ export default function ProfileScreen({ navigate }) {
             <button onClick={() => setEditing(true)} style={{
               padding: '8px 16px', borderRadius: 'var(--radius-sm)',
               border: '1px solid var(--accent-blue)', background: 'var(--accent-blue-light)',
-              color: 'var(--accent-blue)', fontSize: 'var(--font-body-sm)',
-              fontWeight: 600, cursor: 'pointer',
+              color: 'var(--accent-blue)', fontSize: 'var(--font-body-sm)', fontWeight: 600, cursor: 'pointer',
             }}>Edit</button>
           ) : (
             <button onClick={handleSave} disabled={saving} style={{
               padding: '8px 16px', borderRadius: 'var(--radius-sm)',
               border: 'none', background: saving ? '#94a3b8' : 'var(--accent-green)',
-              color: '#fff', fontSize: 'var(--font-body-sm)',
-              fontWeight: 600, cursor: saving ? 'wait' : 'pointer',
+              color: '#fff', fontSize: 'var(--font-body-sm)', fontWeight: 600, cursor: saving ? 'wait' : 'pointer',
             }}>{saving ? 'Saving...' : 'Save'}</button>
           )}
         </div>
@@ -169,23 +193,29 @@ export default function ProfileScreen({ navigate }) {
           <div>
             <div style={{ fontSize: 'var(--font-body-sm)', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 4 }}>Name</div>
             {editing ? (
-              <input type="text" value={name} onChange={e => setName(e.target.value)}
-                style={{ width: '100%', padding: '8px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)' }} />
+              <input type="text" value={name} onChange={e => setName(e.target.value)} style={{ width: '100%', padding: '8px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)' }} />
             ) : (
               <div style={{ fontSize: 'var(--font-body)', color: 'var(--text-primary)' }}>{user.name || '—'}</div>
             )}
           </div>
           <div>
-            <div style={{ fontSize: 'var(--font-body-sm)', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 4 }}>Email</div>
+            <div style={{ fontSize: 'var(--font-body-sm)', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 4 }}>Email (private)</div>
             <div style={{ fontSize: 'var(--font-body)', color: 'var(--text-secondary)' }}>{user.email || '—'}</div>
           </div>
           <div>
             <div style={{ fontSize: 'var(--font-body-sm)', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 4 }}>Phone</div>
             {editing ? (
-              <input type="text" value={phone} onChange={e => setPhone(e.target.value)}
-                style={{ width: '100%', padding: '8px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)' }} />
+              <input type="text" value={phone} onChange={e => setPhone(e.target.value)} style={{ width: '100%', padding: '8px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)' }} />
             ) : (
               <div style={{ fontSize: 'var(--font-body)', color: 'var(--text-primary)' }}>{user.phone || '—'}</div>
+            )}
+          </div>
+          <div>
+            <div style={{ fontSize: 'var(--font-body-sm)', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 4 }}>Photo URL</div>
+            {editing ? (
+              <input type="text" value={photoUrl} onChange={e => setPhotoUrl(e.target.value)} placeholder="https://example.com/photo.jpg" style={{ width: '100%', padding: '8px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)' }} />
+            ) : (
+              <div style={{ fontSize: 'var(--font-body)', color: 'var(--text-primary)' }}>{photoUrl || 'No photo set'}</div>
             )}
           </div>
         </div>
@@ -205,7 +235,7 @@ export default function ProfileScreen({ navigate }) {
         <span style={{ color: 'var(--accent-blue)', fontSize: 'var(--font-body-sm)' }}>Upgrade →</span>
       </div>
 
-      {/* Menu items – each rendered by a stable component */}
+      {/* Menu items */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
         {menuItems.map((item, idx) => (
           <MenuRow key={idx} item={item} navigate={navigate} />

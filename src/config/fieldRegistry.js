@@ -25,7 +25,7 @@ const fieldRegistry = {
       fields: [
         { name: 'displayName', type: 'text', labelKey: 'worker.apply.displayName', placeholderKey: 'worker.apply.displayNamePlaceholder', required: false, noteKey: 'worker.apply.displayNameNote' },
         { name: 'phone', type: 'text', labelKey: 'field.phone', placeholderKey: 'field.phonePlaceholder', required: true },
-        { name: 'dob', type: 'datepicker', labelKey: 'worker.apply.dob', placeholderKey: '', required: true, minAge: 18 },
+        { name: 'dob', type: 'date', labelKey: 'worker.apply.dob', placeholderKey: '', required: true, minAge: 18 },
       ],
     },
     {

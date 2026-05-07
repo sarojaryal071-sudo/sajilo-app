@@ -88,16 +88,42 @@ export default function SignupForm({ onSubmit, loading, error, success, navigate
           placeholder={phonePlaceholder} style={i} />
       </div>
 
-      <div>
+            <div>
         <label style={l}>
-          {passwordLabel}
+          {useContent('auth.signup.password.label')}
           <span style={{ color: 'var(--accent-red)', marginLeft: 2 }}>★</span>
         </label>
-        <input type={showPassword?'text':'password'} value={password} onChange={e => setPassword(e.target.value)}
-          placeholder={passwordPlaceholder} style={i} />
-        <span onClick={()=>setShowPassword(!showPassword)} style={{fontSize:13,cursor:'pointer',color:'var(--accent-blue)'}}>
-          {showPassword ? 'Hide' : 'Show'}
-        </span>
+        <div style={{ position: 'relative' }}>
+          <input
+            type={showPassword ? 'text' : 'password'}
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            placeholder={useContent('auth.signup.password.placeholder')}
+            style={{
+              width: '100%',
+              padding: '12px 44px 12px 12px',
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid var(--border)',
+              background: 'var(--bg-surface2)',
+              fontSize: 'var(--font-body)',
+              outline: 'none',
+            }}
+          />
+          <span
+            onClick={() => setShowPassword(!showPassword)}
+            style={{
+              position: 'absolute',
+              right: 12,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              cursor: 'pointer',
+              fontSize: 16,
+              userSelect: 'none',
+            }}
+          >
+            {showPassword ? '🙈' : '👁'}
+          </span>
+        </div>
       </div>
 
       <div>
