@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { api } from '../services/api.js'
+import { api, API_URL } from '../services/api.js'
 import ConfigContainer from '../components/ConfigContainer.jsx'
 import BannerCarousel from '../components/BannerCarousel.jsx'
 import WorkerCard from '../components/WorkerCard.jsx'
@@ -74,7 +74,7 @@ export default function HomeScreen({ navigate, t }) {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/workers/categories')
+        const res = await fetch(`${API_URL}/workers/categories`)
         const json = await res.json()
         if (json.success && Array.isArray(json.data)) {
           setCategories(json.data)
@@ -105,11 +105,11 @@ export default function HomeScreen({ navigate, t }) {
   const iconStyle = useStyle('homeServiceIcon')
   const labelStyle = useStyle('homeServiceLabel')
 
-  // Dynamic primary / secondary split (matching previous hardcoded logic)
+  // Dynamic primary / secondary split
   const primaryServices = categories.filter(c => c.enabled).slice(0, 6)
   const secondaryServices = categories.filter(c => c.enabled).slice(6)
 
-  // ── Filter workers for the currently stacked category ──
+  // Filter workers for the currently stacked category
   const stackedWorkers = stackedCategory
     ? workers.filter(w => {
         const cat = categories.find(c => c.role === stackedCategory)
@@ -144,14 +144,14 @@ export default function HomeScreen({ navigate, t }) {
           iconStyle={iconStyle}
           labelStyle={{
             ...labelStyle,
-            fontSize: '11px',   // smaller for grid tiles
+            fontSize: '11px',
           }}
         />
       ))}
     </div>
   )
 
-  // Desktop stacked view – LOCKED SCROLL
+  // Desktop stacked view
   if (stackedCategory) {
     return (
       <div style={{ height: 'calc(100vh - 140px)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>

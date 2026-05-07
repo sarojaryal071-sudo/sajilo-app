@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { api } from '../services/api.js'
+import { api, API_URL } from '../services/api.js'
 import { useContent } from '../hooks/useContent.js'
 import { getSocket } from '../services/realtime/socketClient'
 
@@ -15,7 +15,7 @@ export default function SearchScreen({ navigate }) {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/locations?status=available')
+        const res = await fetch(`${API_URL}/locations?status=available`)
         const json = await res.json()
         if (json.success) setLocations(json.data || [])
       } catch (err) {
@@ -42,7 +42,7 @@ export default function SearchScreen({ navigate }) {
     placeholder: useContent('search.placeholder'),
     all: useContent('search.all'),
     topRated: useContent('search.topRated'),
-    availableNow: useContent('search.availableNow'),   // keep for possible future use
+    availableNow: useContent('search.availableNow'),
     noResults: useContent('search.noResults'),
     verified: useContent('search.verified'),
     locationLabel: useContent('search.locationLabel') || 'Service Area',
