@@ -3,6 +3,8 @@ import { useLocation } from 'react-router-dom'
 import navbar from '../config/ui/navbar.config.js'
 import { useFeatureFlag } from '../hooks/useFeatureFlag.js'
 import { useNotification } from '../contexts/NotificationContext.jsx'
+import conversationState from '../services/chat/ConversationStateManager.js'
+
 console.log("NAVBAR ACTIVE FILE:", import.meta.url)
 console.log("LOADED NAVBAR FILE:", import.meta.url)
 
@@ -33,6 +35,13 @@ export default function Navbar({ dark, setDark, lang, setLang, navigate, t, onSO
   const sosEnabled = useFeatureFlag('sosEmergency')
   const notifEnabled = useFeatureFlag('notifications')
   const { notifications, unreadCount } = useNotification()
+
+  // Conversation unread count
+  const [convUnread, setConvUnread] = useState(() => conversationState.getUnreadCount())
+  useEffect(() => {
+    const unsub = conversationState.onChange(count => setConvUnread(count))
+    return unsub
+  }, [])
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -100,13 +109,13 @@ export default function Navbar({ dark, setDark, lang, setLang, navigate, t, onSO
             position: 'relative',
           }}>
             🔔
-            {unreadCount > 0 && (
+            {unreadCount + convUnread > 0 && (
               <span style={{
                 position: 'absolute', top: -4, right: -4,
                 background: 'var(--accent-red)', color: '#fff',
                 fontSize: 10, fontWeight: 700, width: 18, height: 18,
                 borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>{unreadCount}</span>
+              }}>{unreadCount + convUnread}</span>
             )}
           </button>
 

@@ -8,6 +8,33 @@ import { useStyle } from '../hooks/useStyle.js'
 import { useIsMobile } from '../hooks/useIsMobile.js'
 import { getSocket } from '../services/realtime/socketClient'
 
+// ── Helper for horizontal category buttons (hooks safe) ──
+function CategoryButton({ service, isActive, onClick }) {
+  const icon = useContent(`category.icon.${service.role}`, '🔧')
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        padding: '8px 16px',
+        borderRadius: 20,
+        border: isActive ? '2px solid var(--accent-blue)' : '1px solid var(--border)',
+        background: isActive ? 'var(--accent-blue-light)' : 'var(--bg-surface)',
+        color: isActive ? 'var(--accent-blue)' : 'var(--text-secondary)',
+        fontSize: 'var(--font-body-sm)',
+        fontWeight: 500,
+        cursor: 'pointer',
+        whiteSpace: 'nowrap',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6,
+      }}
+    >
+      <span>{icon}</span>
+      <span>{service.label}</span>
+    </button>
+  )
+}
+
 // ── Helper component for grid tiles (vertical icon + label) ──
 function ServiceTile({ service, isSelected, onClick, cardStyle, iconStyle, labelStyle }) {
   const icon = useContent(`category.icon.${service.role}`, service.label?.charAt(0) || '🔧')
@@ -25,25 +52,6 @@ function ServiceTile({ service, isSelected, onClick, cardStyle, iconStyle, label
         {icon}
       </div>
       <span style={{ ...labelStyle, textAlign: 'center' }}>{service.label}</span>
-    </div>
-  )
-}
-
-// ── Helper component for stacked list (horizontal icon + label) ──
-function ServiceStackItem({ service, isSelected, onClick, cardStyle }) {
-  const icon = useContent(`category.icon.${service.role}`, service.label?.charAt(0) || '🔧')
-  return (
-    <div
-      onClick={onClick}
-      style={{
-        ...cardStyle,
-        display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
-        border: isSelected ? '2px solid var(--accent-blue)' : cardStyle.border,
-        padding: '10px 14px',
-      }}
-    >
-      <span style={{ fontSize: 18 }}>{icon}</span>
-      <span style={{ fontSize: 'var(--font-body-sm)', fontWeight: 500, color: 'var(--text-primary)' }}>{service.label}</span>
     </div>
   )
 }
@@ -71,7 +79,7 @@ export default function HomeScreen({ navigate, t }) {
     })()
   }, [])
 
-    // Live update when a worker toggles online/offline
+  // Live update when a worker toggles online/offline
   useEffect(() => {
     const socket = getSocket()
     if (!socket) return
@@ -165,10 +173,10 @@ export default function HomeScreen({ navigate, t }) {
     </div>
   )
 
-  // Desktop stacked view
+  // Expanded category view — horizontal filter bar + worker grid
   if (stackedCategory) {
     return (
-      <div style={{ height: 'calc(100vh - 140px)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <div>
         <h2 style={welcomeTitleStyle}>{txt.welcome}</h2>
         <p style={welcomeSubStyle}>{txt.subtitle}</p>
 
@@ -180,46 +188,40 @@ export default function HomeScreen({ navigate, t }) {
           width: 'fit-content',
         }}>← {txt.back}</button>
 
-        <div style={{ display: 'flex', gap: 20, flex: 1, minHeight: 0 }}>
-          <div style={{
-            width: 220, flexShrink: 0,
-            overflowY: 'auto',
-            paddingRight: 8,
-          }}>
-            <h3 style={{ ...sectionTitleStyle, marginBottom: 12 }}>{txt.primary}</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {categoryStack.map(service => (
-                <ServiceStackItem
-                  key={service.role}
-                  service={service}
-                  isSelected={stackedCategory === service.role}
-                  onClick={() => setStackedCategory(service.role)}
-                  cardStyle={cardStyle}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div style={{ flex: 1, overflowY: 'auto' }}>
-            <h3 style={sectionTitleStyle}>
-              {categories.find(c => c.role === stackedCategory)?.label || ''} — {txt.nearbyWorkers}
-            </h3>
-            {stackedWorkers.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-secondary)' }}>
-                <div style={{ fontSize: 40, marginBottom: 8 }}>👷</div>
-                <p>{txt.noWorkers}</p>
-              </div>
-            ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
-                {stackedWorkers.map(worker => (
-                  <div key={worker.id} onClick={() => navigate(`/detail/${worker.id}`)} style={{ cursor: 'pointer' }}>
-                    <WorkerCard worker={worker} />
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+        {/* Horizontal scrollable category buttons */}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 20, overflowX: 'auto', paddingBottom: 8 }}>
+          {categoryStack.map(service => (
+            <CategoryButton
+              key={service.role}
+              service={service}
+              isActive={stackedCategory === service.role}
+              onClick={() => setStackedCategory(service.role)}
+            />
+          ))}
         </div>
+
+        {/* Workers grid */}
+        <h3 style={sectionTitleStyle}>
+          {categories.find(c => c.role === stackedCategory)?.label || ''} — {txt.nearbyWorkers}
+        </h3>
+        {stackedWorkers.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-secondary)' }}>
+            <div style={{ fontSize: 40, marginBottom: 8 }}>👷</div>
+            <p>{txt.noWorkers}</p>
+          </div>
+        ) : (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr))',
+            gap: 16,
+          }}>
+            {stackedWorkers.map(worker => (
+              <div key={worker.id} onClick={() => navigate(`/detail/${worker.id}`)} style={{ cursor: 'pointer' }}>
+                <WorkerCard worker={worker} />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     )
   }

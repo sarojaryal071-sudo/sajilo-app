@@ -31,9 +31,12 @@ import AdminCustomers from '../screens/admin/AdminCustomers.jsx'
 import WorkerPending from '../screens/worker/WorkerPending.jsx'
 import WorkerApply from '../screens/worker/WorkerApply.jsx'
 import AdminChat from '../screens/admin/AdminChat.jsx'
-
+import InboxScreen from '../screens/InboxScreen.jsx'
 
 const routes = [
+  { path: '/inbox', component: InboxScreen, role: 'customer' },
+  { path: '/inbox', component: InboxScreen, role: 'worker' },
+
   // Add as first route:
 { path: '/welcome', component: WelcomeScreen, public: true },
 
@@ -57,7 +60,7 @@ const routes = [
   { path: '/worker/earnings', component: WorkerEarnings, role: 'worker' },
   { path: '/worker/schedule', component: WorkerSchedule, role: 'worker' },
   { path: '/worker/profile', component: WorkerProfile, role: 'worker' },
-
+  
   { path: '/admin/dashboard', component: AdminDashboard, role: 'admin' },
   { path: '/admin/users', component: AdminUsers, role: 'admin' },
   { path: '/admin/workers', component: AdminWorkers, role: 'admin' },
