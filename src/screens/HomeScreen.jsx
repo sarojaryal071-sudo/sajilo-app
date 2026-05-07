@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { services } from '../config/data.js'
 import { api } from '../services/api.js'
 import ConfigContainer from '../components/ConfigContainer.jsx'
 import BannerCarousel from '../components/BannerCarousel.jsx'
@@ -8,14 +7,53 @@ import { useContent } from '../hooks/useContent.js'
 import { useStyle } from '../hooks/useStyle.js'
 import { useIsMobile } from '../hooks/useIsMobile.js'
 
-const primaryServices = services.slice(0, 6)
-const secondaryServices = services.slice(6)
+// ── Helper component for grid tiles (vertical icon + label) ──
+function ServiceTile({ service, isSelected, onClick, cardStyle, iconStyle, labelStyle }) {
+  const icon = useContent(`category.icon.${service.role}`, service.label?.charAt(0) || '🔧')
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        ...cardStyle,
+        display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer',
+        border: isSelected ? '2px solid var(--accent-blue)' : cardStyle.border,
+        transition: 'border-color 0.12s',
+      }}
+    >
+      <div style={{ ...iconStyle, background: service.bg || '#F0F2F6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {icon}
+      </div>
+      <span style={{ ...labelStyle, textAlign: 'center' }}>{service.label}</span>
+    </div>
+  )
+}
+
+// ── Helper component for stacked list (horizontal icon + label) ──
+function ServiceStackItem({ service, isSelected, onClick, cardStyle }) {
+  const icon = useContent(`category.icon.${service.role}`, service.label?.charAt(0) || '🔧')
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        ...cardStyle,
+        display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
+        border: isSelected ? '2px solid var(--accent-blue)' : cardStyle.border,
+        padding: '10px 14px',
+      }}
+    >
+      <span style={{ fontSize: 18 }}>{icon}</span>
+      <span style={{ fontSize: 'var(--font-body-sm)', fontWeight: 500, color: 'var(--text-primary)' }}>{service.label}</span>
+    </div>
+  )
+}
 
 export default function HomeScreen({ navigate, t }) {
   const [stackedCategory, setStackedCategory] = useState(null)
   const [selectedCategory, setSelectedCategory] = useState(null)
-  const [workers, setWorkers] = useState([])   // ← real workers from backend
+  const [workers, setWorkers] = useState([])
   const [loading, setLoading] = useState(true)
+  const [categories, setCategories] = useState([])
+  const [categoriesLoading, setCategoriesLoading] = useState(true)
   const isMobile = useIsMobile()
 
   // Fetch all online workers on mount
@@ -28,6 +66,23 @@ export default function HomeScreen({ navigate, t }) {
         console.error('Failed to load workers', err)
       } finally {
         setLoading(false)
+      }
+    })()
+  }, [])
+
+  // Fetch enabled professions from backend
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('http://localhost:5000/api/workers/categories')
+        const json = await res.json()
+        if (json.success && Array.isArray(json.data)) {
+          setCategories(json.data)
+        }
+      } catch (err) {
+        console.error('Failed to load categories', err)
+      } finally {
+        setCategoriesLoading(false)
       }
     })()
   }, [])
@@ -50,22 +105,26 @@ export default function HomeScreen({ navigate, t }) {
   const iconStyle = useStyle('homeServiceIcon')
   const labelStyle = useStyle('homeServiceLabel')
 
+  // Dynamic primary / secondary split (matching previous hardcoded logic)
+  const primaryServices = categories.filter(c => c.enabled).slice(0, 6)
+  const secondaryServices = categories.filter(c => c.enabled).slice(6)
+
   // ── Filter workers for the currently stacked category ──
   const stackedWorkers = stackedCategory
     ? workers.filter(w => {
-        const cat = services.find(s => s.id === stackedCategory)
+        const cat = categories.find(c => c.role === stackedCategory)
         if (!cat) return false
-        const catName = cat.name?.toLowerCase()
+        const catRole = cat.role?.toLowerCase()
         const primary = (w.primary_skill || '').toLowerCase()
         const secondary = (w.secondary_roles || []).map(s => s.toLowerCase())
-        return primary === catName || secondary.includes(catName)
+        return primary === catRole || secondary.includes(catRole)
       })
     : []
 
-  const buildStack = (clickedId) => {
-    const clicked = services.find(s => s.id === clickedId)
-    const others = services.filter(s => s.id !== clickedId)
-    return [clicked, ...others]
+  const buildStack = (clickedRole) => {
+    const clicked = categories.find(c => c.role === clickedRole)
+    const others = categories.filter(c => c.role !== clickedRole)
+    return clicked ? [clicked, ...others] : others
   }
 
   const categoryStack = stackedCategory ? buildStack(stackedCategory) : []
@@ -73,29 +132,26 @@ export default function HomeScreen({ navigate, t }) {
   const renderTileGrid = (serviceList) => (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 28 }}>
       {serviceList.map(service => (
-        <div
-          key={service.id}
+        <ServiceTile
+          key={service.role}
+          service={service}
+          isSelected={selectedCategory === service.role}
           onClick={() => {
-            setStackedCategory(service.id)
-            setSelectedCategory(service.id)
+            setStackedCategory(service.role)
+            setSelectedCategory(service.role)
           }}
-          style={{
-            ...cardStyle,
-            display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer',
-            border: selectedCategory === service.id ? '2px solid var(--accent-blue)' : cardStyle.border,
-            transition: 'border-color 0.12s',
+          cardStyle={cardStyle}
+          iconStyle={iconStyle}
+          labelStyle={{
+            ...labelStyle,
+            fontSize: '11px',   // smaller for grid tiles
           }}
-        >
-          <div style={{ ...iconStyle, background: service.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {service.icon}
-          </div>
-          <span style={{ ...labelStyle, textAlign: 'center' }}>{service.name}</span>
-        </div>
+        />
       ))}
     </div>
   )
 
-  // Desktop stacked view — LOCKED SCROLL
+  // Desktop stacked view – LOCKED SCROLL
   if (stackedCategory) {
     return (
       <div style={{ height: 'calc(100vh - 140px)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
@@ -119,26 +175,20 @@ export default function HomeScreen({ navigate, t }) {
             <h3 style={{ ...sectionTitleStyle, marginBottom: 12 }}>{txt.primary}</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {categoryStack.map(service => (
-                <div
-                  key={service.id}
-                  onClick={() => setStackedCategory(service.id)}
-                  style={{
-                    ...cardStyle,
-                    display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
-                    border: stackedCategory === service.id ? '2px solid var(--accent-blue)' : cardStyle.border,
-                    padding: '10px 14px',
-                  }}
-                >
-                  <span style={{ fontSize: 20 }}>{service.icon}</span>
-                  <span style={{ fontSize: 'var(--font-body-sm)', fontWeight: 500, color: 'var(--text-primary)' }}>{service.name}</span>
-                </div>
+                <ServiceStackItem
+                  key={service.role}
+                  service={service}
+                  isSelected={stackedCategory === service.role}
+                  onClick={() => setStackedCategory(service.role)}
+                  cardStyle={cardStyle}
+                />
               ))}
             </div>
           </div>
 
           <div style={{ flex: 1, overflowY: 'auto' }}>
             <h3 style={sectionTitleStyle}>
-              {services.find(s => s.id === stackedCategory)?.name} — {txt.nearbyWorkers}
+              {categories.find(c => c.role === stackedCategory)?.label || ''} — {txt.nearbyWorkers}
             </h3>
             {stackedWorkers.length === 0 ? (
               <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-secondary)' }}>

@@ -11,6 +11,15 @@ export default function WorkerCard({ worker }) {
   const ratingStyle = useStyle('homeWorkerRating')
   const etaStyle = useStyle('homeWorkerEta')
 
+  // Helpers
+  const primaryProfession = worker.primary_skill || worker.role || 'General Service'
+  const secondaryList = (worker.secondary_roles || []).filter(r => r !== primaryProfession)
+  const allProfessions = [primaryProfession, ...secondaryList].join(', ')
+  const priceRange = worker.hourly_rate
+    ? `Rs ${worker.hourly_rate}/hr`
+    : 'Rate not set'
+  const isOnline = worker.is_online ?? false
+
   return (
     <div style={{
       background: cardStyle.background || 'var(--bg-surface)',
@@ -19,9 +28,10 @@ export default function WorkerCard({ worker }) {
       overflow: 'hidden',
       cursor: 'pointer',
     }}>
+      {/* Photo / Avatar */}
       <div style={{
         height: iconAreaStyle.height || cards.workerCard.iconArea.height,
-        background: worker.bg,
+        background: worker.bg || 'var(--accent-blue-light)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -56,40 +66,60 @@ export default function WorkerCard({ worker }) {
         )}
       </div>
 
+      {/* Info section */}
       <div style={{ padding: infoStyle.padding || cards.workerCard.info.padding }}>
+        {/* Name + online dot */}
         <div style={{
           fontSize: nameStyle.fontSize || cards.workerCard.info.nameSize,
           fontWeight: nameStyle.fontWeight || 600,
           color: 'var(--text-primary)',
           marginBottom: 2,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
         }}>
           {worker.name}
+          {isOnline && (
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent-green)' }} />
+          )}
         </div>
+
+        {/* Worker ID */}
+        <div style={{
+          fontSize: 'var(--font-body-sm)',
+          color: 'var(--text-secondary)',
+          marginBottom: 2,
+          fontWeight: 500,
+        }}>
+          {worker.client_id || ''}
+        </div>
+
+        {/* Professions */}
         <div style={{
           fontSize: roleStyle.fontSize || 'var(--font-body-sm)',
           color: roleStyle.color || 'var(--text-secondary)',
           marginBottom: 2,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 4,
         }}>
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent-green)' }} />
-          {worker.role}
+          {allProfessions}
         </div>
+
+        {/* Location + Distance placeholder (GPS later) */}
         <div style={{
           fontSize: 'var(--font-body-sm)',
           color: 'var(--text-secondary)',
           marginBottom: 6,
         }}>
-          📍 {worker.location} · {worker.distance}
+          📍 {worker.service_area || '—'} · {worker.distance || '—'}
         </div>
+
+        {/* Price & Rating */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{
             fontSize: ratingStyle.fontSize || 'var(--font-body-sm)',
             fontWeight: ratingStyle.fontWeight || 600,
             color: 'var(--text-primary)',
           }}>
-            ★ {worker.rating}
+            ⭐ {worker.rating || '—'}
           </span>
           <span style={{
             fontSize: etaStyle.fontSize || cards.workerCard.info.etaBadge.fontSize,
@@ -99,7 +129,7 @@ export default function WorkerCard({ worker }) {
             padding: etaStyle.padding || cards.workerCard.info.etaBadge.padding,
             borderRadius: etaStyle.borderRadius || cards.workerCard.info.etaBadge.borderRadius,
           }}>
-            {worker.eta}
+            {priceRange}
           </span>
         </div>
       </div>

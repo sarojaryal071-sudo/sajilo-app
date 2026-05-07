@@ -152,6 +152,11 @@ const contentRegistry = {
   'category.primary': { en: 'Our Services', ne: 'हाम्रा सेवाहरू' },
   'category.secondary': { en: 'More Services', ne: 'थप सेवाहरू' },
   'category.all': { en: 'All', ne: 'सबै' },
+  'category.icon.electrician': { en: '⚡' },
+  'category.icon.plumber': { en: '🔧' },
+  'category.icon.cleaner': { en: '🧹' },
+  'category.icon.painter': { en: '🖌️' },
+  'category.icon.carpenter': { en: '🪚' },
 
   // ═══════════════════════════════════════
   // WORKER — DASHBOARD
@@ -178,7 +183,7 @@ const contentRegistry = {
   'worker.title': { en: 'Worker', ne: 'कामदार' },
   'worker.logout': { en: 'Logout', ne: 'लगआउट' },
   'worker.activeJobInProgress': { en: 'Active Job in Progress', ne: 'सक्रिय काम जारी छ' },
-
+'search.locationLabel': { en: 'Service Area', ne: 'सेवा क्षेत्र' },
   // ═══════════════════════════════════════
   // WORKER — PENDING / APPLICATION
   // ═══════════════════════════════════════

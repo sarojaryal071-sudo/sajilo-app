@@ -53,14 +53,7 @@ const fieldRegistry = {
       titleKey: 'worker.apply.cardLocation',
       fields: [
         { name: 'address', type: 'textarea', labelKey: 'worker.apply.address', placeholderKey: 'worker.apply.addressPlaceholder', required: true },
-                { name: 'serviceArea', type: 'select', labelKey: 'worker.apply.serviceArea', placeholderKey: 'worker.apply.serviceAreaPlaceholder', required: true, options: [
-          // Admin-configured available cities — reads from contentRegistry keys
-          { value: 'kathmandu', labelKey: 'city.kathmandu', group: 'available' },
-          { value: 'lalitpur', labelKey: 'city.lalitpur', group: 'available' },
-          { value: 'bhaktapur', labelKey: 'city.bhaktapur', group: 'available' },
-          { value: 'pokhara', labelKey: 'city.pokhara', group: 'comingSoon' },
-          { value: 'chitwan', labelKey: 'city.chitwan', group: 'comingSoon' },
-        ]},
+        { name: 'serviceArea', type: 'select', labelKey: 'worker.apply.serviceArea', placeholderKey: 'worker.apply.serviceAreaPlaceholder', required: true, options: [] },
       ],
     },
     {

@@ -43,7 +43,7 @@ export default function DetailScreen({ navigate, workerId }) {
   }
 
   const txt = {
-    back: useContent('auth.signup.loginLink'),
+    back: useContent('detail.back', '← Back'),
     selectJob: useContent('detail.selectJob'),
     small: useContent('detail.small'),
     medium: useContent('detail.medium'),

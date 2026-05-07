@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import fieldRegistry from '../../config/fieldRegistry.js'
 import contentRegistry from '../../config/contentRegistry.js'
 import { allRequiredFilled } from '../../utils/validateFields.js'
 import { adminAnimationConfig } from '../../config/adminAnimations.js'
-
+import { API_URL } from '../../services/api.js'
 
 function getContent(key, fallback = '') {
   const lang = localStorage.getItem('sajilo_lang') || 'en'
@@ -26,8 +26,24 @@ export default function WorkerApply({ onUserRefresh }) {
   const [showPasswords, setShowPasswords] = useState({})
   const [showConfirm, setShowConfirm] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [serviceAreaOptions, setServiceAreaOptions] = useState([])
   const shake = adminAnimationConfig?.shakeError || {}
   const errBorder = (val) => showErrors && !val ? `1px solid ${shake.borderColor || 'var(--accent-red)'}` : '1px solid var(--border)'
+
+  // Fetch available service areas from backend
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(`${API_URL}/locations?status=available`)
+        const json = await res.json()
+        if (json.success) {
+          setServiceAreaOptions(json.data || [])
+        }
+      } catch (err) {
+        console.error('Failed to load locations', err)
+      }
+    })()
+  }, [])
 
   const currentCard = CARDS[currentCardIndex] || { titleKey: '', fields: [] }
   const cardTitle = getContent(currentCard.titleKey, 'Worker Application')
@@ -403,10 +419,16 @@ export default function WorkerApply({ onUserRefresh }) {
         }
 
         // ── Select ──
-                if (field.type === 'select') {
+        if (field.type === 'select') {
+          // Dynamic options for serviceArea
+          let options = field.options || [];
+          if (field.name === 'serviceArea') {
+            options = serviceAreaOptions;
+          }
+
           // Group options by availability if they have a 'group' field
           const groups = {}
-          ;(field.options || []).forEach(o => {
+          options.forEach(o => {
             const g = o.group || 'available'
             if (!groups[g]) groups[g] = []
             groups[g].push(o)
@@ -431,7 +453,7 @@ export default function WorkerApply({ onUserRefresh }) {
                     </optgroup>
                   ))
                 ) : (
-                  (field.options || []).map(o => (
+                  options.map(o => (
                     <option key={o.value} value={o.value}>{getContent(o.labelKey, o.value)}</option>
                   ))
                 )}
