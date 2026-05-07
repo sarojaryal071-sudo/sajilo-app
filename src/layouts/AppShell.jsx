@@ -15,7 +15,6 @@ import WorkerLayout from './WorkerLayout.jsx'
 import AdminMobileBlock from '../screens/admin/AdminMobileBlock.jsx'
 import AdminLayout from './AdminLayout.jsx'
 import { WorkerProvider } from '../contexts/WorkerContext.jsx'
-import CommunicationCenter from '../components/chat/CommunicationCenter.jsx'
 import { reconnectSocket } from '../services/realtime/socketClient.js'
 import { BookingProvider } from '../contexts/BookingContext.jsx'
 import AuthFlow from '../navigation/AuthFlow.jsx'
@@ -121,7 +120,6 @@ export default function AppShell() {
       return (
         <>
           <Component navigate={navigate} t={t} onLogin={handleLogin} />
-          {localStorage.getItem('sajilo_worker_application') && <CommunicationCenter />}
         </>
       )
     }
@@ -151,7 +149,6 @@ export default function AppShell() {
         })}
       </Routes>
     </main>
-    {(user || location.pathname === '/worker/pending' || localStorage.getItem('sajilo_worker_application')) && <CommunicationCenter />}
   </WorkerLayout>
 )
   }
@@ -200,7 +197,6 @@ export default function AppShell() {
       </div>
       {showLayout && <MobileBottomNav navigate={navigate} t={t} onMore={() => setShowDrawer(!showDrawer)} onSOS={() => setShowSOS(true)} />}
       <MobileDrawer isOpen={showDrawer} onClose={() => setShowDrawer(false)} navigate={navigate} t={t} lang={lang} setLang={setLang} />
-      {(user || location.pathname === '/worker/pending' || localStorage.getItem('sajilo_worker_application')) && <CommunicationCenter />}
       {showSOS && <EmergencyModal onClose={() => setShowSOS(false)} />}
       <style>{`
         @media (max-width: 768px) {

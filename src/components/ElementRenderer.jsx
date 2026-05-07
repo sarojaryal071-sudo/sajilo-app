@@ -73,36 +73,29 @@ function JobRow({ booking, statusBadgeKeys, onAction, w, c, r, s, overrideStyles
         </div>
       </div>
 
-      {/* Action buttons */}
-      <div style={{ display: 'flex', gap: w.jobs?.actions?.gap || '8px' }}>
-        {resolveBookingActions(booking).map((btn, i) => (
+            {/* Message button – visible after acceptance */}
+      {booking.status !== 'pending' && booking.id && (
+        <div style={{ marginTop: 8, textAlign: 'right' }}>
           <button
-            key={btn.id}
-                        // TEMPORARY – bypass prop chain, call dispatcher directly (same as all other working buttons)
-            // Old: onClick={() => onAction?.(booking.id, btn.action)}
-            onClick={async () => {
-              try {
-                await dispatchBookingCommand({ action: btn.action, bookingId: booking.id });
-              } catch (err) {
-                alert(err.message || 'Action failed');
-              }
+            onClick={(e) => {
+              e.stopPropagation()
+              window.location.href = `/inbox?bookingId=${booking.id}`
             }}
             style={{
-              padding: '8px 16px',
-              borderRadius: '8px',
-              border: btn.variant === 'danger' ? '1px solid var(--border)' : 'none',
-              background: btn.variant === 'success' ? 'var(--accent-green)' :
-                           btn.variant === 'danger' ? 'transparent' : 'var(--accent-blue)',
-              color: btn.variant === 'danger' ? 'var(--text-secondary)' : '#fff',
-              cursor: 'pointer',
-              fontSize: '14px',
+              padding: '6px 14px',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--accent-blue)',
+              background: 'var(--accent-blue-light)',
+              color: 'var(--accent-blue)',
+              fontSize: 12,
               fontWeight: 600,
+              cursor: 'pointer',
             }}
           >
-            {btn.label}
+            💬 Message
           </button>
-        ))}
-      </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -1712,14 +1705,32 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
                   </span>
                 </div>
 
-                {/* Chat placeholder */}
+                {/* Message button – navigates to Inbox */}
                 {chatVisible && (
                   <div style={{
-                    borderTop: '1px solid var(--border)', paddingTop: '10px', marginTop: '10px', textAlign: 'center',
+                    borderTop: '1px solid var(--border)', paddingTop: '10px', marginTop: '10px',
+                    textAlign: 'center',
                   }}>
-                    <span style={{ fontSize: 'var(--font-caption)', color: 'var(--text-secondary)' }}>
-                      💬 Chat available here
-                    </span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (booking.id) {
+                          window.location.href = `/inbox?bookingId=${booking.id}`
+                        }
+                      }}
+                      style={{
+                        padding: '8px 16px',
+                        borderRadius: 'var(--radius-sm)',
+                        border: '1px solid var(--accent-blue)',
+                        background: 'var(--accent-blue-light)',
+                        color: 'var(--accent-blue)',
+                        fontSize: 'var(--font-caption)',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      💬 Message
+                    </button>
                   </div>
                 )}
               </div>

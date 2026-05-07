@@ -212,8 +212,10 @@ export default function HomeScreen({ navigate, t }) {
         ) : (
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr))',
+            gridTemplateColumns: 'repeat(3, 1fr)',
             gap: 16,
+            maxWidth: 800,
+            margin: '0 auto',
           }}>
             {stackedWorkers.map(worker => (
               <div key={worker.id} onClick={() => navigate(`/detail/${worker.id}`)} style={{ cursor: 'pointer' }}>

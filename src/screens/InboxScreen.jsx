@@ -1,30 +1,49 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useContent } from '../hooks/useContent.js'
 import { useSocket } from '../hooks/useSocket.js'
 import { useNotification } from '../contexts/NotificationContext.jsx'
 import conversationState from '../services/chat/ConversationStateManager.js'
 
-const SUPPORT_ID = 32   // localhost admin; will be replaced by environment later
+// ── Soft‑coded text fallbacks ──
+const FALLBACK_ADMIN_ID = 32   // only used if the endpoint fails
 
 export default function InboxScreen() {
-  const [activeTab, setActiveTab] = useState('messages')   // 'messages' | 'notifications'
+  const [searchParams] = useSearchParams()
+  const targetBookingId = searchParams.get('bookingId') // e.g. /inbox?bookingId=7
+
+  const [activeTab, setActiveTab] = useState('messages')
   const [conversations, setConversations] = useState([])
   const [activeConv, setActiveConv] = useState(null)
   const [messages, setMessages] = useState([])
   const [chatInput, setChatInput] = useState('')
   const [unreadConversations, setUnreadConversations] = useState(conversationState.getUnreadCount())
+  const [adminId, setAdminId] = useState(FALLBACK_ADMIN_ID)   // dynamic admin ID
   const messagesEndRef = useRef(null)
 
   const { socket } = useSocket()
   const { notifications, unreadCount: notifUnread } = useNotification()
 
-  // ── Soft‑coded text ──
+  // ── Fetch the real admin ID on mount ──
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('http://localhost:5000/api/admin/support')
+        const json = await res.json()
+        if (json.success && json.data?.id) {
+          setAdminId(json.data.id)
+        }
+      } catch (err) { /* keep fallback */ }
+    })()
+  }, [])
+
+  // ── Soft‑coded labels ──
   const tabMessages = useContent('inbox.tab.messages', 'Messages')
   const tabNotifications = useContent('inbox.tab.notifications', 'Notifications')
-  const chatTitle = useContent('chat.title', 'Support Chat')
   const chatPlaceholder = useContent('chat.placeholder', 'Type your message...')
   const chatSend = useContent('chat.send', 'Send')
   const newChatLabel = useContent('chat.newChat', 'New Message')
+  const liveSupportLabel = useContent('chat.liveSupport', 'Live Support')
   const backLabel = useContent('chat.back', '← Back')
   const noConversations = useContent('chat.noConversations', 'No conversations yet')
   const noNotifications = useContent('notifications.empty', 'No notifications yet')
@@ -37,16 +56,26 @@ export default function InboxScreen() {
     return unsub
   }, [])
 
-  // ── Load conversations ──
+  // ── Load conversations + auto‑open booking conversation if requested ──
   useEffect(() => {
     const token = localStorage.getItem('sajilo_token')
     if (!token) return
+
     fetch('http://localhost:5000/api/chat/conversations', {
       headers: { Authorization: `Bearer ${token}` }
     }).then(r => r.json()).then(d => {
-      if (d.data?.length > 0) setConversations(d.data)
+      const list = d.data || []
+      setConversations(list)
+
+      // If a bookingId was passed in the URL, find its conversation and open it
+      if (targetBookingId && list.length > 0) {
+        const targetConv = list.find(c => c.booking_id === Number(targetBookingId))
+        if (targetConv) {
+          openConversation(targetConv)
+        }
+      }
     })
-  }, [])
+  }, [targetBookingId])
 
   // ── Socket listeners ──
   useEffect(() => {
@@ -65,7 +94,6 @@ export default function InboxScreen() {
     }
   }, [socket, activeConv])
 
-  // ── Auto‑scroll ──
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
@@ -74,7 +102,7 @@ export default function InboxScreen() {
     if (!chatInput.trim() || !activeConv) return
     const text = chatInput.trim()
     socket.emit('send_message', {
-      receiverId: activeConv.other_id || SUPPORT_ID,
+      receiverId: activeConv.other_id || adminId,
       text,
       bookingId: activeConv.booking_id || null,
     })
@@ -84,7 +112,7 @@ export default function InboxScreen() {
 
   const openConversation = async (conv) => {
     setActiveConv(conv)
-    conversationState.setRead(conv.id)          // mark as read
+    conversationState.setRead(conv.id)
     const token = localStorage.getItem('sajilo_token')
     try {
       const res = await fetch(`http://localhost:5000/api/chat/conversations/${conv.id}/messages`, {
@@ -96,17 +124,15 @@ export default function InboxScreen() {
         from: msg.sender_role === 'admin' ? 'support' : 'user'
       }))
       setMessages(normalized)
-    } catch (e) {
-      console.error(e)
-    }
+    } catch (e) { console.error(e) }
   }
 
-  const openNewChat = () => {
-    setActiveConv({ id: 'new', name: 'Support Chat', other_id: SUPPORT_ID })
+  const openNewSupportChat = () => {
+    // Create a fresh conversation with admin
+    setActiveConv({ id: 'new', name: 'Support Chat', other_id: adminId, booking_id: null })
     setMessages([])
   }
 
-  // ── Layout ──
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', maxWidth: 800, margin: '0 auto', width: '100%' }}>
       {/* Tab bar */}
@@ -202,13 +228,15 @@ export default function InboxScreen() {
             </div>
           ) : (
             <div>
-              <button onClick={openNewChat} style={{
+              {/* Live Support button */}
+              <button onClick={openNewSupportChat} style={{
                 display: 'flex', alignItems: 'center', gap: 8,
                 margin: '12px 16px', padding: '10px 14px',
                 borderRadius: 'var(--radius-md)', border: '1px solid var(--accent-blue)',
                 background: 'var(--accent-blue-light)', color: 'var(--accent-blue)',
-                fontSize: 13, fontWeight: 600, cursor: 'pointer'
-              }}>✏️ {newChatLabel}</button>
+                fontSize: 13, fontWeight: 600, cursor: 'pointer', width: 'calc(100% - 32px)'
+              }}>✏️ {liveSupportLabel}</button>
+
               {conversations.length === 0 ? (
                 <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-secondary)', fontSize: 13 }}>{noConversations}</div>
               ) : (
