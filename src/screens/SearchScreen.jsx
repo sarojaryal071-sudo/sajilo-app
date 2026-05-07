@@ -37,6 +37,25 @@ export default function SearchScreen({ navigate }) {
       .finally(() => setLoading(false))
   }, [searchTerm, selectedLocation])
 
+  
+  // Live update when a worker toggles online/offline
+  useEffect(() => {
+    const socket = getSocket()
+    if (!socket) return
+
+    const handleStatusChange = () => {
+      // Re‑fetch the worker list when any worker toggles
+      setLoading(true)
+      api.searchWorkers()
+        .then(result => setWorkers(result.data || []))
+        .catch(console.error)
+        .finally(() => setLoading(false))
+    }
+
+    socket.on('worker:statusChanged', handleStatusChange)
+    return () => socket.off('worker:statusChanged', handleStatusChange)
+  }, [])
+
   const txt = {
     title: useContent('search.title'),
     placeholder: useContent('search.placeholder'),

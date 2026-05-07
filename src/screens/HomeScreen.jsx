@@ -6,6 +6,7 @@ import WorkerCard from '../components/WorkerCard.jsx'
 import { useContent } from '../hooks/useContent.js'
 import { useStyle } from '../hooks/useStyle.js'
 import { useIsMobile } from '../hooks/useIsMobile.js'
+import { getSocket } from '../services/realtime/socketClient'
 
 // ── Helper component for grid tiles (vertical icon + label) ──
 function ServiceTile({ service, isSelected, onClick, cardStyle, iconStyle, labelStyle }) {
@@ -68,6 +69,19 @@ export default function HomeScreen({ navigate, t }) {
         setLoading(false)
       }
     })()
+  }, [])
+
+    // Live update when a worker toggles online/offline
+  useEffect(() => {
+    const socket = getSocket()
+    if (!socket) return
+
+    const handleStatusChange = () => {
+      api.searchWorkers().then(result => setWorkers(result.data || []))
+    }
+
+    socket.on('worker:statusChanged', handleStatusChange)
+    return () => socket.off('worker:statusChanged', handleStatusChange)
   }, [])
 
   // Fetch enabled professions from backend

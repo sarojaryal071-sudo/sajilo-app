@@ -2,8 +2,21 @@
 import { useWorker } from '../../contexts/WorkerContext.jsx'
 import ElementRenderer from '../../components/ElementRenderer.jsx'
 
+// ── Reward points calculation (same as client) ──
+const JOB_SIZE_POINTS = {
+  small: 2,
+  medium: 5,
+  large: 15,
+}
+
+function calcRewardPoints(bookings) {
+  return (bookings || [])
+    .filter(b => b.status === 'completed')
+    .reduce((total, b) => total + (JOB_SIZE_POINTS[b.job_size] || 0), 0)
+}
+
 export default function WorkerProfile() {
-  const { profile, updateProfile } = useWorker()
+  const { profile, bookings, updateProfile } = useWorker()
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [name, setName] = useState('')
@@ -19,6 +32,9 @@ export default function WorkerProfile() {
   const [locationPassword, setLocationPassword] = useState('')
   const [locationConfirmPassword, setLocationConfirmPassword] = useState('')
   const [locations, setLocations] = useState([])
+
+  // Reward points
+  const rewardPoints = calcRewardPoints(bookings)
 
   useEffect(() => {
     (async () => {
@@ -116,6 +132,34 @@ export default function WorkerProfile() {
             }}>Change Location</button>
           </div>
         </div>
+      </div>
+
+      {/* Reward Points Card (same as client) */}
+      <div style={{
+        background: 'var(--bg-surface)', border: '1px solid var(--border)',
+        borderRadius: 'var(--radius-lg)', padding: 22, marginBottom: 16,
+      }}>
+        <div style={{ fontSize: 'var(--font-body-sm)', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 6 }}>
+          Reward Points
+        </div>
+        <div style={{ fontSize: 'var(--font-xxl)', fontWeight: 800, color: 'var(--accent-green)', marginBottom: 4 }}>
+          {rewardPoints} pts
+        </div>
+        <div style={{ fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)' }}>
+          {rewardPoints === 0
+            ? 'Complete jobs to earn reward points'
+            : `${rewardPoints} point${rewardPoints > 1 ? 's' : ''} = Rs ${rewardPoints}`}
+        </div>
+        {/* Exchange button placeholder – functioning later */}
+        {rewardPoints > 0 && (
+          <button disabled style={{
+            marginTop: 12, padding: '8px 16px', borderRadius: 6,
+            border: '1px solid var(--accent-green)', background: 'var(--accent-green-light)',
+            color: 'var(--accent-green)', fontWeight: 600, cursor: 'not-allowed', opacity: 0.6
+          }}>
+            Exchange for Cash (coming soon)
+          </button>
+        )}
       </div>
 
       {/* Location Change Modal */}
