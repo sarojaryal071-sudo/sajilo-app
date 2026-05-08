@@ -152,3 +152,16 @@ html.auth-locked body {
   width: 0 !important;
   height: 0 !important;
 }
+
+/* ── Allow whole‑page vertical scroll everywhere on client/worker panels ── */
+.main-content,
+.worker-content {
+  touch-action: pan-y;
+  overscroll-behavior-y: auto;
+}
+
+/* Let touch scroll pass through cards and grid items */
+.config-container,
+.main-content div {
+  touch-action: pan-y;
+}
