@@ -20,6 +20,7 @@ import { useContent } from "../hooks/useContent.js";
 import { resolveBookingActions } from '../utils/bookingActionResolver.js'
 import ActionButtonGroup from './renderers/ActionButtonGroup.jsx'
 import { dispatchBookingCommand } from '../utils/bookingCommandDispatcher.js';
+import { formatDateSeparator } from '../utils/dateGrouping.js';
 
 
 function JobRow({ booking, statusBadgeKeys, onAction, w, c, r, s, overrideStyles }) {
@@ -493,11 +494,11 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
     // ──────────────────────────────────────────────
     // JOB HISTORY ITEM (Earnings — completed jobs)
     // ──────────────────────────────────────────────
-    case "jobHistoryItem": {
-      const completedJobs = overrideData?.bookings || [];
+       case "jobHistoryItem": {
+      const items = overrideData?.bookings || [];
       const we = w.earnings || {};
 
-      if (completedJobs.length === 0) {
+      if (items.length === 0) {
         const emptyMsg = useContent("worker.noCompletedJobs", "No completed jobs yet.");
         return (
           <div style={{
@@ -517,40 +518,60 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
           gap: we.list?.gap || '8px',
           ...overrideStyles,
         }}>
-          {completedJobs.map((job) => (
-            <div key={job.id} style={{
-              background: we.jobItem?.background || c.bgSurface,
-              border: we.jobItem?.border || `1px solid ${c.border}`,
-              borderRadius: we.jobItem?.borderRadius || r.md || '12px',
-              padding: we.jobItem?.padding || '12px',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}>
-              <div>
-                <div style={{
-                  fontWeight: we.jobName?.fontWeight || 600,
-                  color: we.jobName?.color || c.textPrimary,
-                  fontSize: we.jobName?.fontSize || f.body || '16px',
+          {items.map((item, idx) => {
+            // ── Date separator ──
+            if (item.type === 'dateSeparator') {
+              return (
+                <div key={`sep-${idx}`} style={{
+                  padding: '10px 0 6px 0',
+                  fontSize: 'var(--font-body-sm)',
+                  fontWeight: 600,
+                  color: c.textSecondary,
+                  borderBottom: '1px solid var(--border)',
+                  marginBottom: '4px',
                 }}>
-                  {job.service_name}
+                  {formatDateSeparator(item.date)}
                 </div>
-                <div style={{
-                  fontSize: we.jobMeta?.fontSize || f.bodySm || '14px',
-                  color: we.jobMeta?.color || c.textSecondary,
-                }}>
-                  {job.customer_name} · {job.job_size}
-                </div>
-              </div>
-              <div style={{
-                fontSize: we.jobPrice?.fontSize || f.body || '16px',
-                fontWeight: we.jobPrice?.fontWeight || 700,
-                color: we.jobPrice?.color || c.accentGreen,
+              );
+            }
+
+            // ── Normal job item ──
+            const job = item;
+            return (
+              <div key={job.id} style={{
+                background: we.jobItem?.background || c.bgSurface,
+                border: we.jobItem?.border || `1px solid ${c.border}`,
+                borderRadius: we.jobItem?.borderRadius || r.md || '12px',
+                padding: we.jobItem?.padding || '12px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
               }}>
-                Rs {job.price || 0}
+                <div>
+                  <div style={{
+                    fontWeight: we.jobName?.fontWeight || 600,
+                    color: we.jobName?.color || c.textPrimary,
+                    fontSize: we.jobName?.fontSize || f.body || '16px',
+                  }}>
+                    {job.service_name}
+                  </div>
+                  <div style={{
+                    fontSize: we.jobMeta?.fontSize || f.bodySm || '14px',
+                    color: we.jobMeta?.color || c.textSecondary,
+                  }}>
+                    {job.customer_name} · {job.job_size}
+                  </div>
+                </div>
+                <div style={{
+                  fontSize: we.jobPrice?.fontSize || f.body || '16px',
+                  fontWeight: we.jobPrice?.fontWeight || 700,
+                  color: we.jobPrice?.color || c.accentGreen,
+                }}>
+                  Rs {job.price || 0}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       );
     }
@@ -1663,44 +1684,61 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-      {bookings.map(booking => {
-        const currentIdx = stageOrder.indexOf(booking.status)
-        const chatVisible = currentIdx >= chatAfterIdx && (chatDisableIdx === -1 || currentIdx < chatDisableIdx)
+      {bookings.map((booking, idx) => {
+  // ── Date separator ──
+  if (booking.type === 'dateSeparator') {
+    return (
+      <div key={`sep-${idx}`} style={{
+        padding: '10px 0 6px 0',
+        fontSize: 'var(--font-body-sm)',
+        fontWeight: 600,
+        color: 'var(--text-secondary)',
+        borderBottom: '1px solid var(--border)',
+        marginBottom: '4px',
+      }}>
+        {formatDateSeparator(booking.date)}
+      </div>
+    );
+  }
 
-        return (
-          <div key={booking.id} style={{
-            background: wb.trackCard?.background || 'var(--bg-surface)',
-            border: wb.trackCard?.border || '1px solid var(--border)',
-            borderRadius: wb.trackCard?.borderRadius || 'var(--radius-lg)',
-            padding: wb.trackCard?.padding || '16px',
-            marginBottom: wb.trackCard?.marginBottom || '12px',
+  // Original booking rendering continues below...
+  const currentIdx = stageOrder.indexOf(booking.status)
+  const chatVisible = currentIdx >= chatAfterIdx && (chatDisableIdx === -1 || currentIdx < chatDisableIdx)
+
+  return (
+    <div key={booking.id} style={{
+      background: wb.trackCard?.background || 'var(--bg-surface)',
+      border: wb.trackCard?.border || '1px solid var(--border)',
+      borderRadius: wb.trackCard?.borderRadius || 'var(--radius-lg)',
+      padding: wb.trackCard?.padding || '16px',
+      marginBottom: wb.trackCard?.marginBottom || '12px',
+    }}>
+      {/* Top row: Service type / Profession ··· Booking ID / Status */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+        <div>
+          <div style={{
+            fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)',
+            marginBottom: 2
           }}>
-            {/* Top row: Service type / Profession ··· Booking ID / Status */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-              <div>
-                <div style={{
-                  fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)',
-                  marginBottom: 2
-                }}>
-                  {booking.job_size ? (booking.job_size.charAt(0).toUpperCase() + booking.job_size.slice(1)) : '–'} · {booking.service_name || '—'}
-                </div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{
-                  fontSize: 'var(--font-caption)', color: 'var(--text-secondary)',
-                  fontWeight: 500, marginBottom: 2
-                }}>
-                  #{booking.id}
-                </div>
-                <span style={{
-                  fontSize: 'var(--font-caption)', fontWeight: 700, padding: '2px 10px',
-                  borderRadius: 20, background: 'var(--accent-blue-light)',
-                  color: 'var(--accent-blue)',
-                }}>
-                  {stageLabels[booking.status] || booking.status}
-                </span>
-              </div>
-            </div>
+            {booking.job_size ? (booking.job_size.charAt(0).toUpperCase() + booking.job_size.slice(1)) : '–'} · {booking.service_name || '—'}
+          </div>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{
+            fontSize: 'var(--font-caption)', color: 'var(--text-secondary)',
+            fontWeight: 500, marginBottom: 2
+          }}>
+            #{booking.id}
+          </div>
+          <span style={{
+            fontSize: 'var(--font-caption)', fontWeight: 700, padding: '2px 10px',
+            borderRadius: 20, background: 'var(--accent-blue-light)',
+            color: 'var(--accent-blue)',
+          }}>
+            {stageLabels[booking.status] || booking.status}
+          </span>
+        </div>
+      </div>
 
             {/* Timeline bar */}
             <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', marginBottom: '14px', padding: '0 6px' }}>

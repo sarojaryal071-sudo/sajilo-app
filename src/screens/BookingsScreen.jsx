@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useBooking } from '../contexts/BookingContext.jsx'
 import { useContent } from '../hooks/useContent.js'
 import ElementRenderer from '../components/ElementRenderer.jsx'
+import { groupBookingsByCompletedDate } from '../utils/dateGrouping.js'
 
 export default function BookingsScreen({ navigate }) {
   const { bookings, loading } = useBooking()
@@ -9,15 +10,11 @@ export default function BookingsScreen({ navigate }) {
 
   const title = useContent('bookings.title', 'My Bookings')
 
-  const handleChatSend = (bookingId, text) => {
-    console.log('Chat:', bookingId, text)
-  }
-
   if (loading) {
     return <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-secondary)' }}>Loading...</div>
   }
 
-  // ── Filtering ──
+  // Apply filter
   let filtered = bookings || []
   if (filter === 'pending') {
     filtered = filtered.filter(b => b.status === 'pending')
@@ -25,11 +22,16 @@ export default function BookingsScreen({ navigate }) {
     filtered = filtered.filter(b => b.status === 'completed')
   }
 
+  // Only group by date when showing completed jobs
+  const displayBookings = filter === 'completed' ? groupBookingsByCompletedDate(filtered) : filtered
+
   const filters = [
     { key: 'all', label: useContent('bookings.filter.all', 'All') },
     { key: 'pending', label: useContent('bookings.filter.pending', 'Pending') },
     { key: 'completed', label: useContent('bookings.filter.completed', 'Completed') },
   ]
+
+  console.log('BOOKINGS DISPLAY:', displayBookings)
 
   return (
     <div>
@@ -60,7 +62,7 @@ export default function BookingsScreen({ navigate }) {
 
       <ElementRenderer
         elementId="bookingTrackCard"
-        overrideData={{ bookings: filtered, onChatSend: handleChatSend }}
+        overrideData={{ bookings: displayBookings }}
       />
     </div>
   )
