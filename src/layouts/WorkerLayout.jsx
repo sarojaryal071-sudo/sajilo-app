@@ -118,35 +118,36 @@ function WorkerLayoutInner({ children, onLogout, onSOS }) {
           </select>
 
           {/* Notifications */}
-          <button style={{
-            width: w.desktop?.navbar?.control?.width || '36px',
-            height: w.desktop?.navbar?.control?.height || '36px',
-            borderRadius: w.desktop?.navbar?.control?.borderRadius || '8px',
-            border: w.desktop?.navbar?.control?.border || '1px solid var(--border)',
-            background: w.desktop?.navbar?.control?.background || 'var(--bg-surface2)',
-            cursor: 'pointer',
-            fontSize: w.desktop?.navbar?.control?.fontSize || '16px',
-            color: w.desktop?.navbar?.control?.color || 'var(--text-secondary)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            position: 'relative',
-          }} title="Notifications">
-            🔔
-            {unreadCount > 0 && (
-              <span style={{
-                background: w.desktop?.navbar?.badge?.background || 'var(--accent-red)',
-                color: '#fff',
-                fontSize: w.desktop?.navbar?.badge?.fontSize || '10px',
-                fontWeight: 700,
-                width: w.desktop?.navbar?.badge?.width || '18px',
-                height: w.desktop?.navbar?.badge?.height || '18px',
-                borderRadius: '50%',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                position: 'absolute',
-                top: w.desktop?.navbar?.badge?.top || '-4px',
-                right: w.desktop?.navbar?.badge?.right || '-4px',
-              }}>{unreadCount}</span>
-            )}
-          </button>
+          <button onClick={() => navigate('/inbox')} style={{
+  width: w.desktop?.navbar?.control?.width || '36px',
+  height: w.desktop?.navbar?.control?.height || '36px',
+  borderRadius: w.desktop?.navbar?.control?.borderRadius || '8px',
+  border: w.desktop?.navbar?.control?.border || '1px solid var(--border)',
+  background: w.desktop?.navbar?.control?.background || 'var(--bg-surface2)',
+  cursor: 'pointer',
+  fontSize: w.desktop?.navbar?.control?.fontSize || '16px',
+  color: w.desktop?.navbar?.control?.color || 'var(--text-secondary)',
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  position: 'relative',
+}} title="Notifications">
+  🔔
+  {unreadCount > 0 && (
+    <span style={{
+      background: w.desktop?.navbar?.badge?.background || 'var(--accent-red)',
+      color: '#fff',
+      fontSize: w.desktop?.navbar?.badge?.fontSize || '10px',
+      fontWeight: 700,
+      width: w.desktop?.navbar?.badge?.width || '18px',
+      height: w.desktop?.navbar?.badge?.height || '18px',
+      borderRadius: '50%',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      position: 'absolute',
+      top: w.desktop?.navbar?.badge?.top || '-4px',
+      right: w.desktop?.navbar?.badge?.right || '-4px',
+    }}>{unreadCount}</span>
+  )}
+</button>
+
 
           {/* Logout */}
           <button onClick={handleLogout} style={{
@@ -192,30 +193,41 @@ function WorkerLayoutInner({ children, onLogout, onSOS }) {
           {workerNavigation.map((item) => {
             const isActive = location.pathname === item.path;
             return (
-              <button key={item.id} onClick={() => navigate(item.path)} style={{
-                display: w.desktop?.sidebar?.link?.display || 'flex',
-                alignItems: w.desktop?.sidebar?.link?.alignItems || 'center',
-                gap: w.desktop?.sidebar?.link?.gap || '12px',
-                width: '100%',
-                padding: w.desktop?.sidebar?.link?.padding || '12px 20px',
-                border: 'none',
-                borderLeft: isActive
-                  ? (w.desktop?.sidebar?.linkActive?.borderLeft || `3px solid var(--accent-blue)`)
-                  : (w.desktop?.sidebar?.link?.borderLeft || '3px solid transparent'),
-                background: isActive
-                  ? (w.desktop?.sidebar?.linkActive?.background || 'var(--accent-blue-light)')
-                  : 'transparent',
-                color: isActive
-                  ? (w.desktop?.sidebar?.linkActive?.color || 'var(--accent-blue)')
-                  : (w.desktop?.sidebar?.link?.color || 'var(--text-secondary)'),
-                fontSize: w.desktop?.sidebar?.link?.fontSize || 'var(--font-body)',
-                fontWeight: isActive
-                  ? (w.desktop?.sidebar?.linkActive?.fontWeight || 600)
-                  : (w.desktop?.sidebar?.link?.fontWeight || 500),
-                cursor: 'pointer',
-                textAlign: 'left',
-                transition: 'all 0.15s',
-              }}>
+              <button
+                key={item.id}
+                onClick={() => {
+                  // Always replace history for the dashboard to avoid back‑button loops
+                  if (item.path === '/worker/dashboard') {
+                    navigate(item.path, { replace: true });
+                  } else {
+                    navigate(item.path);
+                  }
+                }}
+                style={{
+                  display: w.desktop?.sidebar?.link?.display || 'flex',
+                  alignItems: w.desktop?.sidebar?.link?.alignItems || 'center',
+                  gap: w.desktop?.sidebar?.link?.gap || '12px',
+                  width: '100%',
+                  padding: w.desktop?.sidebar?.link?.padding || '12px 20px',
+                  border: 'none',
+                  borderLeft: isActive
+                    ? (w.desktop?.sidebar?.linkActive?.borderLeft || `3px solid var(--accent-blue)`)
+                    : (w.desktop?.sidebar?.link?.borderLeft || '3px solid transparent'),
+                  background: isActive
+                    ? (w.desktop?.sidebar?.linkActive?.background || 'var(--accent-blue-light)')
+                    : 'transparent',
+                  color: isActive
+                    ? (w.desktop?.sidebar?.linkActive?.color || 'var(--accent-blue)')
+                    : (w.desktop?.sidebar?.link?.color || 'var(--text-secondary)'),
+                  fontSize: w.desktop?.sidebar?.link?.fontSize || 'var(--font-body)',
+                  fontWeight: isActive
+                    ? (w.desktop?.sidebar?.linkActive?.fontWeight || 600)
+                    : (w.desktop?.sidebar?.link?.fontWeight || 500),
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'all 0.15s',
+                }}
+              >
                 <span style={{
                   fontSize: w.desktop?.sidebar?.icon?.fontSize || '18px',
                   width: w.desktop?.sidebar?.icon?.width || '24px',
@@ -241,22 +253,35 @@ function WorkerLayoutInner({ children, onLogout, onSOS }) {
 
       <div className="worker-bottom-nav" style={{ display: 'none', height: 60, background: 'var(--bg-nav)', borderTop: '1px solid var(--border)', position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9999 }}>
         {primaryItems.map((item) => (
-          <button key={item.id} onClick={() => navigate(item.path)} style={{
-            flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            gap: 2, border: 'none', background: 'transparent', cursor: 'pointer', padding: '8px 4px',
-            color: location.pathname === item.path ? 'var(--accent-blue)' : 'var(--text-secondary)',
-          }}>
+          <button
+            key={item.id}
+            onClick={() => {
+              if (item.path === '/worker/dashboard') {
+                navigate(item.path, { replace: true });
+              } else {
+                navigate(item.path);
+              }
+            }}
+            style={{
+              flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              gap: 2, border: 'none', background: 'transparent', cursor: 'pointer', padding: '8px 4px',
+              color: location.pathname === item.path ? 'var(--accent-blue)' : 'var(--text-secondary)',
+            }}
+          >
             <span style={{ fontSize: 18 }}>{item.icon}</span>
             <span style={{ fontSize: 10, fontWeight: 500 }}>{item.label}</span>
           </button>
         ))}
         {/* Real notification bell — same as client panel */}
-        <button style={{
-          flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
-          justifyContent: 'center', gap: 2, border: 'none', background: 'transparent',
-          cursor: 'pointer', padding: '8px 4px', color: 'var(--text-secondary)',
-          position: 'relative',
-        }}>
+        <button
+          onClick={() => navigate('/inbox')}
+          style={{
+            flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
+            justifyContent: 'center', gap: 2, border: 'none', background: 'transparent',
+            cursor: 'pointer', padding: '8px 4px', color: 'var(--text-secondary)',
+            position: 'relative',
+          }}
+        >
           <span style={{ fontSize: 18 }}>🔔</span>
           <span style={{ fontSize: 10, fontWeight: 500 }}>Alerts</span>
           {unreadCount > 0 && (
