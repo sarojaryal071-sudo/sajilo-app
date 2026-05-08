@@ -1,16 +1,17 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useContent } from '../hooks/useContent.js'
 import { useSocket } from '../hooks/useSocket.js'
 import { useNotification } from '../contexts/NotificationContext.jsx'
 import conversationState from '../services/chat/ConversationStateManager.js'
+import { API_URL } from '../services/api.js'
+import { getCurrentUser } from '../config/auth.js'   // <-- used to identify own messages
 
-// ── Soft‑coded text fallbacks ──
-const FALLBACK_ADMIN_ID = 32   // only used if the endpoint fails
+const FALLBACK_ADMIN_ID = 32
 
 export default function InboxScreen() {
   const [searchParams] = useSearchParams()
-  const targetBookingId = searchParams.get('bookingId') // e.g. /inbox?bookingId=7
+  const targetBookingId = searchParams.get('bookingId')
 
   const [activeTab, setActiveTab] = useState('messages')
   const [conversations, setConversations] = useState([])
@@ -18,21 +19,23 @@ export default function InboxScreen() {
   const [messages, setMessages] = useState([])
   const [chatInput, setChatInput] = useState('')
   const [unreadConversations, setUnreadConversations] = useState(conversationState.getUnreadCount())
-  const [adminId, setAdminId] = useState(FALLBACK_ADMIN_ID)   // dynamic admin ID
+  const [adminId, setAdminId] = useState(FALLBACK_ADMIN_ID)
   const messagesEndRef = useRef(null)
 
   const { socket } = useSocket()
   const { notifications, unreadCount: notifUnread } = useNotification()
 
-  // ── Fetch the real admin ID on mount ──
+  // ── Current user ID (for message side detection) ──
+  const currentUser = getCurrentUser()
+  const currentUserId = currentUser?.id
+
+  // ── Fetch admin ID ──
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/admin/support')
+        const res = await fetch(`${API_URL}/admin/support`)
         const json = await res.json()
-        if (json.success && json.data?.id) {
-          setAdminId(json.data.id)
-        }
+        if (json.success && json.data?.id) setAdminId(json.data.id)
       } catch (err) { /* keep fallback */ }
     })()
   }, [])
@@ -48,31 +51,25 @@ export default function InboxScreen() {
   const noConversations = useContent('chat.noConversations', 'No conversations yet')
   const noNotifications = useContent('notifications.empty', 'No notifications yet')
 
-  // ── Subscribe to conversation unread changes ──
+  // ── Unread count sync ──
   useEffect(() => {
-    const unsub = conversationState.onChange((count) => {
-      setUnreadConversations(count)
-    })
+    const unsub = conversationState.onChange((count) => setUnreadConversations(count))
     return unsub
   }, [])
 
-  // ── Load conversations + auto‑open booking conversation if requested ──
+  // ── Load conversations + auto‑open booking conversation ──
   useEffect(() => {
     const token = localStorage.getItem('sajilo_token')
     if (!token) return
 
-    fetch('http://localhost:5000/api/chat/conversations', {
+    fetch(`${API_URL}/chat/conversations`, {
       headers: { Authorization: `Bearer ${token}` }
     }).then(r => r.json()).then(d => {
       const list = d.data || []
       setConversations(list)
-
-      // If a bookingId was passed in the URL, find its conversation and open it
       if (targetBookingId && list.length > 0) {
         const targetConv = list.find(c => c.booking_id === Number(targetBookingId))
-        if (targetConv) {
-          openConversation(targetConv)
-        }
+        if (targetConv) openConversation(targetConv)
       }
     })
   }, [targetBookingId])
@@ -80,19 +77,21 @@ export default function InboxScreen() {
   // ── Socket listeners ──
   useEffect(() => {
     if (!socket) return
+
     socket.on('new_message', (msg) => {
       if (activeConv && msg.conversation_id === activeConv.id) {
-        setMessages(prev => [...prev, { ...msg, from: msg.sender_role === 'admin' ? 'support' : 'user' }])
+        setMessages(prev => [...prev, msg])
       }
     })
-    socket.on('message_sent', (msg) => {
-      setMessages(prev => prev.map(m => m.id === msg.pendingId ? { ...msg, from: 'user' } : m))
 
-      // ✅ If this was a new chat, replace the fake conversation with the real one
+    socket.on('message_sent', (msg) => {
+      setMessages(prev => prev.map(m => m.id === msg.pendingId ? { ...msg } : m))
+
+      // If new chat, replace temporary conversation with real one
       if (activeConv && activeConv.id === 'new') {
         const realConvId = msg.conversation_id
         if (realConvId) {
-          fetch('http://localhost:5000/api/chat/conversations', {
+          fetch(`${API_URL}/chat/conversations`, {
             headers: { Authorization: `Bearer ${localStorage.getItem('sajilo_token')}` }
           }).then(r => r.json()).then(d => {
             const updatedList = d.data || []
@@ -106,12 +105,35 @@ export default function InboxScreen() {
         }
       }
     })
+
+    socket.on('conversation_updated', (conv) => {
+      setConversations(prev => {
+        const existing = prev.find(c => c.id === conv.id)
+        if (existing) return prev.map(c => c.id === conv.id ? { ...c, ...conv } : c)
+        return [conv, ...prev]
+      })
+    })
+
     return () => {
       socket.off('new_message')
       socket.off('message_sent')
+      socket.off('conversation_updated')
     }
   }, [socket, activeConv])
 
+  // ── Hide bottom bar & lock scroll when a conversation is open ──
+  useEffect(() => {
+    if (activeConv) {
+      document.body.classList.add('inbox-conversation-open')
+    } else {
+      document.body.classList.remove('inbox-conversation-open')
+    }
+    return () => {
+      document.body.classList.remove('inbox-conversation-open')
+    }
+  }, [activeConv])
+
+  // ── Auto scroll to bottom ──
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
@@ -124,7 +146,7 @@ export default function InboxScreen() {
       text,
       bookingId: activeConv.booking_id || null,
     })
-    setMessages(prev => [...prev, { id: Date.now(), from: 'user', text, sender_name: 'You' }])
+    setMessages(prev => [...prev, { id: Date.now(), from: 'user', text, sender_name: 'You', sender_id: currentUserId }])
     setChatInput('')
   }
 
@@ -133,15 +155,11 @@ export default function InboxScreen() {
     conversationState.setRead(conv.id)
     const token = localStorage.getItem('sajilo_token')
     try {
-      const res = await fetch(`http://localhost:5000/api/chat/conversations/${conv.id}/messages`, {
+      const res = await fetch(`${API_URL}/chat/conversations/${conv.id}/messages`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       const data = await res.json()
-      const normalized = (data.data || []).map(msg => ({
-        ...msg,
-        from: msg.sender_role === 'admin' ? 'support' : 'user'
-      }))
-      setMessages(normalized)
+      setMessages(data.data || [])
     } catch (e) { console.error(e) }
   }
 
@@ -150,10 +168,17 @@ export default function InboxScreen() {
     setMessages([])
   }
 
+  // Determines if a message is from the current user
+  const isOwnMessage = (msg) => {
+    if (msg.from === 'user') return true  // locally added message
+    if (msg.sender_id && currentUserId && msg.sender_id === currentUserId) return true
+    return false
+  }
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', maxWidth: 800, margin: '0 auto', width: '100%' }}>
-      {/* Tab bar */}
-      <div style={{ display: 'flex', borderBottom: '1px solid var(--border)' }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', maxWidth: 800, margin: '0 auto', width: '100%' }}>
+      {/* ── Fixed Tab bar ── */}
+      <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
         <button onClick={() => setActiveTab('messages')} style={{
           flex: 1, padding: '12px', border: 'none',
           background: activeTab === 'messages' ? 'var(--accent-blue-light)' : 'transparent',
@@ -192,15 +217,21 @@ export default function InboxScreen() {
         </button>
       </div>
 
-      {/* Content */}
-      <div style={{ flex: 1, overflowY: 'auto' }}>
+      {/* ── Content area (scrollable or split) ── */}
+      <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         {activeTab === 'messages' ? (
           activeConv ? (
-            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-              {/* ✅ Messenger‑style header */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: '1px solid var(--border)', background: 'var(--bg-surface2)' }}>
+            /* ── Conversation View ── */
+            <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+              {/* Messenger‑style header */}
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 12,
+                padding: '12px 16px', borderBottom: '1px solid var(--border)',
+                background: 'var(--bg-surface2)', flexShrink: 0
+              }}>
                 <button onClick={() => setActiveConv(null)} style={{
-                  background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: 'var(--accent-blue)', padding: 0, lineHeight: 1
+                  background: 'none', border: 'none', fontSize: 18,
+                  cursor: 'pointer', color: 'var(--accent-blue)', padding: 0, lineHeight: 1
                 }}>←</button>
                 <div style={{
                   width: 36, height: 36, borderRadius: '50%',
@@ -216,18 +247,26 @@ export default function InboxScreen() {
                 </div>
               </div>
 
-              <div style={{ flex: 1, overflowY: 'auto', padding: 12 }}>
+              {/* Messages (scrollable) */}
+              <div style={{ flex: 1, overflowY: 'auto', padding: 12, minHeight: 0 }}>
                 {messages.map(msg => {
-                  const isOwn = msg.from === 'user' || msg.sender_name === 'You'
+                  const isOwn = isOwnMessage(msg)
                   return (
-                    <div key={msg.id} style={{ display: 'flex', justifyContent: isOwn ? 'flex-end' : 'flex-start', marginBottom: 8 }}>
+                    <div key={msg.id} style={{
+                      display: 'flex', justifyContent: isOwn ? 'flex-end' : 'flex-start',
+                      marginBottom: 8
+                    }}>
                       <div style={{
                         maxWidth: '80%', padding: '10px 14px', borderRadius: 14,
                         background: isOwn ? 'var(--accent-blue)' : 'var(--bg-surface2)',
                         color: isOwn ? '#fff' : 'var(--text-primary)',
                         fontSize: 13, lineHeight: 1.5
                       }}>
-                        {msg.sender_name && <div style={{ fontSize: 10, opacity: 0.7, marginBottom: 2 }}>{msg.sender_name}</div>}
+                        {!isOwn && msg.sender_name && (
+                          <div style={{ fontSize: 10, opacity: 0.7, marginBottom: 2 }}>
+                            {msg.sender_name}
+                          </div>
+                        )}
                         {msg.text}
                         <div style={{ fontSize: 10, marginTop: 4, opacity: 0.7 }}>
                           {msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
@@ -238,7 +277,15 @@ export default function InboxScreen() {
                 })}
                 <div ref={messagesEndRef} />
               </div>
-              <div style={{ display: 'flex', gap: 8, padding: 12, borderTop: '1px solid var(--border)' }}>
+
+              {/* Input area – fixed at bottom (reduced gap, sits like bottom bar) */}
+              <div style={{
+                display: 'flex', gap: 8,
+                padding: '8px 12px 4px',   /* smaller bottom padding */
+                borderTop: '1px solid var(--border)',
+                background: 'var(--bg-surface)',
+                flexShrink: 0
+              }}>
                 <input
                   value={chatInput}
                   onChange={e => setChatInput(e.target.value)}
@@ -258,58 +305,71 @@ export default function InboxScreen() {
               </div>
             </div>
           ) : (
-            <div>
-              {/* Live Support button */}
-              <button onClick={openNewSupportChat} style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                margin: '12px 16px', padding: '10px 14px',
-                borderRadius: 'var(--radius-md)', border: '1px solid var(--accent-blue)',
-                background: 'var(--accent-blue-light)', color: 'var(--accent-blue)',
-                fontSize: 13, fontWeight: 600, cursor: 'pointer', width: 'calc(100% - 32px)'
-              }}>✏️ {liveSupportLabel}</button>
+            /* ── Conversation List (Messages tab) ── */
+            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+              {/* Fixed Live Support button */}
+              <div style={{ flexShrink: 0 }}>
+                <button onClick={openNewSupportChat} style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  margin: '12px 16px', padding: '10px 14px',
+                  borderRadius: 'var(--radius-md)', border: '1px solid var(--accent-blue)',
+                  background: 'var(--accent-blue-light)', color: 'var(--accent-blue)',
+                  fontSize: 13, fontWeight: 600, cursor: 'pointer', width: 'calc(100% - 32px)'
+                }}>✏️ {liveSupportLabel}</button>
+              </div>
 
-              {conversations.length === 0 ? (
-                <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-secondary)', fontSize: 13 }}>{noConversations}</div>
-              ) : (
-                conversations.map(chat => {
-                  const unread = conversationState.isUnread(chat.id)
-                  return (
-                    <div key={chat.id} onClick={() => openConversation(chat)} style={{
-                      display: 'flex', alignItems: 'center', gap: 12,
-                      padding: '14px 16px', borderBottom: '1px solid var(--border)',
-                      cursor: 'pointer', background: unread ? 'var(--accent-blue-light)' : 'transparent',
-                    }}>
-                      <div style={{
-                        width: 40, height: 40, borderRadius: '50%',
-                        background: 'var(--bg-surface2)', display: 'flex',
-                        alignItems: 'center', justifyContent: 'center',
-                        fontSize: 18, flexShrink: 0
-                      }}>💬</div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: unread ? 700 : 500, color: 'var(--text-primary)' }}>
-                          {chat.other_name || 'Support Chat'}
+              {/* Scrollable conversation list */}
+              <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+                {conversations.length === 0 ? (
+                  <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-secondary)', fontSize: 13 }}>
+                    {noConversations}
+                  </div>
+                ) : (
+                  conversations.map(chat => {
+                    const unread = conversationState.isUnread(chat.id)
+                    return (
+                      <div key={chat.id} onClick={() => openConversation(chat)} style={{
+                        display: 'flex', alignItems: 'center', gap: 12,
+                        padding: '14px 16px', borderBottom: '1px solid var(--border)',
+                        cursor: 'pointer', background: unread ? 'var(--accent-blue-light)' : 'transparent',
+                      }}>
+                        <div style={{
+                          width: 40, height: 40, borderRadius: '50%',
+                          background: 'var(--bg-surface2)', display: 'flex',
+                          alignItems: 'center', justifyContent: 'center',
+                          fontSize: 18, flexShrink: 0
+                        }}>💬</div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: unread ? 700 : 500, color: 'var(--text-primary)' }}>
+                            {chat.other_name || 'Support Chat'}
+                          </div>
+                          <div style={{
+                            fontSize: 12, color: 'var(--text-secondary)', marginTop: 2,
+                            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+                          }}>
+                            {chat.last_message || 'No messages'}
+                          </div>
                         </div>
-                        <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {chat.last_message || 'No messages'}
-                        </div>
+                        {unread && (
+                          <span style={{
+                            width: 10, height: 10, borderRadius: '50%',
+                            background: 'var(--accent-blue)', flexShrink: 0
+                          }} />
+                        )}
                       </div>
-                      {unread && (
-                        <span style={{
-                          width: 10, height: 10, borderRadius: '50%',
-                          background: 'var(--accent-blue)', flexShrink: 0
-                        }} />
-                      )}
-                    </div>
-                  )
-                })
-              )}
+                    )
+                  })
+                )}
+              </div>
             </div>
           )
         ) : (
-          /* ── Notifications ── */
-          <div>
+          /* ── Notifications tab ── */
+          <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
             {notifications.length === 0 ? (
-              <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-secondary)' }}>{noNotifications}</div>
+              <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-secondary)' }}>
+                {noNotifications}
+              </div>
             ) : (
               notifications.map(n => (
                 <div key={n.id} style={{
@@ -319,7 +379,9 @@ export default function InboxScreen() {
                   <div style={{ fontSize: 13, fontWeight: n.read ? 400 : 700, color: 'var(--text-primary)' }}>
                     {n.title || n.message}
                   </div>
-                  <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 4 }}>{n.time}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 4 }}>
+                    {n.time}
+                  </div>
                 </div>
               ))
             )}

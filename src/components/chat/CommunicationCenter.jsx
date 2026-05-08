@@ -81,12 +81,19 @@ export default function CommunicationCenter() {
       setPendingId(null)
     })
     socket.on('message_error', (err) => console.error('Chat error:', err))
+
+    // ✅ Updated listener: now updates existing conversation if already present
     socket.on('conversation_updated', (conversation) => {
       setConversations(prev => {
-        if (prev.find(c => c.id === conversation.id)) return prev
+        const existing = prev.find(c => c.id === conversation.id)
+        if (existing) {
+          // Update the conversation's last message etc.
+          return prev.map(c => c.id === conversation.id ? { ...c, ...conversation } : c)
+        }
         return [conversation, ...prev]
       })
     })
+
     return () => {
       socket.off('new_message')
       socket.off('message_sent')

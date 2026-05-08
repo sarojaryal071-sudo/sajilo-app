@@ -165,3 +165,16 @@ html.auth-locked body {
 .main-content div {
   touch-action: pan-y;
 }
+
+/* ── Hide bottom nav & lock main scroll when a conversation is open ── */
+.inbox-conversation-open .mobile-bottom-nav,
+.inbox-conversation-open .worker-bottom-nav {
+  display: none !important;
+}
+
+.inbox-conversation-open .main-content,
+.inbox-conversation-open .worker-content {
+  overflow: hidden !important;
+  height: 100%;
+  padding-bottom: 0 !important;   /* ← remove any page-level bottom padding */
+}
