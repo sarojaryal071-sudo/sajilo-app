@@ -12,6 +12,7 @@
  */
 
 import React from "react";
+import { useNavigate } from 'react-router-dom';   // ← ADD THIS
 import visualIdentityRegistry from "../config/visualIdentityRegistry.js";
 import config from "../config/ui/configResolver.js";
 import { useStyle } from "../hooks/useStyle.js";
@@ -111,7 +112,8 @@ function JobRow({ booking, statusBadgeKeys, onAction, w, c, r, s, overrideStyles
 
 
             {/* Message button – visible after acceptance */}
-      {booking.status !== 'pending' && booking.id && (
+            {/* Message button – only while the job is accepted or on‑the‑way */}
+      {(booking.status === 'accepted' || booking.status === 'onway') && booking.id && (
         <div style={{ marginTop: 8, textAlign: 'right' }}>
           <button
             onClick={(e) => {
@@ -133,10 +135,10 @@ function JobRow({ booking, statusBadgeKeys, onAction, w, c, r, s, overrideStyles
           </button>
         </div>
       )}
-    </div>
-  )
-}
 
+ </div>
+  );
+}
 
 const ElementRenderer = ({ elementId, overrideData = {} }) => {
 
@@ -1623,7 +1625,7 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
     }
 
 
-    
+
   case "bookingTrackCard": {
   const bookings = overrideData?.bookings || []
   const stages = elementConfig.content?.stages || []
