@@ -166,15 +166,45 @@ html.auth-locked body {
   touch-action: pan-y;
 }
 
-/* ── Hide bottom nav & lock main scroll when a conversation is open ── */
+/* ── Perfectly full‑screen chat (same for client & worker) ── */
 .inbox-conversation-open .mobile-bottom-nav,
 .inbox-conversation-open .worker-bottom-nav {
   display: none !important;
 }
 
+/* Kill ALL padding and margin on the scroll containers */
 .inbox-conversation-open .main-content,
 .inbox-conversation-open .worker-content {
+  padding: 0 !important;
+  margin: 0 !important;
+  height: 100% !important;
   overflow: hidden !important;
-  height: 100%;
-  padding-bottom: 0 !important;   /* ← remove any page-level bottom padding */
+}
+
+/* Also kill any padding on the flex wrapper that holds the content */
+.inbox-conversation-open .worker-content + div,
+.inbox-conversation-open .main-content + div {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Make sure the InboxScreen itself takes the full height */
+.inbox-conversation-open .worker-content > *,
+.inbox-conversation-open .main-content > * {
+  height: 100% !important;
+}
+
+/* ── Full‑screen app (no outer gutters) ── */
+.main-content,
+.worker-content {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Keep bottom clearance for the mobile nav bar */
+@media (max-width: 768px) {
+  .main-content,
+  .worker-content {
+    padding-bottom: 80px !important;
+  }
 }

@@ -217,8 +217,8 @@ export default function InboxScreen() {
         </button>
       </div>
 
-      {/* ── Content area (scrollable or split) ── */}
-      <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+      {/* ── Content area (scrollable or split) – added top gap for breathing room ── */}
+      <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0, marginTop: 12 }}>
         {activeTab === 'messages' ? (
           activeConv ? (
             /* ── Conversation View ── */
@@ -278,14 +278,16 @@ export default function InboxScreen() {
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Input area – fixed at bottom (reduced gap, sits like bottom bar) */}
+                           {/* Input area – fixed at bottom, with slight separation from messages */}
               <div style={{
                 display: 'flex', gap: 8,
-                padding: '8px 12px 4px',   /* smaller bottom padding */
+                padding: '12px',
+                marginTop: 8,                        /* ← extra space above input */
                 borderTop: '1px solid var(--border)',
                 background: 'var(--bg-surface)',
                 flexShrink: 0
               }}>
+                
                 <input
                   value={chatInput}
                   onChange={e => setChatInput(e.target.value)}
