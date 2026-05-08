@@ -73,6 +73,7 @@ const visualIdentityRegistry = {
     visible: true,
   },
 
+
   // ── DASHBOARD: Online Toggle Card (Phase 15) ──────────
   dashboardOnlineToggle: {
     type: "onlineToggleCard",

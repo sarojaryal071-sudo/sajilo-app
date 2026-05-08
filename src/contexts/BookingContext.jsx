@@ -25,9 +25,18 @@ export function BookingProvider({ children }) {
     if (token) fetchBookings()
   }, [fetchBookings])
 
-    // ── Socket lifecycle sync ──
+  // ── Socket lifecycle sync ──
   useEffect(() => {
     if (!socket) return
+
+    const handleConnect = () => {
+      console.log('[BOOKINGCTX] Socket connected, refreshing bookings')
+      fetchBookings()
+    }
+    const handleDisconnect = (reason) => console.log('[BOOKINGCTX] Socket disconnected:', reason)
+
+    socket.on('connect', handleConnect)
+    socket.on('disconnect', handleDisconnect)
 
     const lifecycleEvents = [
       'booking.accepted', 'booking.rejected', 'booking.onway',
@@ -36,22 +45,24 @@ export function BookingProvider({ children }) {
 
     lifecycleEvents.forEach(event => {
       socket.on(event, () => {
-        // Re‑fetch all bookings so the UI always matches the server
+        console.log(`[BOOKINGCTX] ${event} received`)
         fetchBookings()
       })
     })
 
-    // New booking created (for customer)
     socket.on('booking.created', () => {
+      console.log('[BOOKINGCTX] booking.created received')
       fetchBookings()
     })
 
     return () => {
+      socket.off('connect', handleConnect)
+      socket.off('disconnect', handleDisconnect)
       lifecycleEvents.forEach(event => socket.off(event))
       socket.off('booking.created')
     }
   }, [socket, fetchBookings])
-  
+
   // ── Create booking ──
   const createBooking = useCallback(async (bookingData) => {
     setLoading(true)

@@ -87,6 +87,24 @@ export default function InboxScreen() {
     })
     socket.on('message_sent', (msg) => {
       setMessages(prev => prev.map(m => m.id === msg.pendingId ? { ...msg, from: 'user' } : m))
+
+      // ✅ If this was a new chat, replace the fake conversation with the real one
+      if (activeConv && activeConv.id === 'new') {
+        const realConvId = msg.conversation_id
+        if (realConvId) {
+          fetch('http://localhost:5000/api/chat/conversations', {
+            headers: { Authorization: `Bearer ${localStorage.getItem('sajilo_token')}` }
+          }).then(r => r.json()).then(d => {
+            const updatedList = d.data || []
+            setConversations(updatedList)
+            const newConv = updatedList.find(c => c.id === realConvId)
+            if (newConv) {
+              setActiveConv(newConv)
+              conversationState.setRead(newConv.id)
+            }
+          })
+        }
+      }
     })
     return () => {
       socket.off('new_message')
@@ -128,7 +146,6 @@ export default function InboxScreen() {
   }
 
   const openNewSupportChat = () => {
-    // Create a fresh conversation with admin
     setActiveConv({ id: 'new', name: 'Support Chat', other_id: adminId, booking_id: null })
     setMessages([])
   }
@@ -180,11 +197,25 @@ export default function InboxScreen() {
         {activeTab === 'messages' ? (
           activeConv ? (
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-              <button onClick={() => setActiveConv(null)} style={{
-                padding: '8px 16px', border: 'none', background: 'var(--bg-surface2)',
-                color: 'var(--accent-blue)', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                textAlign: 'left', borderBottom: '1px solid var(--border)'
-              }}>{backLabel}</button>
+              {/* ✅ Messenger‑style header */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: '1px solid var(--border)', background: 'var(--bg-surface2)' }}>
+                <button onClick={() => setActiveConv(null)} style={{
+                  background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: 'var(--accent-blue)', padding: 0, lineHeight: 1
+                }}>←</button>
+                <div style={{
+                  width: 36, height: 36, borderRadius: '50%',
+                  background: 'var(--accent-blue-light)', display: 'flex',
+                  alignItems: 'center', justifyContent: 'center',
+                  fontSize: 16, fontWeight: 700, color: 'var(--accent-blue)',
+                  flexShrink: 0
+                }}>
+                  {(activeConv.other_name || activeConv.name || '?').charAt(0).toUpperCase()}
+                </div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>
+                  {activeConv.other_name || activeConv.name || 'Chat'}
+                </div>
+              </div>
+
               <div style={{ flex: 1, overflowY: 'auto', padding: 12 }}>
                 {messages.map(msg => {
                   const isOwn = msg.from === 'user' || msg.sender_name === 'You'

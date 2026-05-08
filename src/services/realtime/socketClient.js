@@ -12,26 +12,28 @@ let socket = null
 export function getSocket() {
   const token = localStorage.getItem('sajilo_token')
   if (!token) return null
-  
-  // Return existing connected socket
-  if (socket?.connected) return socket
-  
-  // Clean up dead socket
+
+  // If socket already exists and is connected or still connecting, reuse it
+  if (socket && (socket.connected || socket.active)) return socket
+
+  // Clean up only a truly dead socket (disconnected and not reconnecting)
   if (socket) {
     socket.removeAllListeners()
     socket.disconnect()
     socket = null
   }
-  
+
+  console.log('🔧 Creating new socket instance...')
   socket = io(SOCKET_URL, { 
     auth: { token },
     transports: ['websocket', 'polling'],
+    upgrade: true,
     reconnection: true,
     reconnectionAttempts: Infinity,
     reconnectionDelay: 1000,
-    reconnectionDelayMax: 5000,
+    timeout: 20000,
   })
-  
+
   return socket
 }
 

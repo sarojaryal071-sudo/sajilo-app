@@ -73,6 +73,43 @@ function JobRow({ booking, statusBadgeKeys, onAction, w, c, r, s, overrideStyles
         </div>
       </div>
 
+      {/* Action buttons – Accept/Reject/Start Travel/Complete Job */}
+      {resolveBookingActions(booking).length > 0 && (
+        <div style={{
+          display: 'flex',
+          gap: w.jobs?.actions?.gap || '8px',
+          marginTop: '10px',
+        }}>
+          {resolveBookingActions(booking).map((btn, i) => (
+            <button
+              key={btn.id}
+              onClick={async (e) => {
+                e.stopPropagation();
+                try {
+                  await dispatchBookingCommand({ action: btn.action, bookingId: booking.id });
+                } catch (err) {
+                  alert(err.message || 'Action failed');
+                }
+              }}
+              style={{
+                padding: w.jobs?.actionBtn?.padding || '8px 16px',
+                borderRadius: w.jobs?.actionBtn?.borderRadius || '8px',
+                border: btn.variant === 'danger' ? `1px solid ${c.border}` : 'none',
+                background: btn.variant === 'success' ? c.accentGreen :
+                             btn.variant === 'danger' ? 'transparent' : c.accentBlue,
+                color: btn.variant === 'danger' ? c.textSecondary : '#fff',
+                cursor: 'pointer',
+                fontSize: w.jobs?.actionBtn?.fontSize || '14px',
+                fontWeight: 600,
+              }}
+            >
+              {btn.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+
             {/* Message button – visible after acceptance */}
       {booking.status !== 'pending' && booking.id && (
         <div style={{ marginTop: 8, textAlign: 'right' }}>
@@ -1306,109 +1343,84 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
         // ──────────────────────────────────────────────
     // MAP PLACEHOLDER (Dashboard — Phase 15)
     // ──────────────────────────────────────────────
-             case "mapPlaceholder": {
-      const activeJob = overrideData?.activeBooking
-      const wd = w.dashboard?.mapCard || {}
-      const title = useContent("worker.mapPreview", "Service Map")
-      const emptyText = useContent("worker.mapEmpty", "Map updates when job accepted")
+  case "mapPlaceholder": {
+  const activeJob = overrideData?.activeBooking
+  const wd = w.dashboard?.mapCard || {}
+  const title = useContent("worker.mapPreview", "Service Map")
+  const emptyText = useContent("worker.mapEmpty", "Map updates when job accepted")
 
-      return (
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
-          <div style={{
-            width: wd.width || '175px',
-            height: wd.height || '175px',
-            background: activeJob ? (wd.active?.background || 'var(--accent-blue-light)') : (wd.background || 'var(--bg-surface2)'),
-            border: activeJob ? (wd.active?.border || '2px solid var(--accent-blue)') : (wd.border || '2px dashed var(--border)'),
-            borderRadius: wd.borderRadius || 'var(--radius-lg)',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            marginBottom: wd.marginBottom || '16px',
-            position: 'relative',
-            overflow: 'hidden',
-            ...overrideStyles,
-          }}>
-            {activeJob ? (
-              <>
-                {/* Blinking worker dot */}
-                <div style={{
-                  position: 'absolute',
-                  bottom: '12px',
-                  left: '30%',
-                  width: '10px',
-                  height: '10px',
-                  borderRadius: '50%',
-                  background: '#3B82F6',
-                  animation: 'blink 1s infinite',
-                }} />
-                {/* Target pin */}
-                <span style={{ fontSize: wd.icon?.fontSize || '40px', opacity: 1 }}>
-                  📍
-                </span>
-                <span style={{
-                  fontSize: wd.title?.fontSize || '11px',
-                  color: wd.title?.color || 'var(--text-secondary)',
-                  marginTop: wd.title?.marginTop || '8px',
-                  textAlign: 'center',
-                  padding: '0 12px',
-                  fontWeight: 600
-                }}>
-                  {activeJob.service_name || 'Active Job'}
-                </span>
-                <span style={{
-                  fontSize: '9px',
-                  color: 'var(--text-secondary)',
-                  marginTop: '2px',
-                  textAlign: 'center',
-                  padding: '0 12px'
-                }}>
-                  Customer: {activeJob.customer_name || '…'}
-                </span>
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center' }}>
+      <div style={{
+        width: wd.width || '175px',
+        height: wd.height || '175px',
+        background: activeJob ? (wd.active?.background || 'var(--accent-blue-light)') : (wd.background || 'var(--bg-surface2)'),
+        border: activeJob ? (wd.active?.border || '2px solid var(--accent-blue)') : (wd.border || '2px dashed var(--border)'),
+        borderRadius: wd.borderRadius || 'var(--radius-lg)',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        marginBottom: wd.marginBottom || '16px',
+        position: 'relative',
+        overflow: 'hidden',
+        ...overrideStyles,
+      }}>
+        {activeJob ? (
+          <>
+            {/* Blinking worker dot */}
+            <div style={{
+              position: 'absolute',
+              bottom: '12px',
+              left: '30%',
+              width: '10px',
+              height: '10px',
+              borderRadius: '50%',
+              background: '#3B82F6',
+              animation: 'blink 1s infinite',
+            }} />
+            {/* Target pin */}
+            <span style={{ fontSize: wd.icon?.fontSize || '40px', opacity: 1 }}>
+              📍
+            </span>
+            <span style={{
+              fontSize: wd.title?.fontSize || '11px',
+              color: wd.title?.color || 'var(--text-secondary)',
+              marginTop: wd.title?.marginTop || '8px',
+              textAlign: 'center',
+              padding: '0 12px',
+              fontWeight: 600
+            }}>
+              {activeJob.service_name || 'Active Job'}
+            </span>
+            <span style={{
+              fontSize: '9px',
+              color: 'var(--text-secondary)',
+              marginTop: '2px',
+              textAlign: 'center',
+              padding: '0 12px'
+            }}>
+              Customer: {activeJob.customer_name || '…'}
+            </span>
+          </>
+        ) : (
+          <>
+            <span style={{ fontSize: wd.icon?.fontSize || '40px', opacity: wd.icon?.opacity || 0.3 }}>
+              🗺️
+            </span>
+            <span style={{
+              fontSize: wd.title?.fontSize || '11px',
+              color: wd.title?.color || 'var(--text-secondary)',
+              marginTop: wd.title?.marginTop || '8px',
+              textAlign: 'center',
+              padding: '0 12px'
+            }}>
+              {emptyText}
+            </span>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
 
-                {/* Action button – directly calls dispatcher, same pattern as other working buttons */}
-                <button
-                  onClick={async (e) => {
-                    e.stopPropagation()
-                    try {
-                      const nextStatus = activeJob.status === 'accepted' ? 'onway' : 'completed'
-                      await dispatchBookingCommand({ action: nextStatus, bookingId: activeJob.id })
-                    } catch (err) {
-                      alert(err.message || 'Action failed')
-                    }
-                  }}
-                  style={{
-                    marginTop: 8,
-                    padding: '6px 14px',
-                    borderRadius: 'var(--radius-sm)',
-                    border: 'none',
-                    background: 'var(--accent-blue)',
-                    color: '#fff',
-                    fontSize: 12,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                >
-                  {activeJob.status === 'accepted' ? 'Start Travel' : 'Complete Job'}
-                </button>
-              </>
-            ) : (
-              <>
-                <span style={{ fontSize: wd.icon?.fontSize || '40px', opacity: wd.icon?.opacity || 0.3 }}>
-                  🗺️
-                </span>
-                <span style={{
-                  fontSize: wd.title?.fontSize || '11px',
-                  color: wd.title?.color || 'var(--text-secondary)',
-                  marginTop: wd.title?.marginTop || '8px',
-                  textAlign: 'center',
-                  padding: '0 12px'
-                }}>
-                  {emptyText}
-                </span>
-              </>
-            )}
-          </div>
-        </div>
-      )
-    }
 
 
     // ──────────────────────────────────────────────

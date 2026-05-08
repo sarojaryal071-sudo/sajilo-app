@@ -7,7 +7,6 @@ const WorkerContext = createContext()
 
 export function WorkerProvider({ children }) {
   const [profile, setProfile] = useState(null)
-  
   const [bookings, setBookings] = useState([])
   const [activeJob, setActiveJob] = useState(null)
   const [earnings, setEarnings] = useState({ total_earnings: 0, completed_jobs: 0 })
@@ -43,15 +42,14 @@ export function WorkerProvider({ children }) {
     loadAll()
   }, [loadAll])
 
-    // Track the worker's active job (onway/working) for the dashboard map card
+  // Track the worker's active job (onway/working) for the dashboard map card
   useEffect(() => {
     const active = bookings.find(b => b.status === 'onway' || b.status === 'working')
     setActiveJob(active || null)
   }, [bookings])
-  
 
-    // Listen for new booking requests via real‑time socket
-   useEffect(() => {
+  // Listen for new booking requests via real‑time socket
+  useEffect(() => {
     const socket = getSocket()
     if (!socket) return
 
@@ -86,26 +84,29 @@ export function WorkerProvider({ children }) {
     await loadAll()
   }
 
-      const acceptBooking = async (id) => {
+  // ── Accept, Reject, Update status – with immediate local refresh ──
+  const acceptBooking = async (id) => {
     try {
       await dispatchBookingCommand({ action: 'accept', bookingId: id })
+      await loadAll()                     // ← immediate refresh after API success
     } catch (err) {
       console.error('Accept failed:', err)
     }
-    // Backend persistence succeeded → socket will trigger loadAll()
   }
 
   const rejectBooking = async (id) => {
     try {
       await dispatchBookingCommand({ action: 'reject', bookingId: id })
+      await loadAll()
     } catch (err) {
       console.error('Reject failed:', err)
     }
   }
 
-    const updateBookingStatus = async (id, status) => {
+  const updateBookingStatus = async (id, status) => {
     try {
       await dispatchBookingCommand({ action: status, bookingId: id })
+      await loadAll()
     } catch (err) {
       console.error('Status update failed:', err)
     }
@@ -115,14 +116,14 @@ export function WorkerProvider({ children }) {
     await api.saveWorkerSchedule(newSchedule)
     setSchedule(newSchedule)
   }
-  
+
   const saveServices = async (newServices) => {
-  await api.saveWorkerServices(newServices)
-  setServices(newServices)
-}
+    await api.saveWorkerServices(newServices)
+    setServices(newServices)
+  }
 
   const value = {
-    profile, bookings, earnings, schedule, loading,
+    profile, bookings, earnings, schedule, loading, activeJob,
     toggleOnline, updateProfile, acceptBooking, rejectBooking,
     updateBookingStatus, saveSchedule, loadAll, services, saveServices,
   }

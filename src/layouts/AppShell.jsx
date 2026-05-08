@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
+import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom'
 import translations from '../config/translations.js'
 import { getCurrentUser, logoutAndRedirect } from '../config/auth.js'
 import routes from '../config/routes.config.js'
@@ -46,12 +46,15 @@ export default function AppShell() {
   const location = useLocation()
   const t = translations[lang]
 
+  // Only customers see the welcome screen
   useEffect(() => {
-  if (!localStorage.getItem('sajilo_welcome_seen') && location.pathname !== '/welcome') {
-    localStorage.setItem('sajilo_welcome_seen', '1')
-    navigate('/welcome')
-  }
-}, [])
+    const user = getCurrentUser()
+    if (!user || user.role !== 'customer') return
+    if (!localStorage.getItem('sajilo_welcome_seen') && location.pathname !== '/welcome') {
+      localStorage.setItem('sajilo_welcome_seen', '1')
+      navigate('/welcome')
+    }
+  }, [location.pathname, navigate])
 
   useEffect(() => {
     console.log("🔍 APP STATE", {
@@ -140,17 +143,19 @@ export default function AppShell() {
     console.log("🔍 WORKER ROUTES:", { status: user.status, totalRoutes: workerRoutes.length, paths: workerRoutes.map(r => r.path) })
 
     return (
-  <WorkerLayout user={user} onLogout={handleLogout}  onSOS={() => setShowSOS(true)}>
-    <main style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-primary)', padding: 0 }}>
-      <Routes>
-        {workerRoutes.map(route => {
-          const Component = route.component
-          return <Route key={route.path} path={route.path} element={<Component navigate={navigate} t={t} onLogin={handleLogin} title={route.label} />} />
-        })}
-      </Routes>
-    </main>
-  </WorkerLayout>
-)
+      <WorkerLayout user={user} onLogout={handleLogout} onSOS={() => setShowSOS(true)}>
+        <main style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-primary)', padding: 0 }}>
+          <Routes>
+            <Route path="/" element={<Navigate to="/worker/dashboard" replace />} />
+            <Route path="/welcome" element={<Navigate to="/worker/dashboard" replace />} />
+            {workerRoutes.map(route => {
+              const Component = route.component
+              return <Route key={route.path} path={route.path} element={<Component navigate={navigate} t={t} onLogin={handleLogin} title={route.label} />} />
+            })}
+          </Routes>
+        </main>
+      </WorkerLayout>
+    )
   }
 
   if (user && user.role === 'admin') {
@@ -176,6 +181,7 @@ export default function AppShell() {
 
   // Authenticated main layout (customer only—admin/worker handled earlier)
   return (
+    <BookingProvider>
     <div className="app-shell" data-theme={dark ? 'dark' : 'light'} style={{
       height: '100vh', width: '100vw', background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column', fontFamily: 'var(--font-family)',
     }}>
@@ -209,5 +215,6 @@ export default function AppShell() {
         }
       `}</style>
     </div>
+    </BookingProvider>
   )
 }
