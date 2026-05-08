@@ -23,7 +23,6 @@ export function getSocket() {
     socket = null
   }
 
-  console.log('🔧 Creating new socket instance...')
   socket = io(SOCKET_URL, { 
     auth: { token },
     transports: ['websocket', 'polling'],
