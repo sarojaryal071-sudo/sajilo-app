@@ -736,16 +736,20 @@ const visualIdentityRegistry = {
     layout: { width: "full", position: 1 },
     style: { variant: "trackingCard", styleRef: "bookings.trackCard" },
     content: {
-      stages: [
-        { key: "pending", labelKey: "booking.status.pending", icon: "📋" },
-        { key: "accepted", labelKey: "booking.status.accepted", icon: "✅" },
-        { key: "onway", labelKey: "booking.status.onway", icon: "🚗" },
-        { key: "working", labelKey: "booking.status.working", icon: "🔧" },
-        { key: "completed", labelKey: "booking.status.completed", icon: "🎉" },
-      ],
-      chatEnabledAfter: "accepted",
-      dataSource: "api.getMyBookings",
-    },
+  stages: [
+    { key: "pending", labelKey: "booking.status.pending", icon: "📋" },
+    { key: "accepted", labelKey: "booking.status.accepted", icon: "✅" },
+    { key: "onway", labelKey: "booking.status.onway", icon: "🚗" },
+    { key: "working", labelKey: "booking.status.working", icon: "🔧" },
+    { key: "completed", labelKey: "booking.status.completed", icon: "🎉" },
+  ],
+  chatEnabledAfter: "accepted",
+  chatDisabledAfter: "working",          // ← message hidden from working onward
+  trackEnabled: true,                    // ← show Track Worker button
+  showRewardPoints: false,               // ← reward row hidden by default (toggle later)
+  rewardPointsRate: 0.1,                 // ← points per Rupee
+  dataSource: "api.getMyBookings",
+},
     behavior: { clickable: true, action: "expandBooking" },
     responsive: { mobile: "full", desktop: "full" },
     visible: true,

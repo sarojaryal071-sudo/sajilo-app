@@ -46,15 +46,6 @@ export default function AppShell() {
   const location = useLocation()
   const t = translations[lang]
 
-  // Only customers see the welcome screen
-  useEffect(() => {
-    const user = getCurrentUser()
-    if (!user || user.role !== 'customer') return
-    if (!localStorage.getItem('sajilo_welcome_seen') && location.pathname !== '/welcome') {
-      localStorage.setItem('sajilo_welcome_seen', '1')
-      navigate('/welcome')
-    }
-  }, [location.pathname, navigate])
 
   useEffect(() => {
     console.log("🔍 APP STATE", {

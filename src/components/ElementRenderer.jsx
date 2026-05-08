@@ -1621,136 +1621,201 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
         </div>
       )
     }
-            case "bookingTrackCard": {
-      const bookings = overrideData?.bookings || []
-      const stages = elementConfig.content?.stages || []
-      const wb = w.bookings || {}
-      const stageOrder = stages.map(s => s.key)
-      const chatAfter = elementConfig.content?.chatEnabledAfter || 'accepted'
-      const chatAfterIdx = stageOrder.indexOf(chatAfter)
-      const emptyMsg = useContent("bookings.noBookings", "No bookings yet")
 
-      // Pre-compute all stage labels — hooks at top, NOT inside map
-      const stageLabels = {}
-      stages.forEach(s => { stageLabels[s.key] = useContent(s.labelKey, s.key) })
 
-      if (bookings.length === 0) {
+    
+  case "bookingTrackCard": {
+  const bookings = overrideData?.bookings || []
+  const stages = elementConfig.content?.stages || []
+  const wb = w.bookings || {}
+  const stageOrder = stages.map(s => s.key)
+  const chatAfter = elementConfig.content?.chatEnabledAfter || 'accepted'
+  const chatAfterIdx = stageOrder.indexOf(chatAfter)
+  const chatDisableAfter = elementConfig.content?.chatDisabledAfter || null
+  const chatDisableIdx = chatDisableAfter ? stageOrder.indexOf(chatDisableAfter) : -1
+  const trackEnabled = elementConfig.content?.trackEnabled !== false
+  const showRewardPoints = elementConfig.content?.showRewardPoints === true
+  const rewardRate = elementConfig.content?.rewardPointsRate || 0.1
+  const emptyMsg = useContent("bookings.noBookings", "No bookings yet")
+  const navigate = useNavigate()
+
+  // Pre‑compute all stage labels
+  const stageLabels = {}
+  stages.forEach(s => { stageLabels[s.key] = useContent(s.labelKey, s.key) })
+
+  if (bookings.length === 0) {
+    return (
+      <div style={{
+        textAlign: wb.trackEmpty?.textAlign || 'center',
+        padding: wb.trackEmpty?.padding || '60px',
+        color: wb.trackEmpty?.color || 'var(--text-secondary)',
+        background: wb.trackEmpty?.background || 'var(--bg-surface)',
+        borderRadius: wb.trackEmpty?.borderRadius || 'var(--radius-lg)',
+        border: wb.trackEmpty?.border || '1px solid var(--border)',
+      }}>
+        <div style={{ fontSize: 48, marginBottom: 12 }}>📋</div>
+        <p style={{ fontSize: 'var(--font-body)' }}>{emptyMsg}</p>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      {bookings.map(booking => {
+        const currentIdx = stageOrder.indexOf(booking.status)
+        const chatVisible = currentIdx >= chatAfterIdx && (chatDisableIdx === -1 || currentIdx < chatDisableIdx)
+
         return (
-          <div style={{
-            textAlign: wb.trackEmpty?.textAlign || 'center',
-            padding: wb.trackEmpty?.padding || '60px',
-            color: wb.trackEmpty?.color || 'var(--text-secondary)',
-            background: wb.trackEmpty?.background || 'var(--bg-surface)',
-            borderRadius: wb.trackEmpty?.borderRadius || 'var(--radius-lg)',
-            border: wb.trackEmpty?.border || '1px solid var(--border)',
+          <div key={booking.id} style={{
+            background: wb.trackCard?.background || 'var(--bg-surface)',
+            border: wb.trackCard?.border || '1px solid var(--border)',
+            borderRadius: wb.trackCard?.borderRadius || 'var(--radius-lg)',
+            padding: wb.trackCard?.padding || '16px',
+            marginBottom: wb.trackCard?.marginBottom || '12px',
           }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>📋</div>
-            <p style={{ fontSize: 'var(--font-body)' }}>{emptyMsg}</p>
-          </div>
-        )
-      }
-
-      return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {bookings.map(booking => {
-            const currentIdx = stageOrder.indexOf(booking.status)
-            const chatVisible = currentIdx >= chatAfterIdx
-
-            return (
-              <div key={booking.id} style={{
-                background: wb.trackCard?.background || 'var(--bg-surface)',
-                border: wb.trackCard?.border || '1px solid var(--border)',
-                borderRadius: wb.trackCard?.borderRadius || 'var(--radius-lg)',
-                padding: wb.trackCard?.padding || '16px',
-                marginBottom: wb.trackCard?.marginBottom || '12px',
-              }}>
-                {/* Header */}
+            {/* Top row: Service type / Profession ··· Booking ID / Status */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+              <div>
                 <div style={{
-                  display: 'flex', justifyContent: 'space-between', marginBottom: '12px',
+                  fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)',
+                  marginBottom: 2
                 }}>
-                  <span style={{ fontSize: 'var(--font-body)', fontWeight: 600, color: 'var(--text-primary)' }}>
-                    {booking.service_name || 'Service'}
-                  </span>
-                  <span style={{
-                    fontSize: 'var(--font-caption)', fontWeight: 700, padding: '3px 9px', borderRadius: 20,
-                    background: 'var(--accent-blue-light)', color: 'var(--accent-blue)',
-                  }}>
-                    {stageLabels[booking.status] || booking.status}
-                  </span>
+                  {booking.job_size ? (booking.job_size.charAt(0).toUpperCase() + booking.job_size.slice(1)) : '–'} · {booking.service_name || '—'}
                 </div>
-
-                {/* Status Timeline */}
-                <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', marginBottom: '14px', padding: '0 6px' }}>
-                  <div style={{
-                    position: 'absolute', top: '11px', left: '18px', right: '18px', height: '2px',
-                    background: 'var(--border)', zIndex: 0,
-                  }} />
-                  {stages.map((stage, i) => {
-                    const isDone = i <= currentIdx
-                    const isCurrent = i === currentIdx
-                    return (
-                      <div key={stage.key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 1 }}>
-                        <div style={{
-                          width: '24px', height: '24px', borderRadius: '50%',
-                          background: isDone ? 'var(--accent-blue)' : 'var(--bg-surface2)',
-                          border: isCurrent ? '3px solid var(--accent-blue)' : isDone ? '2px solid var(--accent-blue)' : '2px solid var(--border)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: '10px', color: isDone ? '#fff' : 'var(--text-secondary)',
-                        }}>
-                          {stage.icon}
-                        </div>
-                        <span style={{
-                          fontSize: '8px', color: isCurrent ? 'var(--accent-blue)' : 'var(--text-secondary)',
-                          fontWeight: isCurrent ? 600 : 400, textAlign: 'center', marginTop: '4px', maxWidth: '40px',
-                        }}>
-                          {stageLabels[stage.key]}
-                        </span>
-                      </div>
-                    )
-                  })}
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{
+                  fontSize: 'var(--font-caption)', color: 'var(--text-secondary)',
+                  fontWeight: 500, marginBottom: 2
+                }}>
+                  #{booking.id}
                 </div>
+                <span style={{
+                  fontSize: 'var(--font-caption)', fontWeight: 700, padding: '2px 10px',
+                  borderRadius: 20, background: 'var(--accent-blue-light)',
+                  color: 'var(--accent-blue)',
+                }}>
+                  {stageLabels[booking.status] || booking.status}
+                </span>
+              </div>
+            </div>
 
-                {/* Worker info + price */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '10px', borderTop: '1px solid var(--border)' }}>
+            {/* Timeline bar */}
+            <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', marginBottom: '14px', padding: '0 6px' }}>
+              <div style={{
+                position: 'absolute', top: '11px', left: '18px', right: '18px', height: '2px',
+                background: 'var(--border)', zIndex: 0,
+              }} />
+              {stages.map((stage, i) => {
+                const isDone = i <= currentIdx
+                const isCurrent = i === currentIdx
+                return (
+                  <div key={stage.key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 1 }}>
+                    <div style={{
+                      width: '24px', height: '24px', borderRadius: '50%',
+                      background: isDone ? 'var(--accent-blue)' : 'var(--bg-surface2)',
+                      border: isCurrent ? '3px solid var(--accent-blue)' : isDone ? '2px solid var(--accent-blue)' : '2px solid var(--border)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: '10px', color: isDone ? '#fff' : 'var(--text-secondary)',
+                    }}>
+                      {stage.icon}
+                    </div>
+                    <span style={{
+                      fontSize: '8px', color: isCurrent ? 'var(--accent-blue)' : 'var(--text-secondary)',
+                      fontWeight: isCurrent ? 600 : 400, textAlign: 'center', marginTop: '4px', maxWidth: '40px',
+                    }}>
+                      {stageLabels[stage.key]}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Bottom section: Worker info, price, reward, tracking, message */}
+            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '10px' }}>
+              {/* Row 1: Worker ID + Track Worker */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <div>
                   <span style={{ fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)' }}>
-                    👤 {booking.worker_name || 'Worker'} · Rs {booking.price || 0}
+                    Worker ID:
+                  </span>
+                  <span style={{ fontWeight: 600, marginLeft: 6 }}>
+                    {booking.worker_client_id || booking.worker_id || '—'}
                   </span>
                 </div>
+                {trackEnabled && booking.worker_id && (
+                  <button
+                    onClick={() => navigate(`/tracking/${booking.worker_id}`)}
+                    style={{
+                      padding: '4px 12px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid var(--accent-blue)',
+                      background: 'transparent',
+                      color: 'var(--accent-blue)',
+                      fontSize: 'var(--font-caption)',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    📍 Track Worker
+                  </button>
+                )}
+              </div>
 
-                {/* Message button – navigates to Inbox */}
-                {chatVisible && (
-                  <div style={{
-                    borderTop: '1px solid var(--border)', paddingTop: '10px', marginTop: '10px',
-                    textAlign: 'center',
-                  }}>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        if (booking.id) {
-                          window.location.href = `/inbox?bookingId=${booking.id}`
-                        }
-                      }}
-                      style={{
-                        padding: '8px 16px',
-                        borderRadius: 'var(--radius-sm)',
-                        border: '1px solid var(--accent-blue)',
-                        background: 'var(--accent-blue-light)',
-                        color: 'var(--accent-blue)',
-                        fontSize: 'var(--font-caption)',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      💬 Message
-                    </button>
+              {/* Row 2: Price + Reward points */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <div>
+                  <span style={{ fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)' }}>
+                    Price:
+                  </span>
+                  <span style={{ fontWeight: 600, marginLeft: 6 }}>
+                    Rs {booking.price || 0}
+                  </span>
+                </div>
+                {showRewardPoints && (
+                  <div>
+                    <span style={{ fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)' }}>
+                      Reward Points:
+                    </span>
+                    <span style={{ fontWeight: 600, marginLeft: 6 }}>
+                      {Math.round((booking.price || 0) * rewardRate)} pts
+                    </span>
                   </div>
                 )}
               </div>
-            )
-          })}
-        </div>
-      )
-    }
+
+              {/* Message button */}
+              {chatVisible && (
+                <div style={{ textAlign: 'center', marginTop: 8 }}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (booking.id) {
+                        navigate(`/inbox?bookingId=${booking.id}`)
+                      }
+                    }}
+                    style={{
+                      padding: '8px 20px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid var(--accent-blue)',
+                      background: 'var(--accent-blue-light)',
+                      color: 'var(--accent-blue)',
+                      fontSize: 'var(--font-body-sm)',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    💬 Message
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
 
         case "dataTable": {
       const columns = (elementConfig.content?.columns || []).filter(c => c.visible).sort((a, b) => a.order - b.order)
