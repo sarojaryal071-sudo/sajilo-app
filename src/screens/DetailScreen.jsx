@@ -139,7 +139,11 @@ export default function DetailScreen({ navigate, workerId }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
         <div>
           <div style={{ fontSize: 'var(--font-large)', fontWeight: 800, color: 'var(--text-primary)' }}>{worker.name}</div>
-          <div style={{ fontSize: 'var(--font-body)', color: 'var(--text-secondary)', marginTop: 3 }}>⭐ {worker.rating} · {worker.role} · {worker.location}</div>
+          <div style={{ fontSize: 'var(--font-body)', color: 'var(--text-secondary)', marginTop: 3 }}>
+            ⭐ {worker.average_rating != null ? Number(worker.average_rating).toFixed(1) : '—'}
+            {worker.role ? ` · ${worker.role}` : ''}
+            {worker.location ? ` · ${worker.location}` : ''}
+          </div>
         </div>
         <div style={{ background: 'var(--accent-orange-light)', color: 'var(--accent-orange)', fontSize: 'var(--font-body)', fontWeight: 700, padding: '6px 12px', borderRadius: 20 }}>Rs 500-2500/hr</div>
       </div>

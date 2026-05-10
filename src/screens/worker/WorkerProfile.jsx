@@ -1,6 +1,8 @@
 ﻿import { useState, useEffect } from 'react'
 import { useWorker } from '../../contexts/WorkerContext.jsx'
 import ElementRenderer from '../../components/ElementRenderer.jsx'
+import { api } from '../../services/api.js'
+import { useSocket } from '../../hooks/useSocket.js'
 
 // ── Reward points calculation (same as client) ──
 const JOB_SIZE_POINTS = {
@@ -33,6 +35,10 @@ export default function WorkerProfile() {
   const [locationConfirmPassword, setLocationConfirmPassword] = useState('')
   const [locations, setLocations] = useState([])
 
+  // ── Reviews state ──
+  const [workerRating, setWorkerRating] = useState({ average_rating: 0, review_count: 0, reviews: [] })
+  const [reviewsLoading, setReviewsLoading] = useState(true)
+
   // Reward points
   const rewardPoints = calcRewardPoints(bookings)
 
@@ -45,6 +51,40 @@ export default function WorkerProfile() {
       } catch (err) { /* ignore */ }
     })()
   }, [])
+
+  // Fetch worker reviews on mount and when profile.id is available
+  useEffect(() => {
+    if (!profile?.id) return
+    setReviewsLoading(true)
+    api.getWorkerReviews(profile.id)
+      .then(res => {
+        if (res?.success && res.data) {
+          setWorkerRating(res.data)
+        }
+      })
+      .catch(console.error)
+      .finally(() => setReviewsLoading(false))
+  }, [profile?.id])
+
+    // Listen for live review.created events and refresh reviews
+  const { socket } = useSocket()
+
+  useEffect(() => {
+    if (!socket || !profile?.id) return
+
+    const handleReviewCreated = () => {
+      api.getWorkerReviews(profile.id)
+        .then(res => {
+          if (res?.success && res.data) {
+            setWorkerRating(res.data)
+          }
+        })
+        .catch(console.error)
+    }
+
+    socket.on('review.created', handleReviewCreated)
+    return () => socket.off('review.created', handleReviewCreated)
+  }, [socket, profile?.id])
 
   if (!profile) {
     return <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-secondary)' }}>Loading...</div>
@@ -134,7 +174,7 @@ export default function WorkerProfile() {
         </div>
       </div>
 
-      {/* Reward Points Card (same as client) */}
+      {/* Reward Points Card (unchanged) */}
       <div style={{
         background: 'var(--bg-surface)', border: '1px solid var(--border)',
         borderRadius: 'var(--radius-lg)', padding: 22, marginBottom: 16,
@@ -150,7 +190,6 @@ export default function WorkerProfile() {
             ? 'Complete jobs to earn reward points'
             : `${rewardPoints} point${rewardPoints > 1 ? 's' : ''} = Rs ${rewardPoints}`}
         </div>
-        {/* Exchange button placeholder – functioning later */}
         {rewardPoints > 0 && (
           <button disabled style={{
             marginTop: 12, padding: '8px 16px', borderRadius: 6,
@@ -162,7 +201,7 @@ export default function WorkerProfile() {
         )}
       </div>
 
-      {/* Location Change Modal */}
+      {/* Location Change Modal (unchanged) */}
       {showLocationModal && (
         <div style={{
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)',
@@ -229,6 +268,28 @@ export default function WorkerProfile() {
           }}>
             {editing ? (saving ? 'Saving...' : 'Save Changes') : 'Edit Profile'}
           </button>
+        </div>
+      </div>
+
+            {/* ── Reviews Section (compact) ── */}
+      <div style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border)',
+        borderRadius: 'var(--radius-lg)',
+        padding: 20,
+        marginBottom: 16,
+      }}>
+        <div style={{ fontSize: 'var(--font-title)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6 }}>
+          Reviews
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-primary)' }}>
+            ★ {workerRating.average_rating != null ? Number(workerRating.average_rating).toFixed(1) : '0.0'}
+          </span>
+          <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+            ({workerRating.review_count || 0} review{workerRating.review_count !== 1 ? 's' : ''})
+          </span>
         </div>
       </div>
 

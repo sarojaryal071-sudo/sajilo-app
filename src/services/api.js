@@ -52,7 +52,7 @@ cancelBooking: (id, reason) => request(`/bookings/${id}/cancel`, {
   method: 'PUT',
   body: JSON.stringify({ reason: reason || null }),
 }),
-  
+
   updateBookingStatus: (id, status) => request(`/bookings/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
   getAdminWorkers: (params = {}) => {
     const query = new URLSearchParams(params).toString()
@@ -78,7 +78,21 @@ acknowledgeCancellation: (id) => request(`/workers/cancellations/${id}/acknowled
     const query = new URLSearchParams(params).toString()
     return request(`/workers/search${query ? '?' + query : ''}`)
   },
-  getWorkerById: (id) => request(`/workers/${id}`),
-}
+      getWorkerById: (id) => request(`/workers/${id}`),
+    getWorkerReviews: (workerId) => request(`/reviews/worker/${workerId}`),
+    createReview: (bookingId, rating, reviewText) => request('/reviews', {
+      method: 'POST',
+      body: JSON.stringify({ booking_id: bookingId, rating, review_text: reviewText || null }),
+    }),
+    getPaymentByBooking: (bookingId) => request(`/payments/booking/${bookingId}`),
+    confirmInvoice: (bookingId, body = {}) => request(`/payments/booking/${bookingId}/confirm-invoice`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    }),
+    confirmCashPayment: (bookingId) => request(`/payments/booking/${bookingId}/confirm`, { method: 'PUT' }),
+    markCashPaid: (bookingId) => request(`/payments/booking/${bookingId}/mark-cash-paid`, { method: 'PUT' }),
+    getWorkerPayments: (workerId) => request(`/payments/worker/${workerId}`),
+    getCustomerPayments: (customerId) => request(`/payments/customer/${customerId}`),
+  }
 
 export { setToken, removeToken, getToken }

@@ -3,7 +3,7 @@ import ElementRenderer from '../../components/ElementRenderer.jsx'
 import { groupBookingsByCompletedDate } from '../../utils/dateGrouping.js'
 
 export default function WorkerEarnings() {
-  const { bookings, earnings, loading } = useWorker()
+  const { bookings, earnings, loading, paymentMap } = useWorker()
 
   if (loading) {
     return <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-secondary)' }}>Loading...</div>
@@ -17,7 +17,7 @@ export default function WorkerEarnings() {
       <ElementRenderer elementId="earningsHeading" overrideData={{}} />
       <ElementRenderer elementId="earningsHeroCard" overrideData={{ earnings }} />
       <ElementRenderer elementId="earningsHistoryHeading" overrideData={{}} />
-      <ElementRenderer elementId="earningsJobItem" overrideData={{ bookings: grouped }} />
+      <ElementRenderer elementId="earningsJobItem" overrideData={{ bookings: grouped, paymentMap }} />
     </div>
   )
 }

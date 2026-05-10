@@ -7,6 +7,7 @@ const BookingContext = createContext()
 export function BookingProvider({ children }) {
   const [bookings, setBookings] = useState([])
   const [activeBooking, setActiveBooking] = useState(null)
+  const [paymentMap, setPaymentMap] = useState({})
   const [loading, setLoading] = useState(false)
   const { socket } = useSocket()
 
@@ -17,6 +18,26 @@ export function BookingProvider({ children }) {
       if (res?.data) setBookings(res.data)
     } catch (err) {
       console.error('Failed to fetch bookings:', err)
+    }
+
+    // Fetch customer payments (only for customers)
+    try {
+      const meRes = await api.getMe()
+      const user = meRes?.data || meRes
+      const customerId = user?.id || null
+      const role = user?.role
+      if (customerId && role === 'customer') {
+        const payRes = await api.getCustomerPayments(customerId)
+        const payments = payRes.payments || []
+        const map = {}
+        payments.forEach(p => { map[p.booking_id] = p })
+        setPaymentMap(map)
+      } else {
+        setPaymentMap({})
+      }
+    } catch (err) {
+      console.error('Failed to fetch customer payments:', err)
+      setPaymentMap({})
     }
   }, [])
 
@@ -38,7 +59,9 @@ export function BookingProvider({ children }) {
         const lifecycleEvents = [
     'booking.accepted', 'booking.rejected', 'booking.onway',
     'booking.working', 'booking.completed', 'booking.cancelled',
-    'booking.updated'
+    'booking.updated',
+    'review.created',
+    'payment.updated',
   ]
 
   lifecycleEvents.forEach(event => {
@@ -94,6 +117,7 @@ export function BookingProvider({ children }) {
     bookings,
     activeBooking,
     loading,
+    paymentMap,
     createBooking,
     updateBookingStatus,
     setActiveBooking,

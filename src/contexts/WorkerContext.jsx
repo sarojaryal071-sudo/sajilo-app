@@ -12,6 +12,7 @@ export function WorkerProvider({ children }) {
   const [earnings, setEarnings] = useState({ total_earnings: 0, completed_jobs: 0 })
   const [schedule, setSchedule] = useState([])
   const [services, setServices] = useState([])
+  const [paymentMap, setPaymentMap] = useState({})
   const [loading, setLoading] = useState(true)
 
   const loadAll = useCallback(async () => {
@@ -23,15 +24,30 @@ export function WorkerProvider({ children }) {
         api.getWorkerSchedule(),
       ])
 
+      let profileData = null
       if (results[0].status === 'fulfilled') {
+        profileData = results[0].value.data
         setProfile(prev => ({
-          ...results[0].value.data,
-          is_online: prev?.is_online ?? results[0].value.data?.is_online ?? false,
+          ...profileData,
+          is_online: prev?.is_online ?? profileData?.is_online ?? false,
         }))
       }
       if (results[1].status === 'fulfilled') setBookings(results[1].value.data || [])
       if (results[2].status === 'fulfilled') setEarnings(results[2].value.data || { total_earnings: 0, completed_jobs: 0 })
       if (results[3].status === 'fulfilled') setSchedule(results[3].value.data || [])
+
+      // Fetch payment data once we have the worker ID
+      if (profileData) {
+        try {
+          const paymentsRes = await api.getWorkerPayments(profileData.id)
+          const payments = paymentsRes.payments || []
+          const map = {}
+          payments.forEach(p => { map[p.booking_id] = p })
+          setPaymentMap(map)
+        } catch (err) {
+          console.error('Failed to fetch worker payments:', err)
+        }
+      }
     } catch (err) {
       console.error('Failed to load worker data:', err)
     }
@@ -60,9 +76,11 @@ export function WorkerProvider({ children }) {
     const lifecycleEvents = [
       'booking.accepted', 'booking.rejected', 'booking.onway',
       'booking.working', 'booking.completed', 'booking.cancelled',
-      'booking.updated'   // ← catches unified status events like cancellation
-    ]
-    lifecycleEvents.forEach(event => socket.on(event, handleRefresh))
+          'booking.updated',
+    'review.created',
+    'payment.updated',
+  ]
+  lifecycleEvents.forEach(event => socket.on(event, handleRefresh))
 
     return () => {
       socket.off('booking.created', handleRefresh)
@@ -127,6 +145,7 @@ export function WorkerProvider({ children }) {
     profile, bookings, earnings, schedule, loading, activeJob,
     toggleOnline, updateProfile, acceptBooking, rejectBooking,
     updateBookingStatus, saveSchedule, loadAll, services, saveServices,
+    paymentMap,
   }
 
   return <WorkerContext.Provider value={value}>{children}</WorkerContext.Provider>

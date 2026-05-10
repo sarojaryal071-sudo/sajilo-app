@@ -5,7 +5,7 @@ import ElementRenderer from '../components/ElementRenderer.jsx'
 import { groupBookingsByCompletedDate } from '../utils/dateGrouping.js'
 
 export default function BookingsScreen({ navigate }) {
-  const { bookings, loading } = useBooking()
+  const { bookings, loading, paymentMap } = useBooking()
   const [filter, setFilter] = useState('all')
 
   const title = useContent('bookings.title', 'My Bookings')
@@ -63,7 +63,7 @@ export default function BookingsScreen({ navigate }) {
 
       <ElementRenderer
         elementId="bookingTrackCard"
-        overrideData={{ bookings: displayBookings, role: 'customer' }}
+        overrideData={{ bookings: displayBookings, role: 'customer', paymentMap }}
       />
     </div>
   )

@@ -119,7 +119,7 @@ export default function WorkerCard({ worker }) {
             fontWeight: ratingStyle.fontWeight || 600,
             color: 'var(--text-primary)',
           }}>
-            ⭐ {worker.rating || '—'}
+            ⭐ {worker.average_rating != null ? Number(worker.average_rating).toFixed(1) : '—'}
           </span>
           <span style={{
             fontSize: etaStyle.fontSize || cards.workerCard.info.etaBadge.fontSize,

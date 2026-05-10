@@ -20,8 +20,12 @@ import { useContent } from "../hooks/useContent.js";
 import { resolveBookingActions } from '../utils/bookingActionResolver.js'
 import ActionButtonGroup from './renderers/ActionButtonGroup.jsx'
 import { dispatchBookingCommand } from '../utils/bookingCommandDispatcher.js';
+import { api } from '../services/api.js';
+import ReviewModal from './reviews/ReviewModal.jsx';
 import { formatDateSeparator } from '../utils/dateGrouping.js';
-
+import { getPaymentStatusConfig, getPaymentMethodLabel } from '../config/paymentRegistry.js';
+import InvoiceOverlay from './reviews/InvoiceOverlay.jsx';
+import WorkerInvoiceOverlay from './reviews/WorkerInvoiceOverlay.jsx';
 
 function JobRow({ booking, statusBadgeKeys, onAction, w, c, r, s, overrideStyles }) {
   const statusKey = statusBadgeKeys[booking.status]
@@ -142,6 +146,7 @@ function JobRow({ booking, statusBadgeKeys, onAction, w, c, r, s, overrideStyles
 }
 
 const ElementRenderer = ({ elementId, overrideData = {} }) => {
+  const [workerInvoiceBooking, setWorkerInvoiceBooking] = React.useState(null);
 
   // Get blueprint from registry
   const elementConfig = visualIdentityRegistry[elementId];
@@ -494,7 +499,7 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
         // ──────────────────────────────────────────────
     // JOB HISTORY ITEM (Earnings — completed jobs)
     // ──────────────────────────────────────────────
-    case "jobHistoryItem": {
+        case "jobHistoryItem": {
       const items = overrideData?.bookings || [];
       const we = w.earnings || {};
 
@@ -606,7 +611,11 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
                   }}>
                     <span>{job.customer_client_id || '—'}</span>
                     <span>{completedDate}</span>
-                    <span>⭐ —</span>
+                    <span>
+                      {job.review_rating != null
+                        ? '★' + job.review_rating
+                        : ''}
+                    </span>
                   </div>
                   <span style={{
                     fontSize: 'var(--font-caption)',
@@ -619,6 +628,64 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
                   }}>
                     Completed
                   </span>
+                  {/* Payment status badge — only if payment data exists for this booking */}
+                  {overrideData.paymentMap?.[job.id] && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <span style={{
+                        fontSize: 'var(--font-caption)',
+                        fontWeight: 600,
+                        padding: '2px 8px',
+                        borderRadius: 'var(--radius-sm)',
+                        whiteSpace: 'nowrap',
+                        background: getPaymentStatusConfig(overrideData.paymentMap[job.id].status).badgeColor,
+                        color: getPaymentStatusConfig(overrideData.paymentMap[job.id].status).textColor,
+                      }}>
+                        {((status) => {
+                          const method = getPaymentMethodLabel(overrideData.paymentMap[job.id].method);
+                          if (status === 'pending_cash') return `Pay by ${method}`;
+                          if (status === 'paid') return `Paid by ${method}`;
+                          return `${getPaymentStatusConfig(status).label} · ${method}`;
+                        })(overrideData.paymentMap[job.id].status)}
+                      </span>
+                      {overrideData.paymentMap[job.id].status === 'unpaid' && (
+                        <button
+                          onClick={() => setWorkerInvoiceBooking(job)}
+                          style={{
+                            padding: '2px 10px',
+                            borderRadius: 'var(--radius-sm)',
+                            border: '1px solid var(--accent-blue)',
+                            background: 'transparent',
+                            color: 'var(--accent-blue)',
+                            fontSize: 'var(--font-caption)',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          View Invoice
+                        </button>
+                      )}
+                      {overrideData.paymentMap[job.id].status === 'pending_cash' &&
+                       overrideData.paymentMap[job.id].method === 'cash' && (
+                        <button
+                          onClick={() => api.markCashPaid(job.id).catch(err => alert(err.message))}
+                          style={{
+                            padding: '2px 10px',
+                            borderRadius: 'var(--radius-sm)',
+                            border: '1px solid var(--accent-green)',
+                            background: 'transparent',
+                            color: 'var(--accent-green)',
+                            fontSize: 'var(--font-caption)',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          Confirm Cash Received
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Third line: Reward points (only if enabled) */}
@@ -634,6 +701,16 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
               </div>
             );
           })}
+
+          {/* Worker Invoice Overlay */}
+          {workerInvoiceBooking && (
+            <WorkerInvoiceOverlay
+              payment={overrideData.paymentMap?.[workerInvoiceBooking.id]}
+              booking={workerInvoiceBooking}
+              onClose={() => setWorkerInvoiceBooking(null)}
+              onConfirmed={() => setWorkerInvoiceBooking(null)}
+            />
+          )}
         </div>
       );
     }
@@ -1761,6 +1838,7 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
 
   // Local state for in‑card confirmation
   const [confirmCancelId, setConfirmCancelId] = React.useState(null)
+  const [reviewBookingId, setReviewBookingId] = React.useState(null)   // ← review modal
 
     const [cancelReasons, setCancelReasons] = React.useState([])
   const [cancelNote, setCancelNote] = React.useState('')
@@ -1846,6 +1924,28 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
                 }}>
                   {stageLabels[booking.status] || booking.status}
                 </span>
+                {/* Payment status badge – only for completed bookings with payment data */}
+                {booking.status === 'completed' && overrideData.paymentMap?.[booking.id] && (
+                  <span style={{
+                    fontSize: 'var(--font-caption)',
+                    fontWeight: 600,
+                    padding: '2px 8px',
+                    borderRadius: 'var(--radius-sm)',
+                    background: getPaymentStatusConfig(overrideData.paymentMap[booking.id].status).badgeColor,
+                    color: getPaymentStatusConfig(overrideData.paymentMap[booking.id].status).textColor,
+                    marginLeft: '6px',
+                    whiteSpace: 'nowrap',
+                    display: 'inline-block',
+                    marginTop: '4px',
+                  }}>
+                    {((status) => {
+                      const method = getPaymentMethodLabel(overrideData.paymentMap[booking.id].method);
+                      if (status === 'pending_cash') return `Pay by ${method}`;
+                      if (status === 'paid') return `Paid by ${method}`;
+                      return `${getPaymentStatusConfig(status).label} · ${method}`;
+                    })(overrideData.paymentMap[booking.id].status)}
+                  </span>
+                )}
               </div>
             </div>
 
@@ -1933,7 +2033,7 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
                 )}
               </div>
 
-                            {/* ── Cancel button (shows overlay popup) ── */}
+               {/* ── Cancel button (shows overlay popup) ── */}
               {showCancel && (
                 <div style={{ textAlign: 'center', marginBottom: 8 }}>
                   {customerActions.map(btn => (
@@ -2069,7 +2169,59 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
                 </>
               )}
 
-              
+              {/* ── Leave Review button ── */}
+              {booking.status === 'completed' && !booking.reviewed && (
+                <div style={{ textAlign: 'center', marginBottom: 8 }}>
+                  <button
+                    onClick={() => setReviewBookingId(booking.id)}
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid var(--accent-green)',
+                      background: 'transparent',
+                      color: 'var(--accent-green)',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    ⭐ Leave Review
+                  </button>
+                </div>
+              )}
+
+              {/* ── Invoice button (completed bookings with payment data) ── */}
+              {booking.status === 'completed' && overrideData.paymentMap?.[booking.id] && (
+                <div style={{ textAlign: 'center', marginBottom: 8 }}>
+                  <button
+                    onClick={() => setReviewBookingId(booking.id)}
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid var(--accent-blue)',
+                      background: 'transparent',
+                      color: 'var(--accent-blue)',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    🧾 Invoice
+                  </button>
+                </div>
+              )}
+
+              {/* ── Review Modal Overlay ── */}
+              {reviewBookingId === booking.id && (
+                <ReviewModal
+                  bookingId={booking.id}
+                  workerName={booking.worker_name || 'Worker'}
+                  onClose={() => setReviewBookingId(null)}
+                  onSubmitted={() => setReviewBookingId(null)}
+                />
+              )}
+
+
               {/* Message button */}
               {chatVisible && (
                 <div style={{ textAlign: 'center', marginTop: 8 }}>
@@ -2099,6 +2251,16 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
           </div>
         )
       })}
+
+      {/* Invoice overlay for client */}
+      {reviewBookingId && overrideData?.paymentMap?.[reviewBookingId] && (
+        <InvoiceOverlay
+          payment={overrideData.paymentMap[reviewBookingId]}
+          booking={bookings.find(b => b.id === reviewBookingId)}
+          onClose={() => setReviewBookingId(null)}
+          onPaymentCompleted={() => setReviewBookingId(null)}
+        />
+      )}
     </div>
   )
 }
