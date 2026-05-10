@@ -491,12 +491,16 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
       );
     }
 
-    // ──────────────────────────────────────────────
+        // ──────────────────────────────────────────────
     // JOB HISTORY ITEM (Earnings — completed jobs)
     // ──────────────────────────────────────────────
-       case "jobHistoryItem": {
+    case "jobHistoryItem": {
       const items = overrideData?.bookings || [];
       const we = w.earnings || {};
+
+      // Config flags (from registry content, fallback to hardcoded defaults)
+      const showReward = elementConfig.content?.showRewardPoints === true;
+      const rewardRate = elementConfig.content?.rewardPointsRate || 0.1;
 
       if (items.length === 0) {
         const emptyMsg = useContent("worker.noCompletedJobs", "No completed jobs yet.");
@@ -504,7 +508,7 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
           <div style={{
             textAlign: 'center',
             padding: we.empty?.padding || '40px',
-            color: we.empty?.color || c.textSecondary,
+            color: 'var(--text-secondary)',
           }}>
             {emptyMsg}
           </div>
@@ -512,63 +516,121 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
       }
 
       return (
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: we.list?.gap || '8px',
-          ...overrideStyles,
-        }}>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
           {items.map((item, idx) => {
             // ── Date separator ──
             if (item.type === 'dateSeparator') {
               return (
                 <div key={`sep-${idx}`} style={{
-                  padding: '10px 0 6px 0',
-                  fontSize: 'var(--font-body-sm)',
+                  padding: '12px 16px 4px 16px',
+                  fontSize: 'var(--font-caption)',
                   fontWeight: 600,
-                  color: c.textSecondary,
+                  color: 'var(--text-secondary)',
                   borderBottom: '1px solid var(--border)',
-                  marginBottom: '4px',
                 }}>
                   {formatDateSeparator(item.date)}
                 </div>
               );
             }
 
-            // ── Normal job item ──
+            // ── Compact history row ──
             const job = item;
+            const completedDate = job.updated_at
+              ? new Date(job.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+              : '';
+
             return (
               <div key={job.id} style={{
-                background: we.jobItem?.background || c.bgSurface,
-                border: we.jobItem?.border || `1px solid ${c.border}`,
-                borderRadius: we.jobItem?.borderRadius || r.md || '12px',
-                padding: we.jobItem?.padding || '12px',
                 display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
+                flexDirection: 'column',
+                padding: '10px 16px',
+                borderBottom: '1px solid var(--border)',
               }}>
-                <div>
-                  <div style={{
-                    fontWeight: we.jobName?.fontWeight || 600,
-                    color: we.jobName?.color || c.textPrimary,
-                    fontSize: we.jobName?.fontSize || f.body || '16px',
-                  }}>
-                    {job.service_name}
-                  </div>
-                  <div style={{
-                    fontSize: we.jobMeta?.fontSize || f.bodySm || '14px',
-                    color: we.jobMeta?.color || c.textSecondary,
-                  }}>
-                    {job.customer_name} · {job.job_size}
-                  </div>
-                </div>
+                {/* Top line: Booking ID + Service name ··· Amount */}
                 <div style={{
-                  fontSize: we.jobPrice?.fontSize || f.body || '16px',
-                  fontWeight: we.jobPrice?.fontWeight || 700,
-                  color: we.jobPrice?.color || c.accentGreen,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
                 }}>
-                  Rs {job.price || 0}
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    flex: 1,
+                    minWidth: 0,
+                  }}>
+                    <span style={{
+                      fontSize: 'var(--font-body-sm)',
+                      fontWeight: 600,
+                      color: 'var(--text-primary)',
+                    }}>
+                      #{job.id}
+                    </span>
+                    <span style={{
+                      fontSize: 'var(--font-body)',
+                      fontWeight: 500,
+                      color: 'var(--text-primary)',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}>
+                      {job.service_name}
+                    </span>
+                  </div>
+                  <span style={{
+                    fontSize: 'var(--font-body)',
+                    fontWeight: 700,
+                    color: 'var(--accent-green)',
+                    whiteSpace: 'nowrap',
+                    marginLeft: 8,
+                  }}>
+                    Rs {job.price || 0}
+                  </span>
                 </div>
+
+                {/* Second line: Client ID · Date · Rating placeholder */}
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginTop: 4,
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    flex: 1,
+                    minWidth: 0,
+                    fontSize: 'var(--font-body-sm)',
+                    color: 'var(--text-secondary)',
+                  }}>
+                    <span>{job.customer_client_id || '—'}</span>
+                    <span>{completedDate}</span>
+                    <span>⭐ —</span>
+                  </div>
+                  <span style={{
+                    fontSize: 'var(--font-caption)',
+                    color: 'var(--accent-blue)',
+                    background: 'var(--accent-blue-light)',
+                    padding: '2px 8px',
+                    borderRadius: 'var(--radius-sm)',
+                    fontWeight: 500,
+                    whiteSpace: 'nowrap',
+                  }}>
+                    Completed
+                  </span>
+                </div>
+
+                {/* Third line: Reward points (only if enabled) */}
+                {showReward && (
+                  <div style={{
+                    marginTop: 4,
+                    fontSize: 'var(--font-caption)',
+                    color: 'var(--text-secondary)',
+                  }}>
+                    Reward Points: {Math.round((job.price || 0) * rewardRate)} pts
+                  </div>
+                )}
               </div>
             );
           })}
@@ -1479,13 +1541,36 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
     // ──────────────────────────────────────────────
     // ANALYTICS CHART (Dashboard — Phase 15)
     // ──────────────────────────────────────────────
-                         case "analyticsChart": {
+      case "analyticsChart": {
       const wd = w.dashboard?.analytics || {}
       const title = useContent("worker.analytics", "Analytics")
       const weeklyData = overrideData?.weeklyEarnings || []
-      const hasData = weeklyData.length > 0 && weeklyData.some(v => v > 0)
+      const monthlyData = overrideData?.monthlyEarnings || []
+      const chartMode = overrideData?.chartMode || 'weekly'
+      const setChartMode = overrideData?.onSetChartMode || (() => {})
+
+      const currentData = chartMode === 'monthly' ? monthlyData : weeklyData
+      const hasData = currentData.length > 0 && currentData.some(v => v > 0)
+
       const [chartType, setChartType] = React.useState('bar')
       const chartColors = wd.chartColors || ['var(--accent-blue)', 'var(--accent-green)', 'var(--accent-orange)', '#8B5CF6', '#EC4899']
+
+      // Day / month labels
+      const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+      const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+      // Build correct labels based on mode and data length
+      const labels = chartMode === 'monthly'
+        ? monthlyData.map((_, i) => {
+            const d = new Date()
+            d.setMonth(d.getMonth() - (monthlyData.length - 1 - i))
+            return monthLabels[d.getMonth()]
+          })
+        : weeklyData.map((_, i) => {
+            const d = new Date()
+            d.setDate(d.getDate() - (weeklyData.length - 1 - i))
+            return dayLabels[d.getDay()]
+          })
 
       return (
         <div style={{
@@ -1508,6 +1593,17 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
                   {type === 'bar' ? '📊' : type === 'line' ? '📈' : '🥧'}
                 </button>
               ))}
+              <div style={{ width: 1, background: 'var(--border)', margin: '0 4px' }} />
+              {['weekly', 'monthly'].map(mode => (
+                <button key={mode} onClick={() => setChartMode(mode)} style={{
+                  padding: '4px 10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)',
+                  background: chartMode === mode ? 'var(--accent-blue)' : 'transparent',
+                  color: chartMode === mode ? '#fff' : 'var(--text-secondary)',
+                  fontSize: 'var(--font-caption)', cursor: 'pointer', fontWeight: 500,
+                }}>
+                  {mode === 'weekly' ? 'Week' : 'Month'}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -1528,8 +1624,8 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
               {/* BAR CHART */}
               {chartType === 'bar' && (
                 <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: '100%', padding: '4px 0' }}>
-                  {weeklyData.map((h, i) => {
-                    const maxVal = Math.max(...weeklyData, 1) // prevent division by zero
+                  {currentData.map((h, i) => {
+                    const maxVal = Math.max(...currentData, 1)
                     const heightPct = (h / maxVal) * 100
                     return (
                       <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
@@ -1541,7 +1637,7 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
                           minHeight: h > 0 ? 2 : 0,
                         }} />
                         <span style={{ fontSize: '9px', color: 'var(--text-secondary)', marginTop: 4 }}>
-                          {['M','T','W','T','F','S','S'][i]}
+                          {labels[i]}
                         </span>
                       </div>
                     )
@@ -1556,16 +1652,16 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
                     fill="none"
                     stroke={chartColors[0]}
                     strokeWidth="3"
-                    points={weeklyData.map((v, i) => {
-                      const maxVal = Math.max(...weeklyData, 1)
-                      const x = (i / (weeklyData.length - 1 || 1)) * 300
+                    points={currentData.map((v, i) => {
+                      const maxVal = Math.max(...currentData, 1)
+                      const x = (i / (currentData.length - 1 || 1)) * 300
                       const y = 140 - ((v / maxVal) * 100)
                       return `${x},${y}`
                     }).join(' ')}
                   />
-                  {weeklyData.map((v, i) => {
-                    const maxVal = Math.max(...weeklyData, 1)
-                    const x = (i / (weeklyData.length - 1 || 1)) * 300
+                  {currentData.map((v, i) => {
+                    const maxVal = Math.max(...currentData, 1)
+                    const x = (i / (currentData.length - 1 || 1)) * 300
                     const y = 140 - ((v / maxVal) * 100)
                     return <circle key={i} cx={x} cy={y} r="4" fill={chartColors[i % chartColors.length]} />
                   })}
@@ -1576,8 +1672,8 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
               {chartType === 'pie' && (
                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
                   <svg width="120" height="120" viewBox="0 0 100 100">
-                    {weeklyData.reduce((acc, val, i) => {
-                      const total = weeklyData.reduce((s, x) => s + x, 0)
+                    {currentData.reduce((acc, val, i) => {
+                      const total = currentData.reduce((s, x) => s + x, 0)
                       if (total === 0) return acc
                       const slice = (val / total) * 360
                       const start = acc.offset
@@ -1647,7 +1743,7 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
 
 
 
-  case "bookingTrackCard": {
+      case "bookingTrackCard": {
   const bookings = overrideData?.bookings || []
   const stages = elementConfig.content?.stages || []
   const wb = w.bookings || {}
@@ -1661,6 +1757,16 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
   const rewardRate = elementConfig.content?.rewardPointsRate || 0.1
   const emptyMsg = useContent("bookings.noBookings", "No bookings yet")
   const navigate = useNavigate()
+  const userRole = overrideData?.role || 'customer'
+
+  // Local state for in‑card confirmation
+  const [confirmCancelId, setConfirmCancelId] = React.useState(null)
+
+    const [cancelReasons, setCancelReasons] = React.useState([])
+  const [cancelNote, setCancelNote] = React.useState('')
+  const toggleReason = (reason) => {
+    setCancelReasons(prev => prev.includes(reason) ? prev.filter(r => r !== reason) : [...prev, reason])
+  }
 
   // Pre‑compute all stage labels
   const stageLabels = {}
@@ -1671,10 +1777,10 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
       <div style={{
         textAlign: wb.trackEmpty?.textAlign || 'center',
         padding: wb.trackEmpty?.padding || '60px',
-        color: wb.trackEmpty?.color || 'var(--text-secondary)',
-        background: wb.trackEmpty?.background || 'var(--bg-surface)',
-        borderRadius: wb.trackEmpty?.borderRadius || 'var(--radius-lg)',
-        border: wb.trackEmpty?.border || '1px solid var(--border)',
+        color: 'var(--text-secondary)',
+        background: 'var(--bg-surface)',
+        borderRadius: 'var(--radius-lg)',
+        border: '1px solid var(--border)',
       }}>
         <div style={{ fontSize: 48, marginBottom: 12 }}>📋</div>
         <p style={{ fontSize: 'var(--font-body)' }}>{emptyMsg}</p>
@@ -1685,60 +1791,63 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
       {bookings.map((booking, idx) => {
-  // ── Date separator ──
-  if (booking.type === 'dateSeparator') {
-    return (
-      <div key={`sep-${idx}`} style={{
-        padding: '10px 0 6px 0',
-        fontSize: 'var(--font-body-sm)',
-        fontWeight: 600,
-        color: 'var(--text-secondary)',
-        borderBottom: '1px solid var(--border)',
-        marginBottom: '4px',
-      }}>
-        {formatDateSeparator(booking.date)}
-      </div>
-    );
-  }
+        // ── Date separator ──
+        if (booking.type === 'dateSeparator') {
+          return (
+            <div key={`sep-${idx}`} style={{
+              padding: '10px 0 6px 0',
+              fontSize: 'var(--font-body-sm)',
+              fontWeight: 600,
+              color: 'var(--text-secondary)',
+              borderBottom: '1px solid var(--border)',
+              marginBottom: '4px',
+            }}>
+              {formatDateSeparator(booking.date)}
+            </div>
+          );
+        }
 
-  // Original booking rendering continues below...
-  const currentIdx = stageOrder.indexOf(booking.status)
-  const chatVisible = currentIdx >= chatAfterIdx && (chatDisableIdx === -1 || currentIdx < chatDisableIdx)
+        const currentIdx = stageOrder.indexOf(booking.status)
+        const chatVisible = currentIdx >= chatAfterIdx && (chatDisableIdx === -1 || currentIdx < chatDisableIdx)
+        const customerActions = resolveBookingActions(booking, userRole)
+        const showCancel = customerActions.length > 0
+        const isConfirming = confirmCancelId === booking.id
 
-  return (
-    <div key={booking.id} style={{
-      background: wb.trackCard?.background || 'var(--bg-surface)',
-      border: wb.trackCard?.border || '1px solid var(--border)',
-      borderRadius: wb.trackCard?.borderRadius || 'var(--radius-lg)',
-      padding: wb.trackCard?.padding || '16px',
-      marginBottom: wb.trackCard?.marginBottom || '12px',
-    }}>
-      {/* Top row: Service type / Profession ··· Booking ID / Status */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-        <div>
-          <div style={{
-            fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)',
-            marginBottom: 2
+        return (
+          <div key={booking.id} style={{
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '16px',
+            marginBottom: '12px',
           }}>
-            {booking.job_size ? (booking.job_size.charAt(0).toUpperCase() + booking.job_size.slice(1)) : '–'} · {booking.service_name || '—'}
-          </div>
-        </div>
-        <div style={{ textAlign: 'right' }}>
-          <div style={{
-            fontSize: 'var(--font-caption)', color: 'var(--text-secondary)',
-            fontWeight: 500, marginBottom: 2
-          }}>
-            #{booking.id}
-          </div>
-          <span style={{
-            fontSize: 'var(--font-caption)', fontWeight: 700, padding: '2px 10px',
-            borderRadius: 20, background: 'var(--accent-blue-light)',
-            color: 'var(--accent-blue)',
-          }}>
-            {stageLabels[booking.status] || booking.status}
-          </span>
-        </div>
-      </div>
+            {/* Top row: Service type / Profession ··· Booking ID / Status */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+              <div>
+                <div style={{
+                  fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)',
+                  marginBottom: 2
+                }}>
+                  {booking.job_size ? (booking.job_size.charAt(0).toUpperCase() + booking.job_size.slice(1)) : '–'} · {booking.service_name || '—'}
+                </div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{
+                  fontSize: 'var(--font-caption)', color: 'var(--text-secondary)',
+                  fontWeight: 500, marginBottom: 2
+                }}>
+                  #{booking.id}
+                </div>
+                <span style={{
+                  fontSize: 'var(--font-caption)', fontWeight: 700, padding: '2px 10px',
+                  borderRadius: 20,
+                  background: booking.status === 'rejected' ? 'var(--accent-red-light)' : 'var(--accent-blue-light)',
+                  color: booking.status === 'rejected' ? 'var(--accent-red)' : 'var(--accent-blue)',
+                }}>
+                  {stageLabels[booking.status] || booking.status}
+                </span>
+              </div>
+            </div>
 
             {/* Timeline bar */}
             <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', marginBottom: '14px', padding: '0 6px' }}>
@@ -1779,11 +1888,11 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
                   <span style={{ fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)' }}>
                     Worker ID:
                   </span>
-                  <span style={{ fontWeight: 600, marginLeft: 6 }}>
+                  <span style={{ fontWeight: 600, marginLeft: 6, color: 'var(--text-primary)' }}>
                     {booking.worker_client_id || booking.worker_id || '—'}
                   </span>
                 </div>
-                {trackEnabled && booking.worker_id && (
+                {trackEnabled && (booking.status === 'accepted' || booking.status === 'onway') && booking.worker_id && (
                   <button
                     onClick={() => navigate(`/tracking/${booking.worker_id}`)}
                     style={{
@@ -1808,7 +1917,7 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
                   <span style={{ fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)' }}>
                     Price:
                   </span>
-                  <span style={{ fontWeight: 600, marginLeft: 6 }}>
+                  <span style={{ fontWeight: 600, marginLeft: 6, color: 'var(--accent-green)' }}>
                     Rs {booking.price || 0}
                   </span>
                 </div>
@@ -1817,13 +1926,150 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
                     <span style={{ fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)' }}>
                       Reward Points:
                     </span>
-                    <span style={{ fontWeight: 600, marginLeft: 6 }}>
+                    <span style={{ fontWeight: 600, marginLeft: 6, color: 'var(--text-primary)' }}>
                       {Math.round((booking.price || 0) * rewardRate)} pts
                     </span>
                   </div>
                 )}
               </div>
 
+                            {/* ── Cancel button (shows overlay popup) ── */}
+              {showCancel && (
+                <div style={{ textAlign: 'center', marginBottom: 8 }}>
+                  {customerActions.map(btn => (
+                    <button
+                      key={btn.id}
+                      onClick={() => setConfirmCancelId(booking.id)}
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: 'var(--radius-sm)',
+                        border: '1px solid var(--accent-red)',
+                        background: 'transparent',
+                        color: 'var(--accent-red)',
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {btn.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* ── Overlay popup for cancellation ── */}
+              {confirmCancelId === booking.id && (
+                <>
+                  <div
+                    onClick={() => {
+                      setConfirmCancelId(null)
+                      setCancelReasons([])
+                      setCancelNote('')
+                    }}
+                    style={{
+                      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                      background: 'rgba(0,0,0,0.35)', zIndex: 9998,
+                    }}
+                  />
+                  <div style={{
+                    position: 'fixed', top: '50%', left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    width: '90%', maxWidth: 400,
+                    background: 'var(--bg-surface)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 'var(--radius-lg)',
+                    padding: 24,
+                    zIndex: 9999,
+                    boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
+                  }}>
+                    <div style={{
+                      fontSize: 16, fontWeight: 700,
+                      color: 'var(--text-primary)', marginBottom: 14,
+                    }}>
+                      Cancel your booking?
+                    </div>
+                    <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: 'var(--text-secondary)' }}>
+                      Why are you cancelling? (optional)
+                    </div>
+                    {['Worker not responding','Found another worker','Job no longer needed','Price too high','Changing schedule'].map(reason => (
+                      <label key={reason} style={{
+                        display: 'flex', alignItems: 'center', gap: 8,
+                        marginBottom: 6, fontSize: 13,
+                        color: 'var(--text-primary)', cursor: 'pointer',
+                      }}>
+                        <input
+                          type="checkbox"
+                          checked={cancelReasons.includes(reason)}
+                          onChange={() => toggleReason(reason)}
+                        />
+                        {reason}
+                      </label>
+                    ))}
+                    <textarea
+                      value={cancelNote}
+                      onChange={e => setCancelNote(e.target.value)}
+                      placeholder="Add a note (will help us improve)"
+                      rows={2}
+                      style={{
+                        width: '100%', marginTop: 10, padding: '8px 10px',
+                        borderRadius: 'var(--radius-sm)',
+                        border: '1px solid var(--border)',
+                        background: 'var(--bg-surface2)',
+                        color: 'var(--text-primary)', fontSize: 12,
+                        resize: 'vertical',
+                      }}
+                    />
+                    <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+                      <button
+                        onClick={async () => {
+                          try {
+                            await dispatchBookingCommand({
+                              action: 'cancel',
+                              bookingId: confirmCancelId,
+                              reason: [...cancelReasons, cancelNote].filter(Boolean).join(', '),
+                            })
+                            setConfirmCancelId(null)
+                            setCancelReasons([])
+                            setCancelNote('')
+                          } catch (err) {
+                            alert(err.message || 'Cancel failed')
+                            setConfirmCancelId(null)
+                          }
+                        }}
+                        style={{
+                          flex: 1, padding: '10px 12px',
+                          borderRadius: 'var(--radius-sm)',
+                          border: 'none', background: 'var(--accent-red)',
+                          color: '#fff', fontWeight: 600,
+                          fontSize: 14, cursor: 'pointer',
+                        }}
+                      >
+                        Confirm cancellation
+                      </button>
+                      <button
+                        onClick={() => {
+                          setConfirmCancelId(null)
+                          setCancelReasons([])
+                          setCancelNote('')
+                        }}
+                        style={{
+                          flex: 1, padding: '10px 12px',
+                          borderRadius: 'var(--radius-sm)',
+                          border: '1px solid var(--border)',
+                          background: 'transparent',
+                          color: 'var(--text-secondary)',
+                          fontWeight: 600, fontSize: 14,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Back
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              
               {/* Message button */}
               {chatVisible && (
                 <div style={{ textAlign: 'center', marginTop: 8 }}>

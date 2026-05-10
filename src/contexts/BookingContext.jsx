@@ -35,26 +35,29 @@ export function BookingProvider({ children }) {
 
     socket.on('connect', handleConnect)
 
-    const lifecycleEvents = [
-      'booking.accepted', 'booking.rejected', 'booking.onway',
-      'booking.working', 'booking.completed', 'booking.cancelled'
-    ]
+        const lifecycleEvents = [
+    'booking.accepted', 'booking.rejected', 'booking.onway',
+    'booking.working', 'booking.completed', 'booking.cancelled',
+    'booking.updated'
+  ]
 
-    lifecycleEvents.forEach(event => {
-      socket.on(event, () => {
-        fetchBookings()
-      })
-    })
-
-    socket.on('booking.created', () => {
+  lifecycleEvents.forEach(event => {
+    socket.on(event, () => {
       fetchBookings()
     })
+  })
 
-    return () => {
-      socket.off('connect', handleConnect)
-      lifecycleEvents.forEach(event => socket.off(event))
-      socket.off('booking.created')
-    }
+  socket.on('booking.created', () => {
+    fetchBookings()
+  })
+
+  return () => {
+    socket.off('connect')
+    socket.off('disconnect')
+    lifecycleEvents.forEach(event => socket.off(event))
+    socket.off('booking.created')
+  }
+  
   }, [socket, fetchBookings])
 
   // ── Create booking ──

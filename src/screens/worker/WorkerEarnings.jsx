@@ -11,11 +11,9 @@ export default function WorkerEarnings() {
 
   const completedJobs = (bookings || []).filter(b => b.status === 'completed')
   const grouped = groupBookingsByCompletedDate(completedJobs)
-
-  console.log('EARNINGS GROUPED:', grouped)
   
   return (
-    <div>
+    <div style={{ padding: '0 16px' }}>
       <ElementRenderer elementId="earningsHeading" overrideData={{}} />
       <ElementRenderer elementId="earningsHeroCard" overrideData={{ earnings }} />
       <ElementRenderer elementId="earningsHistoryHeading" overrideData={{}} />

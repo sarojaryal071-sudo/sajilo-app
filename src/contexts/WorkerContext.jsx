@@ -59,7 +59,8 @@ export function WorkerProvider({ children }) {
 
     const lifecycleEvents = [
       'booking.accepted', 'booking.rejected', 'booking.onway',
-      'booking.working', 'booking.completed', 'booking.cancelled'
+      'booking.working', 'booking.completed', 'booking.cancelled',
+      'booking.updated'   // ← catches unified status events like cancellation
     ]
     lifecycleEvents.forEach(event => socket.on(event, handleRefresh))
 

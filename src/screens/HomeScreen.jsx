@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { api, API_URL } from '../services/api.js'
 import ConfigContainer from '../components/ConfigContainer.jsx'
@@ -57,6 +58,14 @@ function ServiceTile({ service, isSelected, onClick, cardStyle, iconStyle, label
 }
 
 export default function HomeScreen({ navigate, t }) {
+  // ── Search state (moved from SearchScreen) ──
+  const [searchTerm, setSearchTerm] = useState('')
+  const [selectedLocation, setSelectedLocation] = useState('')
+  const [locations, setLocations] = useState([])
+  const [searchResults, setSearchResults] = useState([])
+  const [searching, setSearching] = useState(false)
+
+  // Original HomeScreen state
   const [stackedCategory, setStackedCategory] = useState(null)
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [workers, setWorkers] = useState([])
@@ -109,6 +118,32 @@ export default function HomeScreen({ navigate, t }) {
     })()
   }, [])
 
+  // Fetch locations for search (from SearchScreen)
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(`${API_URL}/locations?status=available`)
+        const json = await res.json()
+        if (json.success) setLocations(json.data || [])
+      } catch (err) {
+        console.error('Failed to load locations', err)
+      }
+    })()
+  }, [])
+
+  // Perform search whenever searchTerm or selectedLocation changes
+  useEffect(() => {
+    const params = {}
+    if (searchTerm.trim()) params.service = searchTerm.trim()
+    if (selectedLocation) params.location = selectedLocation
+
+    setSearching(true)
+    api.searchWorkers(params)
+      .then(result => setSearchResults(result.data || []))
+      .catch(console.error)
+      .finally(() => setSearching(false))
+  }, [searchTerm, selectedLocation])
+
   const txt = {
     welcome: useContent('home.welcome'),
     subtitle: useContent('home.subtitle'),
@@ -118,6 +153,8 @@ export default function HomeScreen({ navigate, t }) {
     noWorkers: useContent('home.noWorkers'),
     all: useContent('category.all'),
     back: useContent('home.back'),
+    searchPlaceholder: useContent('search.placeholder'),
+    locationLabel: useContent('search.locationLabel') || 'Service Area',
   }
 
   const welcomeTitleStyle = useStyle('homeWelcomeTitle')
@@ -172,6 +209,9 @@ export default function HomeScreen({ navigate, t }) {
       ))}
     </div>
   )
+
+  // ── Determine if we should show search results ──
+  const showSearchResults = searchTerm.trim() !== '' || selectedLocation !== ''
 
   // Expanded category view — horizontal filter bar + worker grid
   if (stackedCategory) {
@@ -234,45 +274,134 @@ export default function HomeScreen({ navigate, t }) {
       <h2 style={welcomeTitleStyle}>{txt.welcome}</h2>
       <p style={welcomeSubStyle}>{txt.subtitle}</p>
 
-      <ConfigContainer id="promoBanners">
-        <BannerCarousel />
-      </ConfigContainer>
+      {/* ── SEARCH BAR (integrated from SearchScreen) ── */}
+      <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder={txt.searchPlaceholder}
+          style={{
+            flex: 1, minWidth: 200,
+            padding: '12px 14px', borderRadius: 'var(--radius-md)',
+            border: '1px solid var(--border)', background: 'var(--bg-surface2)',
+            color: 'var(--text-primary)', fontSize: 'var(--font-body)',
+            outline: 'none'
+          }}
+        />
+        <select
+          value={selectedLocation}
+          onChange={(e) => setSelectedLocation(e.target.value)}
+          style={{
+            padding: '12px 14px', borderRadius: 'var(--radius-md)',
+            border: '1px solid var(--border)', background: 'var(--bg-surface2)',
+            color: 'var(--text-primary)', fontSize: 'var(--font-body)',
+            cursor: 'pointer', minWidth: 150
+          }}
+        >
+          <option value="">{txt.locationLabel}</option>
+          {locations.map(loc => (
+            <option key={loc.value} value={loc.value}>{loc.label}</option>
+          ))}
+        </select>
+      </div>
 
-      <ConfigContainer id="primaryServices">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-          <h3 style={sectionTitleStyle}>{txt.primary}</h3>
-          <button onClick={() => setSelectedCategory(null)} style={{ fontSize: 12, color: 'var(--accent-blue)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 500 }}>
-            {txt.all}
-          </button>
+      {/* ── SEARCH RESULTS (only when user is actively searching) ── */}
+      {showSearchResults && (
+        <div style={{ marginBottom: 20 }}>
+          {searching ? (
+            <div style={{ textAlign: 'center', padding: 20 }}>Searching…</div>
+          ) : searchResults.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: 20, color: 'var(--text-secondary)' }}>
+              No workers found
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {searchResults.map(worker => (
+                <div key={worker.id} onClick={() => navigate(`/detail/${worker.id}`)}
+                  style={{
+                    background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)',
+                    padding: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14,
+                  }}>
+                  <div style={{
+                    width: 48, height: 48, borderRadius: '50%', overflow: 'hidden',
+                    background: worker.photo_url ? 'transparent' : 'var(--accent-blue-light)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 20, fontWeight: 700, color: 'var(--accent-blue)', flexShrink: 0,
+                  }}>
+                    {worker.photo_url ? (
+                      <img src={worker.photo_url} alt="Worker" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      worker.name?.charAt(0)?.toUpperCase() || 'W'
+                    )}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 'var(--font-body)' }}>
+                      {worker.name}
+                      {worker.is_online && <span style={{ color: 'var(--accent-green)', marginLeft: 6, fontSize: 12 }}>● Online</span>}
+                    </div>
+                    <div style={{ fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)' }}>
+                      {worker.primary_skill || 'General Service'}
+                      {worker.secondary_roles?.length > 0 && ` + ${worker.secondary_roles.join(', ')}`}
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--accent-blue)', fontWeight: 600, marginTop: 2 }}>
+                      {worker.client_id}
+                    </div>
+                  </div>
+                  <span style={{ color: 'var(--accent-blue)', fontSize: 'var(--font-body-sm)', fontWeight: 600 }}>
+                    Rs {worker.hourly_rate || 500}/hr
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-        {renderTileGrid(primaryServices)}
-      </ConfigContainer>
-
-      {secondaryServices.length > 0 && (
-        <ConfigContainer id="secondaryServices">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-            <h3 style={sectionTitleStyle}>{txt.secondary}</h3>
-          </div>
-          {renderTileGrid(secondaryServices)}
-        </ConfigContainer>
       )}
 
-      <h3 style={sectionTitleStyle}>{txt.nearbyWorkers}</h3>
-      {loading ? (
-        <div style={{ textAlign: 'center', padding: 20 }}>Loading workers…</div>
-      ) : workers.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-secondary)' }}>
-          <div style={{ fontSize: 40, marginBottom: 8 }}>👷</div>
-          <p>{txt.noWorkers}</p>
-        </div>
-      ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
-          {workers.map(worker => (
-            <div key={worker.id} onClick={() => navigate(`/detail/${worker.id}`)} style={{ cursor: 'pointer' }}>
-              <WorkerCard worker={worker} />
+      {/* ── Original HomeScreen content (hidden when search results are active to reduce clutter) ── */}
+      {!showSearchResults && (
+        <>
+          <ConfigContainer id="promoBanners">
+            <BannerCarousel />
+          </ConfigContainer>
+
+          <ConfigContainer id="primaryServices">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <h3 style={sectionTitleStyle}>{txt.primary}</h3>
+              <button onClick={() => setSelectedCategory(null)} style={{ fontSize: 12, color: 'var(--accent-blue)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 500 }}>
+                {txt.all}
+              </button>
             </div>
-          ))}
-        </div>
+            {renderTileGrid(primaryServices)}
+          </ConfigContainer>
+
+          {secondaryServices.length > 0 && (
+            <ConfigContainer id="secondaryServices">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                <h3 style={sectionTitleStyle}>{txt.secondary}</h3>
+              </div>
+              {renderTileGrid(secondaryServices)}
+            </ConfigContainer>
+          )}
+
+          <h3 style={sectionTitleStyle}>{txt.nearbyWorkers}</h3>
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: 20 }}>Loading workers…</div>
+          ) : workers.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-secondary)' }}>
+              <div style={{ fontSize: 40, marginBottom: 8 }}>👷</div>
+              <p>{txt.noWorkers}</p>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+              {workers.map(worker => (
+                <div key={worker.id} onClick={() => navigate(`/detail/${worker.id}`)} style={{ cursor: 'pointer' }}>
+                  <WorkerCard worker={worker} />
+                </div>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   )

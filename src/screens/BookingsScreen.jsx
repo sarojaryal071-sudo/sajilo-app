@@ -14,13 +14,16 @@ export default function BookingsScreen({ navigate }) {
     return <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-secondary)' }}>Loading...</div>
   }
 
-  // Apply filter
+  // Apply status filter
   let filtered = bookings || []
   if (filter === 'pending') {
     filtered = filtered.filter(b => b.status === 'pending')
   } else if (filter === 'completed') {
     filtered = filtered.filter(b => b.status === 'completed')
   }
+
+  // Always hide cancelled bookings (they disappear after cancellation)
+  filtered = filtered.filter(b => b.status !== 'cancelled')
 
   // Only group by date when showing completed jobs
   const displayBookings = filter === 'completed' ? groupBookingsByCompletedDate(filtered) : filtered
@@ -30,8 +33,6 @@ export default function BookingsScreen({ navigate }) {
     { key: 'pending', label: useContent('bookings.filter.pending', 'Pending') },
     { key: 'completed', label: useContent('bookings.filter.completed', 'Completed') },
   ]
-
-  console.log('BOOKINGS DISPLAY:', displayBookings)
 
   return (
     <div>
@@ -62,7 +63,7 @@ export default function BookingsScreen({ navigate }) {
 
       <ElementRenderer
         elementId="bookingTrackCard"
-        overrideData={{ bookings: displayBookings }}
+        overrideData={{ bookings: displayBookings, role: 'customer' }}
       />
     </div>
   )

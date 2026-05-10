@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
-// import { workers } from '../config/data.js'
 import Calendar from '../components/Calendar.jsx'
 import { useContent } from '../hooks/useContent.js'
 import { api } from '../services/api.js'
+import { useBooking } from '../contexts/BookingContext.jsx'
+import { dispatchBookingCommand } from '../utils/bookingCommandDispatcher.js'
 
 const jobSizes = [
   { id: 'small', labelKey: 'detail.small', descKey: 'detail.smallDesc', price: 'Rs 500-1500' },
@@ -13,6 +14,14 @@ const jobSizes = [
 const HOURS = ['01','02','03','04','05','06','07','08','09','10','11','12']
 const MINUTES = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'))
 
+const CANCEL_REASONS = [
+  'Worker not responding',
+  'Found another worker',
+  'Job no longer needed',
+  'Price too high',
+  'Changing schedule',
+]
+
 export default function DetailScreen({ navigate, workerId }) {
   const [selectedJob, setSelectedJob] = useState('medium')
   const [urgency, setUrgency] = useState('now')
@@ -21,8 +30,19 @@ export default function DetailScreen({ navigate, workerId }) {
   const [selectedMinute, setSelectedMinute] = useState('00')
   const [isAM, setIsAM] = useState(true)
   const [showCalendar, setShowCalendar] = useState(false)
-
   const [booking, setBooking] = useState(false)
+
+  // Cancel popup state
+  const [showCancel, setShowCancel] = useState(false)
+  const [cancelReasons, setCancelReasons] = useState([])
+  const [cancelNote, setCancelNote] = useState('')
+
+  const { bookings } = useBooking()
+
+  // Find an active booking for this worker (any status that can be cancelled)
+  const activeBooking = bookings?.find(
+    b => b.worker_id === workerId && ['pending', 'accepted', 'onway'].includes(b.status)
+  )
 
   const handleBook = async () => {
     const token = localStorage.getItem('sajilo_token')
@@ -42,6 +62,26 @@ export default function DetailScreen({ navigate, workerId }) {
     setBooking(false)
   }
 
+  const handleCancel = async (reason) => {
+    try {
+      await dispatchBookingCommand({
+        action: 'cancel',
+        bookingId: activeBooking.id,
+        reason: reason || null,
+      })
+      setShowCancel(false)
+      navigate('/bookings')
+    } catch (err) {
+      alert(err.message || 'Cancel failed')
+    }
+  }
+
+  const toggleReason = (reason) => {
+    setCancelReasons(prev =>
+      prev.includes(reason) ? prev.filter(r => r !== reason) : [...prev, reason]
+    )
+  }
+
   const txt = {
     back: useContent('detail.back', '← Back'),
     selectJob: useContent('detail.selectJob'),
@@ -57,7 +97,6 @@ export default function DetailScreen({ navigate, workerId }) {
 
   const [worker, setWorker] = useState(null)
 
-  // ✅ FIXED: uses api.getWorkerById instead of hardcoded localhost fetch
   useEffect(() => {
     api.getWorkerById(workerId).then(d => {
       if (d.success) setWorker(d.data)
@@ -144,9 +183,128 @@ export default function DetailScreen({ navigate, workerId }) {
         💳 Pay via eSewa, Khalti, or cash · Platform fee 15%
       </div>
 
-      <button onClick={handleBook} disabled={booking} style={{ width: '100%', background: 'var(--accent-orange)', color: '#fff', border: 'none', borderRadius: 'var(--radius-md)', padding: 14, fontSize: 'var(--font-title)', fontWeight: 700, cursor: 'pointer' }}>
-        {booking ? 'Booking...' : `${txt.book} (${jobSizes.find(j => j.id === selectedJob)?.price || 'Rs 1500-4000'})`}
-      </button>
+            {/* ── Bottom action button (Book now / Cancel booking) ── */}
+      {activeBooking ? (
+        <>
+          <button
+            onClick={() => setShowCancel(true)}
+            style={{
+              width: '100%', background: 'var(--accent-red)', color: '#fff',
+              border: 'none', borderRadius: 'var(--radius-md)', padding: 14,
+              fontSize: 'var(--font-title)', fontWeight: 700, cursor: 'pointer',
+            }}
+          >
+            Cancel booking
+          </button>
+
+          {/* ── Floating cancel popup card ── */}
+          {showCancel && (
+            <>
+              {/* translucent backdrop */}
+              <div
+                onClick={() => setShowCancel(false)}
+                style={{
+                  position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                  background: 'rgba(0,0,0,0.35)', zIndex: 9998,
+                }}
+              />
+
+              {/* centered card */}
+              <div style={{
+                position: 'fixed', top: '50%', left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: '90%', maxWidth: 400,
+                background: 'var(--bg-surface)',
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--radius-lg)',
+                padding: 24,
+                zIndex: 9999,
+                boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
+              }}>
+                <div style={{
+                  fontSize: 16, fontWeight: 700,
+                  color: 'var(--text-primary)', marginBottom: 14,
+                }}>
+                  Cancel your booking?
+                </div>
+
+                <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: 'var(--text-secondary)' }}>
+                  Why are you cancelling? (optional)
+                </div>
+
+                {CANCEL_REASONS.map(reason => (
+                  <label key={reason} style={{
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    marginBottom: 6, fontSize: 13,
+                    color: 'var(--text-primary)', cursor: 'pointer',
+                  }}>
+                    <input
+                      type="checkbox"
+                      checked={cancelReasons.includes(reason)}
+                      onChange={() => toggleReason(reason)}
+                    />
+                    {reason}
+                  </label>
+                ))}
+
+                <textarea
+                  value={cancelNote}
+                  onChange={e => setCancelNote(e.target.value)}
+                  placeholder="Add a note (will help us improve)"
+                  rows={2}
+                  style={{
+                    width: '100%', marginTop: 10, padding: '8px 10px',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border)',
+                    background: 'var(--bg-surface2)',
+                    color: 'var(--text-primary)', fontSize: 12,
+                    resize: 'vertical',
+                  }}
+                />
+
+                <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+                  <button
+                    onClick={() => handleCancel(
+                      [...cancelReasons, cancelNote].filter(Boolean).join(', ')
+                    )}
+                    style={{
+                      flex: 1, padding: '10px 12px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: 'none', background: 'var(--accent-red)',
+                      color: '#fff', fontWeight: 600,
+                      fontSize: 14, cursor: 'pointer',
+                    }}
+                  >
+                    Confirm cancellation
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowCancel(false)
+                      setCancelReasons([])
+                      setCancelNote('')
+                    }}
+                    style={{
+                      flex: 1, padding: '10px 12px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: '1px solid var(--border)',
+                      background: 'transparent',
+                      color: 'var(--text-secondary)',
+                      fontWeight: 600, fontSize: 14,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Back
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+        </>
+      ) : (
+        <button onClick={handleBook} disabled={booking} style={{ width: '100%', background: 'var(--accent-orange)', color: '#fff', border: 'none', borderRadius: 'var(--radius-md)', padding: 14, fontSize: 'var(--font-title)', fontWeight: 700, cursor: 'pointer' }}>
+          {booking ? 'Booking...' : `${txt.book} (${jobSizes.find(j => j.id === selectedJob)?.price || 'Rs 1500-4000'})`}
+        </button>
+      )}
     </div>
   )
 }

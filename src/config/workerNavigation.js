@@ -10,26 +10,16 @@ const workerNavigation = [
     priority: 'primary',
   },
   {
-    id: 'jobs',
-    label: 'Jobs',
-    icon: '🔧',
-    path: '/worker/jobs',
-    role: 'worker',
-    mobileVisible: true,
-    priority: 'primary',
-  },
-  
-  
-  // ═══ SECONDARY — Drawer (More menu) ═══
-  {
     id: 'earnings',
     label: 'Earnings',
     icon: '💰',
     path: '/worker/earnings',
     role: 'worker',
-    mobileVisible: false,
-    priority: 'secondary',
+    mobileVisible: true,
+    priority: 'primary',
   },
+  
+  // ═══ SECONDARY — Drawer (More menu) ═══
   {
     id: 'schedule',
     label: 'Schedule',

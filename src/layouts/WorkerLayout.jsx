@@ -196,7 +196,6 @@ function WorkerLayoutInner({ children, onLogout, onSOS }) {
               <button
                 key={item.id}
                 onClick={() => {
-                  // Always replace history for the dashboard to avoid back‑button loops
                   if (item.path === '/worker/dashboard') {
                     navigate(item.path, { replace: true });
                   } else {

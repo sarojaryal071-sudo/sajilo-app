@@ -11,6 +11,7 @@
   --accent-green: #2D9E6B;
   --accent-orange: #E8720C;
   --accent-red: #D92B2B;
+  --accent-red-light: #FEE2E2;
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
@@ -27,6 +28,7 @@
   --border: #2e3340;
   --accent-blue: #4a9ae8;
   --accent-blue-light: #1a2e48;
+  --accent-red-light: #3a1a1a;
 }
 
 * {
@@ -121,17 +123,6 @@ html.auth-locked body {
   height: 0 !important;
 }
 
-/* ── Scrolling everywhere on client/worker panels ── */
-.main-content,
-.worker-content {
-  touch-action: pan-y;
-  overscroll-behavior-y: auto;
-}
-.config-container,
-.main-content div {
-  touch-action: pan-y;
-}
-
 /* ── Full‑screen app (no outer gutters) ── */
 .main-content,
 .worker-content {
@@ -143,6 +134,15 @@ html.auth-locked body {
   .worker-content {
     padding-bottom: 80px !important;
   }
+}
+
+/* ── Single primary scroll container with native momentum ── */
+.main-content,
+.worker-content {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;   /* iOS momentum */
+  overscroll-behavior-y: auto;         /* natural bounce */
+  touch-action: auto;                  /* let the browser handle momentum freely */
 }
 
 /* ── Conversation overlay support ── */

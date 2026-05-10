@@ -48,30 +48,37 @@ export const api = {
   getWorkerBookings: () => request('/bookings/worker/list'),
   acceptBooking: (id) => request(`/bookings/${id}/accept`, { method: 'PUT' }),
   rejectBooking: (id) => request(`/bookings/${id}/reject`, { method: 'PUT' }),
+cancelBooking: (id, reason) => request(`/bookings/${id}/cancel`, {
+  method: 'PUT',
+  body: JSON.stringify({ reason: reason || null }),
+}),
+  
   updateBookingStatus: (id, status) => request(`/bookings/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
   getAdminWorkers: (params = {}) => {
-  const query = new URLSearchParams(params).toString()
-  return request(`/admin/workers${query ? '?' + query : ''}`)
-},
+    const query = new URLSearchParams(params).toString()
+    return request(`/admin/workers${query ? '?' + query : ''}`)
+  },
+  getUnacknowledgedCancellations: () => request('/workers/cancellations/unacknowledged'),
+acknowledgeCancellation: (id) => request(`/workers/cancellations/${id}/acknowledge`, { method: 'PUT' }),
   getAdminCustomers: () => request('/admin/customers'),
   approveWorker: (id) => request(`/admin/workers/${id}/approve`, { method: 'PUT' }),
   rejectWorker: (id) => request(`/admin/workers/${id}/reject`, { method: 'PUT' }),
   getAdminStats: () => request('/admin/stats'),
   getWorkerProfile: () => request('/users/worker/me'),
   getMyWorkerApplication: () => request('/users/worker/application'),
-    setWelcomed: () => request('/users/worker/welcomed', { method: 'PUT' }),
+  setWelcomed: () => request('/users/worker/welcomed', { method: 'PUT' }),
   updateWorkerProfile: (body) => request('/users/worker/me', { method: 'PUT', body: JSON.stringify(body) }),
   getWorkerEarnings: () => request('/users/worker/earnings'),
   getWorkerSchedule: () => request('/users/worker/schedule'),
   saveWorkerSchedule: (schedule) => request('/users/worker/schedule', { method: 'PUT', body: JSON.stringify({ schedule }) }),
   sendNotification: (body) => request('/notifications', { method: 'POST', body: JSON.stringify(body) }),
   getNotifications: () => request('/notifications'),
-    submitWorkerApplication: (body) => request('/auth/worker/apply', { method: 'POST', body: JSON.stringify(body) }),
+  submitWorkerApplication: (body) => request('/auth/worker/apply', { method: 'POST', body: JSON.stringify(body) }),
   searchWorkers: (params = {}) => {
     const query = new URLSearchParams(params).toString()
     return request(`/workers/search${query ? '?' + query : ''}`)
   },
-    getWorkerById: (id) => request(`/workers/${id}`),
-  }
+  getWorkerById: (id) => request(`/workers/${id}`),
+}
 
 export { setToken, removeToken, getToken }
