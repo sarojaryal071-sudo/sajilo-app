@@ -4,6 +4,7 @@ import mobile from '../config/ui/mobile.config.js'
 import { useFeatureFlag } from '../hooks/useFeatureFlag.js'
 import { useNotification } from '../contexts/NotificationContext.jsx'
 import conversationState from '../services/chat/ConversationStateManager.js'
+import { API_URL } from '../services/api.js'
 
 export default function MobileBottomNav({ navigate, t, onMore, onSOS }) {
   const location = useLocation()
@@ -15,6 +16,22 @@ export default function MobileBottomNav({ navigate, t, onMore, onSOS }) {
   useEffect(() => {
     const unsub = conversationState.onChange(count => setConvUnread(count))
     return unsub
+  }, [])
+
+  // Seed unread conversation count from server on mount
+  useEffect(() => {
+    const token = localStorage.getItem('sajilo_token')
+    if (!token) return
+    fetch(`${API_URL}/chat/conversations`, {
+      headers: { Authorization: `Bearer ${token}` }
+    }).then(r => r.json()).then(d => {
+      const list = d.data || []
+      list.forEach(c => {
+        if (c.unread === '1') conversationState.setUnread(c.id)
+      })
+      const count = list.filter(c => c.unread === '1').length
+      setConvUnread(count)
+    }).catch(() => {})
   }, [])
 
   return (

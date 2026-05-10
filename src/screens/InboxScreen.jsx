@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useContent } from '../hooks/useContent.js'
 import { useSocket } from '../hooks/useSocket.js'
-import { useNotification } from '../contexts/NotificationContext.jsx'
 import conversationState from '../services/chat/ConversationStateManager.js'
 import { API_URL } from '../services/api.js'
 import { getCurrentUser } from '../config/auth.js'
+import { useNotification } from '../contexts/NotificationContext.jsx'
 
 const FALLBACK_ADMIN_ID = 32
 
@@ -19,11 +19,13 @@ export default function InboxScreen() {
   const [messages, setMessages] = useState([])
   const [chatInput, setChatInput] = useState('')
   const [unreadConversations, setUnreadConversations] = useState(conversationState.getUnreadCount())
+  const [unreadConvIds, setUnreadConvIds] = useState(() => new Set(conversationState.getUnreadIds?.() || []))
   const [adminId, setAdminId] = useState(FALLBACK_ADMIN_ID)
   const messagesEndRef = useRef(null)
 
   const { socket } = useSocket()
-  const { notifications, unreadCount: notifUnread } = useNotification()
+  const navigate = useNavigate()
+  const { notifications, unreadCount: notifUnread, markAllRead, markRead } = useNotification()
 
   const currentUser = getCurrentUser()
   const currentUserId = currentUser?.id
@@ -49,11 +51,16 @@ export default function InboxScreen() {
   const noConversations = useContent('chat.noConversations', 'No conversations yet')
   const noNotifications = useContent('notifications.empty', 'No notifications yet')
 
+  // Keep React in sync with conversation unread state
   useEffect(() => {
-    const unsub = conversationState.onChange((count) => setUnreadConversations(count))
+    const unsub = conversationState.onChange((count) => {
+      setUnreadConversations(count)
+      setUnreadConvIds(new Set(conversationState.getUnreadIds?.() || []))
+    })
     return unsub
   }, [])
 
+  // Fetch conversations initially (and when targetBookingId changes)
   useEffect(() => {
     const token = localStorage.getItem('sajilo_token')
     if (!token) return
@@ -62,6 +69,10 @@ export default function InboxScreen() {
     }).then(r => r.json()).then(d => {
       const list = d.data || []
       setConversations(list)
+      // Also seed the state manager with any unread conversations the API says are unread
+      list.forEach(c => {
+        if (c.unread === '1') conversationState.setUnread(c.id)
+      })
       if (targetBookingId && list.length > 0) {
         const targetConv = list.find(c => c.booking_id === Number(targetBookingId))
         if (targetConv) openConversation(targetConv)
@@ -102,10 +113,29 @@ export default function InboxScreen() {
         return [conv, ...prev]
       })
     })
+
+    // Remove chats when the booking completes or is cancelled
+    const refreshConversations = () => {
+      const token = localStorage.getItem('sajilo_token')
+      if (!token) return
+      fetch(`${API_URL}/chat/conversations`, {
+        headers: { Authorization: `Bearer ${token}` }
+      }).then(r => r.json()).then(d => {
+        const list = d.data || []
+        setConversations(list)
+        conversationState.syncFromList(list)   // ← remove stale unread markers
+        setUnreadConvIds(new Set(list.filter(c => c.unread === '1').map(c => c.id)))
+      })
+    }
+    socket.on('booking.completed', refreshConversations)
+    socket.on('booking.cancelled', refreshConversations)
+
     return () => {
       socket.off('new_message')
       socket.off('message_sent')
       socket.off('conversation_updated')
+      socket.off('booking.completed', refreshConversations)
+      socket.off('booking.cancelled', refreshConversations)
     }
   }, [socket, activeConv])
 
@@ -131,7 +161,15 @@ export default function InboxScreen() {
       text,
       bookingId: activeConv.booking_id || null,
     })
-    setMessages(prev => [...prev, { id: Date.now(), from: 'user', text, sender_name: 'You', sender_id: currentUserId }])
+    // Show the message immediately with a timestamp
+    setMessages(prev => [...prev, {
+      id: Date.now(),
+      from: 'user',
+      text,
+      sender_name: 'You',
+      sender_id: currentUserId,
+      created_at: new Date().toISOString()
+    }])
     setChatInput('')
   }
 
@@ -158,6 +196,13 @@ export default function InboxScreen() {
     if (msg.sender_id && currentUserId && msg.sender_id === currentUserId) return true
     return false
   }
+
+  // ── Mark all notifications as read when the Notifications tab is opened ──
+  useEffect(() => {
+    if (activeTab === 'notifications' && notifUnread > 0) {
+      markAllRead()
+    }
+  }, [activeTab])
 
   // ── Conversation overlay (fixed full‑screen, only when activeConv is set) ──
   const renderConversationOverlay = () => {
@@ -321,7 +366,11 @@ export default function InboxScreen() {
                   <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-secondary)', fontSize: 13 }}>{noConversations}</div>
                 ) : (
                   conversations.map(chat => {
-                    const unread = conversationState.isUnread(chat.id)
+                    // a conversation is unread if either the state manager says so, or the API returned unread="1"
+                    const unread = unreadConvIds.has(chat.id) || chat.unread === '1'
+                    const lastMsgTime = chat.last_message_at
+                      ? new Date(chat.last_message_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                      : ''
                     return (
                       <div key={chat.id} onClick={() => openConversation(chat)} style={{
                         display: 'flex', alignItems: 'center', gap: 12,
@@ -330,8 +379,17 @@ export default function InboxScreen() {
                       }}>
                         <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--bg-surface2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>💬</div>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 13, fontWeight: unread ? 700 : 500, color: 'var(--text-primary)' }}>{chat.other_name || 'Support Chat'}</div>
-                          <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{chat.last_message || 'No messages'}</div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ fontSize: 13, fontWeight: unread ? 700 : 500, color: 'var(--text-primary)' }}>
+                              {chat.other_name || 'Support Chat'}
+                            </div>
+                            {lastMsgTime && (
+                              <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginLeft: 8 }}>{lastMsgTime}</div>
+                            )}
+                          </div>
+                          <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {chat.last_message || 'No messages'}
+                          </div>
                         </div>
                         {unread && <span style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--accent-blue)', flexShrink: 0 }} />}
                       </div>
@@ -346,19 +404,62 @@ export default function InboxScreen() {
               {notifications.length === 0 ? (
                 <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-secondary)' }}>{noNotifications}</div>
               ) : (
-                notifications.map(n => (
-                  <div key={n.id} style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', opacity: n.read ? 0.6 : 1, cursor: 'pointer' }}>
-                    <div style={{ fontSize: 13, fontWeight: n.read ? 400 : 700, color: 'var(--text-primary)' }}>{n.title || n.message}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 4 }}>{n.time}</div>
-                  </div>
-                ))
+                notifications.map(n => {
+                  const timeStr = n.created_at
+                    ? new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                    : ''
+
+                  const getPath = (type) => {
+                    const role = currentUser?.role
+                    if (role === 'customer') {
+                      if (type === 'booking_accepted' || type === 'booking_rejected' || type === 'booking_cancelled' || type === 'booking_completed') return '/bookings'
+                      if (type === 'invoice_ready' || type === 'payment_paid') return '/bookings'
+                      if (type === 'review_received') return '/bookings'
+                    }
+                    if (role === 'worker') {
+                      if (type === 'booking_created') return '/worker/dashboard'
+                      if (type === 'booking_completed') return '/worker/earnings'
+                      if (type === 'booking_cancelled' || type === 'payment_paid' || type === 'review_received' || type === 'invoice_ready') return '/worker/earnings'
+                      return '/worker/earnings'
+                    }
+                    return null
+                  }
+
+                  const handleTap = async () => {
+                    if (!n.is_read) {
+                      try { await markRead(n.id) } catch (_) {}
+                    }
+                    const path = getPath(n.type)
+                    if (path) navigate(path)
+                  }
+
+                  return (
+                    <div key={n.id} onClick={handleTap} style={{
+                      padding: '12px 16px',
+                      borderBottom: '1px solid var(--border)',
+                      opacity: n.is_read ? 0.6 : 1,
+                      cursor: 'pointer'
+                    }}>
+                      <div style={{
+                        fontSize: 13,
+                        fontWeight: n.is_read ? 400 : 700,
+                        color: 'var(--text-primary)'
+                      }}>
+                        {n.title || n.message}
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 4 }}>
+                        {timeStr}
+                      </div>
+                    </div>
+                  )
+                })
               )}
             </div>
           )}
         </div>
       </div>
 
-      {/* Full‑screen conversation overlay (rendered outside normal flow) */}
+      {/* Full‑screen conversation overlay */}
       {renderConversationOverlay()}
     </>
   )

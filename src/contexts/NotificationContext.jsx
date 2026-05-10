@@ -1,49 +1,99 @@
-// NotificationContext — centralized notification state via socket only
-// Stores all incoming notifications but exposes filtered streams
-import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
-import { useSocket } from '../hooks/useSocket.js'
-import { isSystemNotification } from '../utils/notificationFilters.js'
+// src/contexts/NotificationContext.jsx
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { api } from '../services/api.js';
+import { useSocket } from '../hooks/useSocket.js';
 
-const NotificationContext = createContext()
+const NotificationContext = createContext();
 
 export function NotificationProvider({ children }) {
-  const [allNotifications, setAllNotifications] = useState([])
-  const { socket } = useSocket()
-  const seenIds = useRef(new Set())
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const { socket } = useSocket();
 
-  // Stores all incoming notifications — raw stream
-  useEffect(() => {
-    if (!socket) return
-    socket.on('notification_new', (notif) => {
-      console.log('[NOTIF RAW]', { type: notif.type, id: notif.id, title: notif.title })
-      if (seenIds.current.has(notif.id)) return
-      seenIds.current.add(notif.id)
-      setAllNotifications(prev => [{ ...notif, read: false }, ...prev])
-    })
-    return () => socket.off('notification_new')
-  }, [socket])
-
-  // Derived: system notifications only — for the bell
-  const systemNotifications = allNotifications.filter(n => isSystemNotification(n))
-
-  // Derived: unread system count only
-  const unreadCount = systemNotifications.filter(n => !n.read).length
-
-  // Marks a notification as read
-  const markAsRead = useCallback((notificationId) => {
-    if (socket) {
-      socket.emit('notification_read', { notificationId })
+  // ── Fetch notifications and unread count ──
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const [notifRes, countRes] = await Promise.allSettled([
+        api.getNotifications?.(),
+        api.getUnreadCount?.(),
+      ]);
+      if (notifRes.status === 'fulfilled') {
+        setNotifications(notifRes.value.notifications || []);
+      }
+      if (countRes.status === 'fulfilled') {
+        setUnreadCount(countRes.value.count ?? 0);
+      }
+    } catch (err) {
+      console.error('Failed to fetch notifications:', err);
     }
-    setAllNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, read: true } : n))
-  }, [socket])
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem('sajilo_token');
+    if (token) fetchNotifications();
+  }, [fetchNotifications]);
+
+  // ── Real‑time socket listener ──
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewNotification = (payload) => {
+      // Prepend the notification and increment unread count
+      setNotifications(prev => [payload, ...prev]);
+      setUnreadCount(prev => prev + 1);
+    };
+
+    socket.on('notification.created', handleNewNotification);
+
+    return () => {
+      socket.off('notification.created', handleNewNotification);
+    };
+  }, [socket]);
+
+  // ── Mark one notification as read ──
+  const markRead = async (id) => {
+    try {
+      await api.markNotificationRead?.(id);
+      setNotifications(prev =>
+        prev.map(n => (n.id === id ? { ...n, is_read: true } : n))
+      );
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (err) {
+      console.error('Failed to mark notification read:', err);
+    }
+  };
+
+  // ── Mark all as read ──
+  const markAllRead = async () => {
+    try {
+      await api.markAllNotificationsRead?.();
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      setUnreadCount(0);
+    } catch (err) {
+      console.error('Failed to mark all notifications read:', err);
+    }
+  };
+
+  const value = {
+    notifications,
+    unreadCount,
+    loading,
+    markRead,
+    markAllRead,
+    refresh: fetchNotifications,
+  };
 
   return (
-    <NotificationContext.Provider value={{ notifications: systemNotifications, unreadCount, markAsRead }}>
+    <NotificationContext.Provider value={value}>
       {children}
     </NotificationContext.Provider>
-  )
+  );
 }
 
-export function useNotification() {
-  return useContext(NotificationContext)
+export function useNotifications() {
+  return useContext(NotificationContext);
 }
+// compatibility alias for older imports using singular
+export const useNotification = useNotifications;

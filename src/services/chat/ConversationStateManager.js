@@ -41,6 +41,17 @@ class ConversationStateManager {
   _notify() {
     this.listeners.forEach(cb => cb(this.getUnreadCount()))
   }
+
+  // Replace the entire unread set with IDs that are currently unread according to the server list
+  syncFromList(conversations) {
+    this.unreadConversations.clear()
+    ;(conversations || []).forEach(c => {
+      if (c.unread === '1' || c.unread === 1) {
+        this.unreadConversations.add(c.id)
+      }
+    })
+    this._notify()
+  }
 }
 
 // Single shared instance across all panels

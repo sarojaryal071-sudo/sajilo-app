@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { getToken } from '../services/api.js'
+import { getToken, API_URL } from '../services/api.js'
 import { useSocket } from '../hooks/useSocket.js'
 import workerNavigation from '../config/workerNavigation.js'
 import OnlineToggle from '../components/worker/OnlineToggle.jsx'
@@ -9,6 +9,7 @@ import { WorkerProvider, useWorker } from '../contexts/WorkerContext.jsx'
 import { BookingProvider } from '../contexts/BookingContext.jsx'
 import { useFeatureFlag } from '../hooks/useFeatureFlag.js'
 import { useNotification } from '../contexts/NotificationContext.jsx'
+import conversationState from '../services/chat/ConversationStateManager.js'
 import workerConfig from '../config/ui/worker.config.js'
 import EmergencyModal from '../components/EmergencyModal.jsx'
 
@@ -27,6 +28,29 @@ function WorkerLayoutInner({ children, onLogout, onSOS }) {
   const showTopbar = useFeatureFlag('workerTopbar')
   const showTopbarName = useFeatureFlag('workerTopbarName')
   const { unreadCount } = useNotification()
+  const [convUnread, setConvUnread] = useState(conversationState.getUnreadCount())
+
+  useEffect(() => {
+    const unsub = conversationState.onChange(count => setConvUnread(count))
+    return unsub
+  }, [])
+
+  // Seed unread conversation count from the backend on mount
+  useEffect(() => {
+    const token = localStorage.getItem('sajilo_token')
+    if (!token) return
+    fetch(`${API_URL}/chat/conversations`, {
+      headers: { Authorization: `Bearer ${token}` }
+    }).then(r => r.json()).then(d => {
+      const list = d.data || []
+      // feed the state manager with unread conversation IDs
+      list.forEach(c => {
+        if (c.unread === '1') conversationState.setUnread(c.id)
+      })
+      const count = list.filter(c => c.unread === '1').length
+      setConvUnread(count)
+    }).catch(() => {})
+  }, [])
 
   const primaryItems = workerNavigation.filter(n => n.priority === 'primary')
   const secondaryItems = workerNavigation.filter(n => n.priority === 'secondary')
@@ -131,21 +155,21 @@ function WorkerLayoutInner({ children, onLogout, onSOS }) {
   position: 'relative',
 }} title="Notifications">
   🔔
-  {unreadCount > 0 && (
-    <span style={{
-      background: w.desktop?.navbar?.badge?.background || 'var(--accent-red)',
-      color: '#fff',
-      fontSize: w.desktop?.navbar?.badge?.fontSize || '10px',
-      fontWeight: 700,
-      width: w.desktop?.navbar?.badge?.width || '18px',
-      height: w.desktop?.navbar?.badge?.height || '18px',
-      borderRadius: '50%',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      position: 'absolute',
-      top: w.desktop?.navbar?.badge?.top || '-4px',
-      right: w.desktop?.navbar?.badge?.right || '-4px',
-    }}>{unreadCount}</span>
-  )}
+            {unreadCount + convUnread > 0 && (
+            <span style={{
+              background: w.desktop?.navbar?.badge?.background || 'var(--accent-red)',
+              color: '#fff',
+              fontSize: w.desktop?.navbar?.badge?.fontSize || '10px',
+              fontWeight: 700,
+              width: w.desktop?.navbar?.badge?.width || '18px',
+              height: w.desktop?.navbar?.badge?.height || '18px',
+              borderRadius: '50%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              position: 'absolute',
+              top: w.desktop?.navbar?.badge?.top || '-4px',
+              right: w.desktop?.navbar?.badge?.right || '-4px',
+            }}>{unreadCount + convUnread}</span>
+          )}
 </button>
 
 
@@ -283,13 +307,13 @@ function WorkerLayoutInner({ children, onLogout, onSOS }) {
         >
           <span style={{ fontSize: 18 }}>🔔</span>
           <span style={{ fontSize: 10, fontWeight: 500 }}>Alerts</span>
-          {unreadCount > 0 && (
+          {unreadCount + convUnread > 0 && (
             <span style={{
               position: 'absolute', top: 2, right: 'calc(50% - 20px)',
               background: 'var(--accent-red)', color: '#fff',
               fontSize: 9, fontWeight: 700, width: 16, height: 16,
               borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>{unreadCount}</span>
+            }}>{unreadCount + convUnread}</span>
           )}
         </button>
         {sosEnabled && (

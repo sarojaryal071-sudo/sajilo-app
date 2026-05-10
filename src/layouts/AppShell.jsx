@@ -17,6 +17,7 @@ import AdminLayout from './AdminLayout.jsx'
 import { WorkerProvider } from '../contexts/WorkerContext.jsx'
 import { reconnectSocket } from '../services/realtime/socketClient.js'
 import { BookingProvider } from '../contexts/BookingContext.jsx'
+import { NotificationProvider } from '../contexts/NotificationContext.jsx'   // ← added
 import AuthFlow from '../navigation/AuthFlow.jsx'
 
 export default function AppShell() {
@@ -134,31 +135,35 @@ export default function AppShell() {
     console.log("🔍 WORKER ROUTES:", { status: user.status, totalRoutes: workerRoutes.length, paths: workerRoutes.map(r => r.path) })
 
     return (
-      <WorkerLayout user={user} onLogout={handleLogout} onSOS={() => setShowSOS(true)}>
-        <main style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-primary)', padding: 0 }}>
-          <Routes>
-            <Route path="/" element={<Navigate to="/worker/dashboard" replace />} />
-            <Route path="/welcome" element={<Navigate to="/worker/dashboard" replace />} />
-            {workerRoutes.map(route => {
-              const Component = route.component
-              return <Route key={route.path} path={route.path} element={<Component navigate={navigate} t={t} onLogin={handleLogin} title={route.label} />} />
-            })}
-          </Routes>
-        </main>
-      </WorkerLayout>
+      <NotificationProvider>      {/* ← add provider */}
+        <WorkerLayout user={user} onLogout={handleLogout} onSOS={() => setShowSOS(true)}>
+          <main style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-primary)', padding: 0 }}>
+            <Routes>
+              <Route path="/" element={<Navigate to="/worker/dashboard" replace />} />
+              <Route path="/welcome" element={<Navigate to="/worker/dashboard" replace />} />
+              {workerRoutes.map(route => {
+                const Component = route.component
+                return <Route key={route.path} path={route.path} element={<Component navigate={navigate} t={t} onLogin={handleLogin} title={route.label} />} />
+              })}
+            </Routes>
+          </main>
+        </WorkerLayout>
+      </NotificationProvider>
     )
   }
 
   if (user && user.role === 'admin') {
     return (
-      <AdminLayout>
-        <Routes>
-          {routes.filter(r => r.role === 'admin').map(route => {
-            const Component = route.component
-            return <Route key={route.path} path={route.path} element={<RequireRole role="admin"><Component navigate={navigate} t={t} title={route.label} /></RequireRole>} />
-          })}
-        </Routes>
-      </AdminLayout>
+      <NotificationProvider>      {/* ← add provider */}
+        <AdminLayout>
+          <Routes>
+            {routes.filter(r => r.role === 'admin').map(route => {
+              const Component = route.component
+              return <Route key={route.path} path={route.path} element={<RequireRole role="admin"><Component navigate={navigate} t={t} title={route.label} /></RequireRole>} />
+            })}
+          </Routes>
+        </AdminLayout>
+      </NotificationProvider>
     )
   }
 
@@ -173,6 +178,7 @@ export default function AppShell() {
   // Authenticated main layout (customer only—admin/worker handled earlier)
   return (
     <BookingProvider>
+    <NotificationProvider>      {/* ← add provider */}
     <div className="app-shell" data-theme={dark ? 'dark' : 'light'} style={{
       height: '100vh', width: '100vw', background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column', fontFamily: 'var(--font-family)',
     }}>
@@ -206,6 +212,7 @@ export default function AppShell() {
         }
       `}</style>
     </div>
+    </NotificationProvider>
     </BookingProvider>
   )
 }

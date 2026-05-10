@@ -10,7 +10,6 @@ import PlaceholderScreen from '../screens/PlaceholderScreen.jsx'
 import DetailWrapper from '../components/DetailWrapper.jsx'
 import TrackingWrapper from '../components/TrackingWrapper.jsx'
 import WorkerDashboard from '../screens/worker/WorkerDashboard.jsx'
-import WorkerJobs from '../screens/worker/WorkerJobs.jsx'
 import WorkerEarnings from '../screens/worker/WorkerEarnings.jsx'
 import WorkerSchedule from '../screens/worker/WorkerSchedule.jsx'
 import WorkerProfile from '../screens/worker/WorkerProfile.jsx'
@@ -56,7 +55,6 @@ const routes = [
   { path: '/profile', component: ProfileScreen, role: 'customer' },
 
   { path: '/worker/dashboard', component: WorkerDashboard, role: 'worker' },
-  { path: '/worker/jobs', component: WorkerJobs, role: 'worker' },
   { path: '/worker/earnings', component: WorkerEarnings, role: 'worker' },
   { path: '/worker/schedule', component: WorkerSchedule, role: 'worker' },
   { path: '/worker/profile', component: WorkerProfile, role: 'worker' },

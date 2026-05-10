@@ -89,10 +89,17 @@ acknowledgeCancellation: (id) => request(`/workers/cancellations/${id}/acknowled
       method: 'PUT',
       body: JSON.stringify(body),
     }),
-    confirmCashPayment: (bookingId) => request(`/payments/booking/${bookingId}/confirm`, { method: 'PUT' }),
+       confirmCashPayment: (bookingId) => request(`/payments/booking/${bookingId}/confirm`, { method: 'PUT' }),
     markCashPaid: (bookingId) => request(`/payments/booking/${bookingId}/mark-cash-paid`, { method: 'PUT' }),
     getWorkerPayments: (workerId) => request(`/payments/worker/${workerId}`),
     getCustomerPayments: (customerId) => request(`/payments/customer/${customerId}`),
+
+    // Notifications
+    getNotifications: () => request('/notifications'),
+    getUnreadNotifications: () => request('/notifications/unread'),
+    getUnreadCount: () => request('/notifications/count'),
+    markNotificationRead: (id) => request(`/notifications/${id}/read`, { method: 'PUT' }),
+    markAllNotificationsRead: () => request('/notifications/read-all', { method: 'PUT' }),
   }
 
 export { setToken, removeToken, getToken }
