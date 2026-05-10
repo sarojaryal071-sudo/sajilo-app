@@ -176,6 +176,8 @@ export default function InboxScreen() {
   const openConversation = async (conv) => {
     setActiveConv(conv)
     conversationState.setRead(conv.id)
+     // immediately remove from local unread list so UI updates
+    setUnreadConvIds(prev => { const next = new Set(prev); next.delete(conv.id); return next })
     const token = localStorage.getItem('sajilo_token')
     try {
       const res = await fetch(`${API_URL}/chat/conversations/${conv.id}/messages`, {

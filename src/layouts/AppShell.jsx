@@ -17,7 +17,9 @@ import AdminLayout from './AdminLayout.jsx'
 import { WorkerProvider } from '../contexts/WorkerContext.jsx'
 import { reconnectSocket } from '../services/realtime/socketClient.js'
 import { BookingProvider } from '../contexts/BookingContext.jsx'
-import { NotificationProvider } from '../contexts/NotificationContext.jsx'   // ← added
+import { NotificationProvider } from '../contexts/NotificationContext.jsx'
+import { ToastProvider } from '../contexts/ToastContext.jsx'
+import ToastContainer from '../components/ToastContainer.jsx'
 import AuthFlow from '../navigation/AuthFlow.jsx'
 
 export default function AppShell() {
@@ -136,6 +138,8 @@ export default function AppShell() {
 
     return (
       <NotificationProvider>      {/* ← add provider */}
+      <ToastProvider>
+        <ToastContainer />
         <WorkerLayout user={user} onLogout={handleLogout} onSOS={() => setShowSOS(true)}>
           <main style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-primary)', padding: 0 }}>
             <Routes>
@@ -148,13 +152,16 @@ export default function AppShell() {
             </Routes>
           </main>
         </WorkerLayout>
+         </ToastProvider>
       </NotificationProvider>
     )
   }
 
   if (user && user.role === 'admin') {
     return (
-      <NotificationProvider>      {/* ← add provider */}
+      <NotificationProvider>
+        <ToastProvider>
+        <ToastContainer />
         <AdminLayout>
           <Routes>
             {routes.filter(r => r.role === 'admin').map(route => {
@@ -163,6 +170,7 @@ export default function AppShell() {
             })}
           </Routes>
         </AdminLayout>
+        </ToastProvider>
       </NotificationProvider>
     )
   }
@@ -179,6 +187,8 @@ export default function AppShell() {
   return (
     <BookingProvider>
     <NotificationProvider>      {/* ← add provider */}
+    <ToastProvider>
+    <ToastContainer />
     <div className="app-shell" data-theme={dark ? 'dark' : 'light'} style={{
       height: '100vh', width: '100vw', background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column', fontFamily: 'var(--font-family)',
     }}>
@@ -212,6 +222,7 @@ export default function AppShell() {
         }
       `}</style>
     </div>
+    </ToastProvider>
     </NotificationProvider>
     </BookingProvider>
   )

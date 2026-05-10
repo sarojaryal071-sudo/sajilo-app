@@ -42,6 +42,11 @@ class ConversationStateManager {
     this.listeners.forEach(cb => cb(this.getUnreadCount()))
   }
 
+  // Return an array of all unread conversation IDs
+  getUnreadIds() {
+    return Array.from(this.unreadConversations)
+  }
+
   // Replace the entire unread set with IDs that are currently unread according to the server list
   syncFromList(conversations) {
     this.unreadConversations.clear()
