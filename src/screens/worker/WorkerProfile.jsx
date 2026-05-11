@@ -3,6 +3,7 @@ import { useWorker } from '../../contexts/WorkerContext.jsx'
 import ElementRenderer from '../../components/ElementRenderer.jsx'
 import { api } from '../../services/api.js'
 import { useSocket } from '../../hooks/useSocket.js'
+import { API_URL } from '../../services/api.js'
 
 // ── Reward points calculation (same as client) ──
 const JOB_SIZE_POINTS = {
@@ -45,7 +46,7 @@ export default function WorkerProfile() {
   useEffect(() => {
     (async () => {
       try {
-        const resp = await fetch('http://localhost:5000/api/locations')
+        const resp = await fetch(`${API_URL}/locations`)
         const json = await resp.json()
         if (json.success) setLocations(json.data || [])
       } catch (err) { /* ignore */ }
