@@ -24,6 +24,9 @@ const CANCEL_REASONS = [
 
 export default function DetailScreen({ navigate, workerId }) {
   const [selectedJob, setSelectedJob] = useState('medium')
+  const [selectedServiceIds, setSelectedServiceIds] = useState([])
+  const [selectedProfessionId, setSelectedProfessionId] = useState(null)
+  const [expandedSizes, setExpandedSizes] = useState({})
   const [urgency, setUrgency] = useState('now')
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedHour, setSelectedHour] = useState('09')
@@ -44,7 +47,7 @@ export default function DetailScreen({ navigate, workerId }) {
     b => b.worker_id === workerId && ['pending', 'accepted', 'onway'].includes(b.status)
   )
 
-  const handleBook = async () => {
+ const handleBook = async () => {
     const token = localStorage.getItem('sajilo_token')
     if (!token) { navigate('/login'); return }
     setBooking(true)
@@ -54,6 +57,7 @@ export default function DetailScreen({ navigate, workerId }) {
         serviceName: worker.job || 'General Service',
         jobSize: selectedJob,
         urgency,
+        selectedServices: selectedServiceIds.map(id => ({ service_id: id })),
       })
       navigate('/bookings')
     } catch (err) {
@@ -96,11 +100,30 @@ export default function DetailScreen({ navigate, workerId }) {
   }
 
   const [worker, setWorker] = useState(null)
+  const [workerServices, setWorkerServices] = useState([])
+  const [filterProfession, setFilterProfession] = useState(null)
+
+  // Flatten all services and attach profession info
+  const allServices = workerServices.flatMap(prof =>
+    (prof.services || []).map(svc => ({ ...svc, profession: prof }))
+  );
+
+  // Filter by selected profession pill
+  const filteredServices = filterProfession
+    ? allServices.filter(s => s.profession.id === filterProfession)
+    : allServices;
+
+  const toggleSize = (size) => {
+    setExpandedSizes(prev => ({ ...prev, [size]: !prev[size] }));
+  };
 
   useEffect(() => {
     api.getWorkerById(workerId).then(d => {
       if (d.success) setWorker(d.data)
     })
+    api.getWorkerPublicServices(workerId).then(d => {
+      if (d.success) setWorkerServices(d.data?.professions || [])
+    }).catch(() => {})
   }, [workerId])
 
   const formatDate = (dateStr) => {
@@ -114,6 +137,7 @@ export default function DetailScreen({ navigate, workerId }) {
     else navigate('/search')
   }
 
+    console.log('🔍 workerServices:', workerServices);
   if (!worker) {
     return (
       <div style={{ textAlign: 'center', padding: 40 }}>
@@ -150,16 +174,116 @@ export default function DetailScreen({ navigate, workerId }) {
 
       <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '16px 0' }} />
 
-      <div style={{ fontSize: 'var(--font-body)', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 10 }}>{txt.selectJob}</div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
-        {jobSizes.map((job) => (
-          <div key={job.id} onClick={() => setSelectedJob(job.id)} style={{ border: selectedJob === job.id ? '2px solid var(--accent-blue)' : '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: 14, cursor: 'pointer', background: selectedJob === job.id ? 'var(--accent-blue-light)' : 'var(--bg-surface)', position: 'relative' }}>
-            <div style={{ fontSize: 'var(--font-body)', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>{txt[job.labelKey.split('.')[1]]}</div>
-            <div style={{ fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)' }}>{job.descKey}</div>
-            <span style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 'var(--font-body)', fontWeight: 700, color: 'var(--text-primary)' }}>{job.price}</span>
+      {workerServices.length > 0 && (
+        <div style={{ display: 'flex', gap: 8, marginBottom: 16, overflowX: 'auto' }}>
+          {(workerServices.length > 1
+            ? [{ id: null, name: 'All', icon: '🔧' }, ...workerServices]
+            : workerServices
+          ).map(prof => (
+            <button
+              key={prof.id ?? 'all'}
+              onClick={() => setFilterProfession(prof.id)}
+              style={{
+                padding: '8px 16px', borderRadius: 20,
+                border: '1px solid var(--border)',
+                background: filterProfession === prof.id ? 'var(--accent-blue)' : 'transparent',
+                color: filterProfession === prof.id ? '#fff' : 'var(--text-secondary)',
+                fontSize: 'var(--font-body-sm)', fontWeight: 600,
+                cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
+              }}
+            >
+              {prof.icon && <span style={{ marginRight: 4 }}>{prof.icon}</span>}
+              {prof.name}
+            </button>
+          ))}
+        </div>
+      )}
+            {['small', 'medium', 'large'].map(size => {
+        const servicesInSize = filteredServices.filter(s => {
+          const price = parseFloat(s.worker_price) || 0;
+          if (size === 'small') return price >= 0 && price <= 1000;
+          if (size === 'medium') return price > 1000 && price <= 3000;
+          return price > 3000;
+        });
+        const isExpanded = expandedSizes[size];
+        return (
+          <div key={size} style={{ marginBottom: 12 }}>
+            <div
+              onClick={() => toggleSize(size)}
+              style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                padding: '12px 16px', borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--border)',
+                background: isExpanded ? 'var(--accent-blue-light)' : 'var(--bg-surface)',
+                cursor: 'pointer',
+              }}
+            >
+              <div>
+                <div style={{ fontSize: 'var(--font-body)', fontWeight: 600, color: 'var(--text-primary)' }}>
+                  {size.charAt(0).toUpperCase() + size.slice(1)} job
+                </div>
+                <div style={{ fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)' }}>
+                  Rs {size === 'small' ? '500-1000' : size === 'medium' ? '1000-3000' : '3000+'}
+                </div>
+              </div>
+              <span style={{ fontSize: 'var(--font-body-sm)', fontWeight: 500, color: 'var(--text-secondary)' }}>
+                {servicesInSize.length} service{servicesInSize.length !== 1 && 's'}
+              </span>
+            </div>
+            {isExpanded && (
+              <div style={{ padding: '8px 0 0' }}>
+                {servicesInSize.length === 0 ? (
+                  <div style={{ padding: '12px 16px', color: 'var(--text-secondary)', fontSize: 'var(--font-body-sm)' }}>
+                    No services listed
+                  </div>
+                ) : (
+                  servicesInSize.map(svc => (
+                    <div
+                      key={svc.service_id || svc.custom_label}
+                      onClick={() => {
+                        setSelectedServiceIds(prev =>
+                          prev.includes(svc.service_id)
+                            ? prev.filter(id => id !== svc.service_id)
+                            : [...prev, svc.service_id]
+                        );
+                      }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 10,
+                        padding: '10px 16px', borderBottom: '1px solid var(--border)',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <div
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                          width: 16, height: 16, borderRadius: '50%',
+                          border: selectedServiceIds.includes(svc.service_id)
+                            ? '4px solid var(--accent-blue)'
+                            : '2px solid var(--border)',
+                          background: selectedServiceIds.includes(svc.service_id) ? 'var(--accent-blue)' : '#fff',
+                          cursor: 'pointer',
+                          flexShrink: 0,
+                        }}
+                      />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 'var(--font-body-sm)', fontWeight: 500, color: 'var(--text-primary)' }}>
+                          {svc.label}
+                        </div>
+                        {svc.label_np && (
+                          <div style={{ fontSize: 10, color: 'var(--text-secondary)' }}>{svc.label_np}</div>
+                        )}
+                      </div>
+                      <div style={{ fontSize: 'var(--font-body-sm)', fontWeight: 700, color: 'var(--accent-green)' }}>
+                        Rs {parseFloat(svc.worker_price).toLocaleString()}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
           </div>
-        ))}
-      </div>
+        );
+      })}
 
       <div style={{ fontSize: 'var(--font-body)', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 10 }}>{txt.when}</div>
       <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
@@ -305,8 +429,16 @@ export default function DetailScreen({ navigate, workerId }) {
           )}
         </>
       ) : (
-        <button onClick={handleBook} disabled={booking} style={{ width: '100%', background: 'var(--accent-orange)', color: '#fff', border: 'none', borderRadius: 'var(--radius-md)', padding: 14, fontSize: 'var(--font-title)', fontWeight: 700, cursor: 'pointer' }}>
-          {booking ? 'Booking...' : `${txt.book} (${jobSizes.find(j => j.id === selectedJob)?.price || 'Rs 1500-4000'})`}
+        <button onClick={handleBook} disabled={booking || selectedServiceIds.length === 0} style={{ width: '100%', background: 'var(--accent-orange)', color: '#fff', border: 'none', borderRadius: 'var(--radius-md)', padding: 14, fontSize: 'var(--font-title)', fontWeight: 700, cursor: selectedServiceIds.length === 0 ? 'not-allowed' : 'pointer', opacity: selectedServiceIds.length === 0 ? 0.6 : 1 }}>
+          {(() => {
+            if (booking) return 'Booking...';
+            const total = selectedServiceIds.reduce((sum, id) => {
+              const svc = allServices.find(s => s.service_id === id);
+              return sum + (parseFloat(svc?.worker_price) || 0);
+            }, 0);
+            if (total > 0) return `${txt.book} · Rs ${total.toLocaleString()}`;
+            return `${txt.book} (select services)`;
+          })()}
         </button>
       )}
     </div>

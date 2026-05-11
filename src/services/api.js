@@ -73,14 +73,15 @@ acknowledgeCancellation: (id) => request(`/workers/cancellations/${id}/acknowled
   saveWorkerSchedule: (schedule) => request('/users/worker/schedule', { method: 'PUT', body: JSON.stringify({ schedule }) }),
 
   // Worker services
-  getMyServices: () => request('/workers/me/services'),
-  updateWorkerService: (id, body) => request(`/workers/me/services/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
-  createWorkerCustomService: (body) => request('/workers/me/services/custom', { method: 'POST', body: JSON.stringify(body) }),
-  activateWorkerService: (serviceId, professionId) => request('/workers/me/services/activate', {
+      getMyServices: () => request('/workers/me/services'),
+    updateWorkerService: (id, body) => request(`/workers/me/services/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+    createWorkerCustomService: (body) => request('/workers/me/services/custom', { method: 'POST', body: JSON.stringify(body) }),
+    activateWorkerService: (serviceId, professionId) => request('/workers/me/services/activate', {
       method: 'POST',
       body: JSON.stringify({ service_id: serviceId, profession_id: professionId, is_active: true }),
     }),
-        deleteWorkerService: (id) => request(`/workers/me/services/${id}`, { method: 'DELETE' }),
+    deleteWorkerService: (id) => request(`/workers/me/services/${id}`, { method: 'DELETE' }),
+    getWorkerPublicServices: (workerId) => request(`/workers/${workerId}/services`),
   sendNotification: (body) => request('/notifications', { method: 'POST', body: JSON.stringify(body) }),
   submitWorkerApplication: (body) => request('/auth/worker/apply', { method: 'POST', body: JSON.stringify(body) }),
   searchWorkers: (params = {}) => {

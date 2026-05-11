@@ -73,10 +73,24 @@ function JobRow({ booking, statusBadgeKeys, onAction, w, c, r, s, overrideStyles
         color: w.jobs?.info?.color || c.textSecondary,
         marginBottom: w.jobs?.info?.marginBottom || '12px',
       }}>
-        Customer: {booking.customer_name} | {booking.job_size}
-        <div style={{ fontSize: '10px', opacity: 0.7, marginTop: 2 }}>
-          Booking #{booking.id}
-        </div>
+        {/* Show selected services if available, otherwise old behavior */}
+        {booking.services_snapshot && booking.services_snapshot.length > 0 ? (
+          <>
+            <strong>Services:</strong>{' '}
+            {booking.services_snapshot.slice(0, 2).map(s => s.label).join(', ')}
+            {booking.services_snapshot.length > 2 && ` +${booking.services_snapshot.length - 2} more`}
+            <div style={{ fontSize: 'var(--font-body)', fontWeight: 700, color: 'var(--accent-green)', marginTop: 4 }}>
+              Rs {parseFloat(booking.booking_total_price || booking.price).toLocaleString()}
+            </div>
+          </>
+        ) : (
+          <>
+            Customer: {booking.customer_name} | {booking.job_size}
+            <div style={{ fontSize: '10px', opacity: 0.7, marginTop: 2 }}>
+              Booking #{booking.id}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Action buttons – Accept/Reject/Start Travel/Complete Job */}
@@ -2527,26 +2541,50 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
                     )}
                   </div>
 
-                  {/* Price (inline editable) */}
-                  <div style={{ flex: 1, minWidth: 80, textAlign: 'right' }}>
+                                    {/* Price (inline editable) */}
+                  <div style={{ flex: 1, minWidth: 80, textAlign: 'right', display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }}>
                     {editingPriceId === svc.worker_service_id ? (
-                      <input
-                        type="number"
-                        value={editPriceValue}
-                        onChange={(e) => setEditPriceValue(e.target.value)}
-                        onBlur={async () => {
-                          const val = parseFloat(editPriceValue);
-                          if (!isNaN(val) && svc.worker_service_id) {
-                            await updatePrice(svc.worker_service_id, val);
-                          }
-                          setEditingPriceId(null);
-                          setEditPriceValue('');
-                        }}
-                        onKeyDown={(e) => { if (e.key === 'Enter') e.target.blur(); }}
-                        style={{ ...inputStyle, width: 80, textAlign: 'right' }}
-                        autoFocus
-                      />
+                      <>
+                        <input
+                          type="number"
+                          value={editPriceValue}
+                          onChange={(e) => setEditPriceValue(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') e.target.blur();
+                            if (e.key === 'Escape') {
+                              setEditingPriceId(null);
+                              setEditPriceValue('');
+                            }
+                          }}
+                          style={{ ...inputStyle, width: 80, textAlign: 'right' }}
+                          autoFocus
+                        />
+                        <button
+                          onClick={async () => {
+                            const val = parseFloat(editPriceValue);
+                            if (!isNaN(val) && svc.worker_service_id) {
+                              await updatePrice(svc.worker_service_id, val);
+                            }
+                            setEditingPriceId(null);
+                            setEditPriceValue('');
+                          }}
+                          style={{ ...actionBtn, background: 'var(--accent-blue)', color: '#fff', border: 'none', padding: '4px 8px' }}
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEditingPriceId(null);
+                            setEditPriceValue('');
+                          }}
+                          style={actionBtn}
+                        >
+                          Cancel
+                        </button>
+                      </>
                     ) : (
+
+
                       <span
                         onClick={() => {
                           setEditingPriceId(svc.worker_service_id);
