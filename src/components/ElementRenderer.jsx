@@ -2356,6 +2356,8 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
       const [showChecklist, setShowChecklist] = React.useState(false);
       const [editingPriceId, setEditingPriceId] = React.useState(null);
       const [editPriceValue, setEditPriceValue] = React.useState('');
+      const [checkedServices, setCheckedServices] = React.useState(new Set());
+
 
       const inputStyle = {
         padding: '8px 10px',
