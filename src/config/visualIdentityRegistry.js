@@ -570,7 +570,7 @@ const visualIdentityRegistry = {
     content: {
       defaultSubtabs: [
         { id: "timeSlots", labelKey: "worker.schedule.timeSlots", elementId: "scheduleDayCard" },
-        { id: "services", labelKey: "worker.schedule.services", elementId: "serviceTable" },
+        { id: "services", labelKey: "worker.schedule.services", elementId: "workerServiceManager" },
       ],
       // Admin can add more subtabs from admin panel
       adminAddable: true,
@@ -609,6 +609,19 @@ const visualIdentityRegistry = {
     visible: true,
   },
 
+  
+  workerServiceManager: {
+    type: "workerServiceManager",
+    screen: "WorkerSchedule",
+    layout: { width: "full", position: 2 },
+    style: { variant: "default", styleRef: "schedule.services" },
+    content: {
+      dataSource: "WorkerSchedule.workerServices",
+    },
+    behavior: { clickable: true },
+    responsive: { mobile: "full", desktop: "full" },
+    visible: true,
+  },
 
   // ============================================================
   // WORKER PROFILE SCREEN ELEMENTS

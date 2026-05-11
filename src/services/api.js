@@ -71,8 +71,17 @@ acknowledgeCancellation: (id) => request(`/workers/cancellations/${id}/acknowled
   getWorkerEarnings: () => request('/users/worker/earnings'),
   getWorkerSchedule: () => request('/users/worker/schedule'),
   saveWorkerSchedule: (schedule) => request('/users/worker/schedule', { method: 'PUT', body: JSON.stringify({ schedule }) }),
+
+  // Worker services
+  getMyServices: () => request('/workers/me/services'),
+  updateWorkerService: (id, body) => request(`/workers/me/services/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  createWorkerCustomService: (body) => request('/workers/me/services/custom', { method: 'POST', body: JSON.stringify(body) }),
+  activateWorkerService: (serviceId, professionId) => request('/workers/me/services/activate', {
+      method: 'POST',
+      body: JSON.stringify({ service_id: serviceId, profession_id: professionId, is_active: true }),
+    }),
+        deleteWorkerService: (id) => request(`/workers/me/services/${id}`, { method: 'DELETE' }),
   sendNotification: (body) => request('/notifications', { method: 'POST', body: JSON.stringify(body) }),
-  getNotifications: () => request('/notifications'),
   submitWorkerApplication: (body) => request('/auth/worker/apply', { method: 'POST', body: JSON.stringify(body) }),
   searchWorkers: (params = {}) => {
     const query = new URLSearchParams(params).toString()
@@ -103,6 +112,20 @@ acknowledgeCancellation: (id) => request(`/workers/cancellations/${id}/acknowled
 
     // Admin analytics
     getAdminAnalytics: () => request('/admin/analytics'),
+
+    // Profession management
+    getAdminProfessions: () => request('/admin/professions'),
+    getAdminProfession: (id) => request(`/admin/professions/${id}`),
+    createAdminProfession: (body) => request('/admin/professions', { method: 'POST', body: JSON.stringify(body) }),
+    updateAdminProfession: (id, body) => request(`/admin/professions/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+        deleteAdminProfession: (id) => request(`/admin/professions/${id}`, { method: 'DELETE' }),
+
+    // Profession Services
+    getProfessionServices: (professionId) => request(`/admin/professions/${professionId}/services`),
+    createProfessionService: (body) => request('/admin/professions/services', { method: 'POST', body: JSON.stringify(body) }),
+    updateProfessionService: (id, body) => request(`/admin/professions/services/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+    deleteProfessionService: (id) => request(`/admin/professions/services/${id}`, { method: 'DELETE' }),
   }
+  
 
 export { setToken, removeToken, getToken }

@@ -19,6 +19,7 @@ import AdminUsers from '../screens/admin/AdminUsers.jsx'
 import AdminWorkers from '../screens/admin/AdminWorkers.jsx'
 import AdminBookings from '../screens/admin/AdminBookings.jsx'
 import AdminAnalytics from '../screens/admin/AdminAnalytics.jsx'
+import AdminProfessions from '../screens/admin/AdminProfessions.jsx'
 import AdminSettings from '../screens/admin/AdminSettings.jsx'
 import AdminApprovals from '../screens/admin/AdminApprovals.jsx'
 import AdminNotifications from '../screens/admin/AdminNotifications.jsx'
@@ -64,6 +65,7 @@ const routes = [
   { path: '/admin/workers', component: AdminWorkers, role: 'admin' },
   { path: '/admin/bookings', component: AdminBookings, role: 'admin' },
   { path: '/admin/analytics', component: AdminAnalytics, role: 'admin' },
+  { path: '/admin/professions', component: AdminProfessions, role: 'admin' },
   { path: '/admin/settings', component: AdminSettings, role: 'admin' },
   { path: '/admin/approvals', component: AdminApprovals, role: 'admin' },
   { path: '/admin/notifications', component: AdminNotifications, role: 'admin' },

@@ -25,9 +25,6 @@ export default function WorkerMobileDrawer({ isOpen, onClose, navigate, lang, se
         </div>
 
         {/* Secondary Nav Items */}
-        <button onClick={() => { navigate('/worker/earnings'); onClose() }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: mobile.drawer.itemPadding, border: 'none', background: 'transparent', cursor: 'pointer', width: '100%', fontSize: mobile.drawer.itemFontSize, fontWeight: mobile.drawer.itemWeight, color: 'var(--text-primary)', borderBottom: mobile.drawer.itemBorder }}>
-          <span style={{ fontSize: mobile.drawer.iconSize }}>💰</span> Earnings
-        </button>
         <button onClick={() => { navigate('/worker/schedule'); onClose() }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: mobile.drawer.itemPadding, border: 'none', background: 'transparent', cursor: 'pointer', width: '100%', fontSize: mobile.drawer.itemFontSize, fontWeight: mobile.drawer.itemWeight, color: 'var(--text-primary)', borderBottom: mobile.drawer.itemBorder }}>
           <span style={{ fontSize: mobile.drawer.iconSize }}>📅</span> Schedule
         </button>
