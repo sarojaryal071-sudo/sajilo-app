@@ -100,6 +100,9 @@ acknowledgeCancellation: (id) => request(`/workers/cancellations/${id}/acknowled
     getUnreadCount: () => request('/notifications/count'),
     markNotificationRead: (id) => request(`/notifications/${id}/read`, { method: 'PUT' }),
     markAllNotificationsRead: () => request('/notifications/read-all', { method: 'PUT' }),
+
+    // Admin analytics
+    getAdminAnalytics: () => request('/admin/analytics'),
   }
 
 export { setToken, removeToken, getToken }

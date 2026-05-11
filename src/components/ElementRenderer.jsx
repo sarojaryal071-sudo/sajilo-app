@@ -499,11 +499,10 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
         // ──────────────────────────────────────────────
     // JOB HISTORY ITEM (Earnings — completed jobs)
     // ──────────────────────────────────────────────
-        case "jobHistoryItem": {
+              case "jobHistoryItem": {
       const items = overrideData?.bookings || [];
       const we = w.earnings || {};
 
-      // Config flags (from registry content, fallback to hardcoded defaults)
       const showReward = elementConfig.content?.showRewardPoints === true;
       const rewardRate = elementConfig.content?.rewardPointsRate || 0.1;
 
@@ -523,7 +522,6 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
       return (
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           {items.map((item, idx) => {
-            // ── Date separator ──
             if (item.type === 'dateSeparator') {
               return (
                 <div key={`sep-${idx}`} style={{
@@ -538,7 +536,6 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
               );
             }
 
-            // ── Compact history row ──
             const job = item;
             const completedDate = job.updated_at
               ? new Date(job.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
@@ -593,44 +590,61 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
                   </span>
                 </div>
 
-                {/* Second line: Client ID · Date · Rating placeholder */}
+                {/* Second line: Client ID · Date · Rating (+ Paid badge when paid) */}
                 <div style={{
                   display: 'flex',
-                  justifyContent: 'space-between',
                   alignItems: 'center',
+                  gap: 12,
                   marginTop: 4,
+                  fontSize: 'var(--font-body-sm)',
+                  color: 'var(--text-secondary)',
                 }}>
+                  <span>{job.customer_client_id || '—'}</span>
+                  <span>{completedDate}</span>
+                  <span>
+                    {job.review_rating != null ? '★' + job.review_rating : ''}
+                  </span>
+                  {/* Show “Paid by …” at the far right when payment is complete */}
+                  {overrideData.paymentMap?.[job.id]?.status === 'paid' && (
+                    <span style={{
+                      marginLeft: 'auto',
+                      fontSize: 'var(--font-caption)',
+                      fontWeight: 600,
+                      padding: '2px 8px',
+                      borderRadius: 'var(--radius-sm)',
+                      whiteSpace: 'nowrap',
+                      background: getPaymentStatusConfig('paid').badgeColor,
+                      color: getPaymentStatusConfig('paid').textColor,
+                    }}>
+                      Paid by {getPaymentMethodLabel(overrideData.paymentMap[job.id].method)}
+                    </span>
+                  )}
+                </div>
+
+                {/* Third line: Payment badge + action buttons (only when NOT paid) */}
+                {overrideData.paymentMap?.[job.id]?.status !== 'paid' && (
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 12,
-                    flex: 1,
-                    minWidth: 0,
-                    fontSize: 'var(--font-body-sm)',
-                    color: 'var(--text-secondary)',
+                    gap: 8,
+                    marginTop: 8,
+                    flexWrap: 'wrap',
                   }}>
-                    <span>{job.customer_client_id || '—'}</span>
-                    <span>{completedDate}</span>
-                    <span>
-                      {job.review_rating != null
-                        ? '★' + job.review_rating
-                        : ''}
+                    {/* Completed badge */}
+                    <span style={{
+                      fontSize: 'var(--font-caption)',
+                      color: 'var(--accent-blue)',
+                      background: 'var(--accent-blue-light)',
+                      padding: '2px 8px',
+                      borderRadius: 'var(--radius-sm)',
+                      fontWeight: 500,
+                      whiteSpace: 'nowrap',
+                    }}>
+                      Completed
                     </span>
-                  </div>
-                  <span style={{
-                    fontSize: 'var(--font-caption)',
-                    color: 'var(--accent-blue)',
-                    background: 'var(--accent-blue-light)',
-                    padding: '2px 8px',
-                    borderRadius: 'var(--radius-sm)',
-                    fontWeight: 500,
-                    whiteSpace: 'nowrap',
-                  }}>
-                    Completed
-                  </span>
-                  {/* Payment status badge — only if payment data exists for this booking */}
-                  {overrideData.paymentMap?.[job.id] && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+
+                    {/* Payment badge for non‑paid statuses */}
+                    {overrideData.paymentMap?.[job.id] && (
                       <span style={{
                         fontSize: 'var(--font-caption)',
                         fontWeight: 600,
@@ -643,52 +657,55 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
                         {((status) => {
                           const method = getPaymentMethodLabel(overrideData.paymentMap[job.id].method);
                           if (status === 'pending_cash') return `Pay by ${method}`;
-                          if (status === 'paid') return `Paid by ${method}`;
                           return `${getPaymentStatusConfig(status).label} · ${method}`;
                         })(overrideData.paymentMap[job.id].status)}
                       </span>
-                      {overrideData.paymentMap[job.id].status === 'unpaid' && (
-                        <button
-                          onClick={() => setWorkerInvoiceBooking(job)}
-                          style={{
-                            padding: '2px 10px',
-                            borderRadius: 'var(--radius-sm)',
-                            border: '1px solid var(--accent-blue)',
-                            background: 'transparent',
-                            color: 'var(--accent-blue)',
-                            fontSize: 'var(--font-caption)',
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          View Invoice
-                        </button>
-                      )}
-                      {overrideData.paymentMap[job.id].status === 'pending_cash' &&
-                       overrideData.paymentMap[job.id].method === 'cash' && (
-                        <button
-                          onClick={() => api.markCashPaid(job.id).catch(err => alert(err.message))}
-                          style={{
-                            padding: '2px 10px',
-                            borderRadius: 'var(--radius-sm)',
-                            border: '1px solid var(--accent-green)',
-                            background: 'transparent',
-                            color: 'var(--accent-green)',
-                            fontSize: 'var(--font-caption)',
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          Confirm Cash Received
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
+                    )}
 
-                {/* Third line: Reward points (only if enabled) */}
+                    {/* View Invoice (unpaid) */}
+                    {overrideData.paymentMap?.[job.id]?.status === 'unpaid' && (
+                      <button
+                        onClick={() => setWorkerInvoiceBooking(job)}
+                        style={{
+                          padding: '2px 10px',
+                          borderRadius: 'var(--radius-sm)',
+                          border: '1px solid var(--accent-blue)',
+                          background: 'transparent',
+                          color: 'var(--accent-blue)',
+                          fontSize: 'var(--font-caption)',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        View Invoice
+                      </button>
+                    )}
+
+                    {/* Confirm Cash Received (pending_cash + cash method) */}
+                    {overrideData.paymentMap?.[job.id]?.status === 'pending_cash' &&
+                     overrideData.paymentMap?.[job.id]?.method === 'cash' && (
+                      <button
+                        onClick={() => api.markCashPaid(job.id).catch(err => alert(err.message))}
+                        style={{
+                          padding: '2px 10px',
+                          borderRadius: 'var(--radius-sm)',
+                          border: '1px solid var(--accent-green)',
+                          background: 'transparent',
+                          color: 'var(--accent-green)',
+                          fontSize: 'var(--font-caption)',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        Confirm Cash Received
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* Reward points */}
                 {showReward && (
                   <div style={{
                     marginTop: 4,
@@ -716,10 +733,8 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
     }
 
         // ──────────────────────────────────────────────
-    // DAY SCHEDULE CARD (Phase 12 — Dynamic Time Slots)
-    // Worker can add/remove multiple start-end time ranges per day.
-    // ──────────────────────────────────────────────
-    case "dayScheduleCard": {
+        // DAY SCHEDULE CARD (Phase 12 — Dynamic Time Slots)
+        case "dayScheduleCard": {
       const days = elementConfig.content?.days || [];
       const schedule = overrideData?.schedule || [];
       const onSave = overrideData?.onSaveSchedule;
@@ -1839,6 +1854,7 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
   // Local state for in‑card confirmation
   const [confirmCancelId, setConfirmCancelId] = React.useState(null)
   const [reviewBookingId, setReviewBookingId] = React.useState(null)   // ← review modal
+  const [invoiceBookingId, setInvoiceBookingId] = React.useState(null) // ← invoice overlay
 
     const [cancelReasons, setCancelReasons] = React.useState([])
   const [cancelNote, setCancelNote] = React.useState('')
@@ -2194,7 +2210,7 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
               {booking.status === 'completed' && overrideData.paymentMap?.[booking.id] && (
                 <div style={{ textAlign: 'center', marginBottom: 8 }}>
                   <button
-                    onClick={() => setReviewBookingId(booking.id)}
+                    onClick={() => setInvoiceBookingId(booking.id)}
                     style={{
                       padding: '6px 14px',
                       borderRadius: 'var(--radius-sm)',
@@ -2253,12 +2269,12 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
       })}
 
       {/* Invoice overlay for client */}
-      {reviewBookingId && overrideData?.paymentMap?.[reviewBookingId] && (
+      {invoiceBookingId && overrideData?.paymentMap?.[invoiceBookingId] && (
         <InvoiceOverlay
-          payment={overrideData.paymentMap[reviewBookingId]}
-          booking={bookings.find(b => b.id === reviewBookingId)}
-          onClose={() => setReviewBookingId(null)}
-          onPaymentCompleted={() => setReviewBookingId(null)}
+          payment={overrideData.paymentMap[invoiceBookingId]}
+          booking={bookings.find(b => b.id === invoiceBookingId)}
+          onClose={() => setInvoiceBookingId(null)}
+          onPaymentCompleted={() => setInvoiceBookingId(null)}
         />
       )}
     </div>

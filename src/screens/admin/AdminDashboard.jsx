@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { api } from '../../services/api.js'
+import AdminAnalyticsDashboard from '../../components/admin/AdminAnalyticsDashboard.jsx'
+import { AdminAnalyticsProvider } from '../../contexts/AdminAnalyticsContext.jsx'
 
 export default function AdminDashboard({ navigate }) {
   const [stats, setStats] = useState(null)
@@ -164,6 +166,16 @@ export default function AdminDashboard({ navigate }) {
             color: '#1A56DB', fontSize: 12, fontWeight: 600, cursor: 'pointer',
           }}>View all →</button>
         )}
+      </div>
+
+      {/* Financial & Marketplace Analytics */}
+      <div style={{ marginTop: 24 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>
+          Analytics
+        </h2>
+        <AdminAnalyticsProvider>
+          <AdminAnalyticsDashboard />
+        </AdminAnalyticsProvider>
       </div>
     </div>
   )
