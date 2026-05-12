@@ -269,8 +269,8 @@ export default function DetailScreen({ navigate, workerId }) {
                         <div style={{ fontSize: 'var(--font-body-sm)', fontWeight: 500, color: 'var(--text-primary)' }}>
                           {svc.label}
                         </div>
-                        {svc.label_np && (
-                          <div style={{ fontSize: 10, color: 'var(--text-secondary)' }}>{svc.label_np}</div>
+                        {(svc.label_np || svc.custom_label_np) && (
+                          <div style={{ fontSize: 10, color: 'var(--text-secondary)' }}>{svc.label_np || svc.custom_label_np}</div>
                         )}
                       </div>
                       <div style={{ fontSize: 'var(--font-body-sm)', fontWeight: 700, color: 'var(--accent-green)' }}>

@@ -2436,14 +2436,15 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
       };
 
       const addCustomService = async () => {
-        if (!newCustomLabel.trim()) return alert('Please enter a service name');
-        const price = parseFloat(newCustomPrice) || 0;
-        try {
-          const res = await api.createWorkerCustomService({
-            profession_id: activeProfId,
-            custom_label: newCustomLabel,
-            price,
-          });
+    if (!newCustomLabel.trim()) return alert('Please enter a service name');
+    const price = parseFloat(newCustomPrice) || 0;
+    try {
+      const res = await api.createWorkerCustomService({
+        profession_id: activeProfId,
+        custom_label: newCustomLabel,
+        custom_label_np: newCustomNepali,      // ← add this
+        price,
+      });
           const created = res?.data;
           if (created) {
             setLocalServices(prev => {
@@ -2458,6 +2459,7 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
                   is_active: created.is_active,
                   worker_service_id: created.id,
                   base_price: null,
+                  custom_label_np: created.custom_label_np,
                 },
               ];
               return updated;
@@ -2531,139 +2533,190 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
                 No services configured yet.
               </div>
             ) : (
-              allServices.map((svc, idx) => (
+                            allServices.map((svc, idx) => (
                 <div key={svc.worker_service_id || idx} style={{
                   display: 'flex', alignItems: 'center', gap: 8,
                   padding: '10px 0', borderBottom: '1px solid var(--border)',
                   flexWrap: 'wrap',
                 }}>
-                  {/* Label + Nepali name */}
-                  <div style={{ flex: 2, minWidth: 120 }}>
-                    <div style={{ fontSize: 'var(--font-body-sm)', fontWeight: 600, color: 'var(--text-primary)' }}>
-                      {svc.label}
-                      {svc.is_custom && (
-                        <span style={{ marginLeft: 8, fontSize: 10, color: 'var(--accent-blue)', background: 'var(--accent-blue-light)', padding: '2px 6px', borderRadius: 8 }}>
-                          Custom
-                        </span>
-                      )}
-                    </div>
-                    {svc.label_np && (
-                      <div style={{ fontSize: 10, color: 'var(--text-secondary)' }}>{svc.label_np}</div>
-                    )}
-                  </div>
-
-                                    {/* Price (inline editable) */}
-                  <div style={{ flex: 1, minWidth: 80, textAlign: 'right', display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }}>
-                    {editingPriceId === svc.worker_service_id ? (
-                      <>
-                        <input
-                          type="number"
-                          value={editPriceValue}
-                          onChange={(e) => setEditPriceValue(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') e.target.blur();
-                            if (e.key === 'Escape') {
-                              setEditingPriceId(null);
-                              setEditPriceValue('');
-                            }
-                          }}
-                          style={{ ...inputStyle, width: 80, textAlign: 'right' }}
-                          autoFocus
-                        />
-                        <button
-                          onClick={async () => {
-                            const val = parseFloat(editPriceValue);
-                            if (!isNaN(val) && svc.worker_service_id) {
-                              await updatePrice(svc.worker_service_id, val);
-                            }
-                            setEditingPriceId(null);
-                            setEditPriceValue('');
-                          }}
-                          style={{ ...actionBtn, background: 'var(--accent-blue)', color: '#fff', border: 'none', padding: '4px 8px' }}
-                        >
-                          Save
-                        </button>
-                        <button
-                          onClick={() => {
-                            setEditingPriceId(null);
-                            setEditPriceValue('');
-                          }}
-                          style={actionBtn}
-                        >
-                          Cancel
-                        </button>
-                      </>
-                    ) : (
-
-
-                      <span
+                  {editingSvcId === svc.worker_service_id ? (
+                    <>
+                      <input
+                        value={editSvcLabel}
+                        onChange={e => setEditSvcLabel(e.target.value)}
+                        placeholder="Service name"
+                        style={{ ...inputStyle, flex: 2, minWidth: 120 }}
+                      />
+                      <input
+                        value={editSvcNepali}
+                        onChange={e => setEditSvcNepali(e.target.value)}
+                        placeholder="Nepali"
+                        style={{ ...inputStyle, flex: 1, minWidth: 100 }}
+                      />
+                      <input
+                        type="number"
+                        value={editPriceValue}
+                        onChange={e => setEditPriceValue(e.target.value)}
+                        placeholder="Price"
+                        style={{ ...inputStyle, width: 80 }}
+                      />
+                      <button
+                        onClick={async () => {
+                          const price = parseFloat(editPriceValue);
+                          if (!isNaN(price) && svc.worker_service_id) {
+                            await updatePrice(svc.worker_service_id, price);
+                          }
+                          setEditingSvcId(null);
+                          setEditSvcLabel('');
+                          setEditSvcNepali('');
+                          setEditPriceValue('');
+                        }}
+                        style={{ ...actionBtn, background: 'var(--accent-blue)', color: '#fff', border: 'none' }}
+                      >
+                        Save
+                      </button>
+                      <button
                         onClick={() => {
-                          setEditingPriceId(svc.worker_service_id);
+                          setEditingSvcId(null);
+                          setEditSvcLabel('');
+                          setEditSvcNepali('');
+                          setEditPriceValue('');
+                        }}
+                        style={actionBtn}
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <div style={{ flex: 2, minWidth: 120 }}>
+                        <div style={{ fontSize: 'var(--font-body-sm)', fontWeight: 600, color: 'var(--text-primary)' }}>
+                          {svc.label}
+                          {svc.is_custom && (
+                            <span style={{ marginLeft: 8, fontSize: 10, color: 'var(--accent-blue)', background: 'var(--accent-blue-light)', padding: '2px 6px', borderRadius: 8 }}>
+                              Custom
+                            </span>
+                          )}
+                        </div>
+                        {(svc.label_np || svc.custom_label_np) && (
+                          <div style={{ fontSize: 10, color: 'var(--text-secondary)' }}>{svc.label_np || svc.custom_label_np}</div>
+                        )}
+                      </div>
+
+                      {/* Price (inline editable) */}
+                      <div style={{ flex: 1, minWidth: 80, textAlign: 'right', display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }}>
+                        {editingPriceId === svc.worker_service_id ? (
+                          <>
+                            <input
+                              type="number"
+                              value={editPriceValue}
+                              onChange={(e) => setEditPriceValue(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') e.target.blur();
+                                if (e.key === 'Escape') {
+                                  setEditingPriceId(null);
+                                  setEditPriceValue('');
+                                }
+                              }}
+                              style={{ ...inputStyle, width: 80, textAlign: 'right' }}
+                              autoFocus
+                            />
+                            <button
+                              onClick={async () => {
+                                const val = parseFloat(editPriceValue);
+                                if (!isNaN(val) && svc.worker_service_id) {
+                                  await updatePrice(svc.worker_service_id, val);
+                                }
+                                setEditingPriceId(null);
+                                setEditPriceValue('');
+                              }}
+                              style={{ ...actionBtn, background: 'var(--accent-blue)', color: '#fff', border: 'none', padding: '4px 8px' }}
+                            >
+                              Save
+                            </button>
+                            <button
+                              onClick={() => {
+                                setEditingPriceId(null);
+                                setEditPriceValue('');
+                              }}
+                              style={actionBtn}
+                            >
+                              Cancel
+                            </button>
+                          </>
+                        ) : (
+                          <span
+                            onClick={() => {
+                              setEditingPriceId(svc.worker_service_id);
+                              setEditPriceValue(svc.worker_price || '');
+                            }}
+                            style={{
+                              cursor: 'pointer',
+                              fontSize: 'var(--font-body-sm)',
+                              color: svc.worker_price ? 'var(--text-primary)' : 'var(--text-secondary)',
+                              fontWeight: svc.worker_price ? 600 : 400,
+                            }}
+                          >
+                            {svc.worker_price ? `Rs ${parseFloat(svc.worker_price).toLocaleString()}` : 'Set price'}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Active / Inactive indicator */}
+                      <span style={{
+                        fontSize: 10,
+                        color: svc.is_active ? 'var(--accent-green)' : 'var(--accent-red)',
+                        fontWeight: 600,
+                        minWidth: 50,
+                        textAlign: 'center',
+                      }}>
+                        {svc.is_active ? 'Active' : 'Inactive'}
+                      </span>
+
+                      {/* Deactivate / Activate button */}
+                      <button
+                        onClick={() => toggleService(svc.worker_service_id, !svc.is_active)}
+                        style={{ ...actionBtn, fontSize: 10, padding: '2px 8px' }}
+                      >
+                        {svc.is_active ? 'Deactivate' : 'Activate'}
+                      </button>
+
+                      {/* ✏️ Full edit button */}
+                      <button
+                        onClick={() => {
+                          setEditingSvcId(svc.worker_service_id);
+                          setEditSvcLabel(svc.label);
+                          setEditSvcNepali(svc.label_np || svc.custom_label_np || '');
                           setEditPriceValue(svc.worker_price || '');
                         }}
-                        style={{
-                          cursor: 'pointer',
-                          fontSize: 'var(--font-body-sm)',
-                          color: svc.worker_price ? 'var(--text-primary)' : 'var(--text-secondary)',
-                          fontWeight: svc.worker_price ? 600 : 400,
-                        }}
+                        style={{ ...actionBtn, fontSize: 10, padding: '2px 8px' }}
                       >
-                        {svc.worker_price ? `Rs ${parseFloat(svc.worker_price).toLocaleString()}` : 'Set price'}
-                      </span>
-                    )}
-                  </div>
+                        ✏️
+                      </button>
 
-                  {/* Active / Inactive indicator */}
-                  <span style={{
-                    fontSize: 10,
-                    color: svc.is_active ? 'var(--accent-green)' : 'var(--accent-red)',
-                    fontWeight: 600,
-                    minWidth: 50,
-                    textAlign: 'center',
-                  }}>
-                    {svc.is_active ? 'Active' : 'Inactive'}
-                  </span>
-
-                  {/* Deactivate / Activate button */}
-                  <button
-                    onClick={() => toggleService(svc.worker_service_id, !svc.is_active)}
-                    style={{ ...actionBtn, fontSize: 10, padding: '2px 8px' }}
-                  >
-                    {svc.is_active ? 'Deactivate' : 'Activate'}
-                  </button>
-
-                  {/* ✏️ Edit price button */}
-                  <button
-                    onClick={() => {
-                      setEditingPriceId(svc.worker_service_id);
-                      setEditPriceValue(svc.worker_price || '');
-                    }}
-                    style={{ ...actionBtn, fontSize: 10, padding: '2px 8px' }}
-                  >
-                    ✏️
-                  </button>
-
-                  {/* 🗑️ Delete button */}
-                  <button
-                    onClick={async () => {
-                      if (!confirm('Remove this service?')) return;
-                      try {
-                        await api.deleteWorkerService(svc.worker_service_id);
-                        const res = await api.getMyServices();
-                        const freshProfs = res?.data?.professions || [];
-                        setLocalServices(prev => {
-                          const updated = { ...prev };
-                          freshProfs.forEach(p => {
-                            updated[p.id] = p.services || [];
-                          });
-                          return updated;
-                        });
-                      } catch (err) { alert('Failed to delete service'); }
-                    }}
-                    style={{ ...actionBtn, fontSize: 10, padding: '2px 8px', color: 'var(--accent-red)', borderColor: 'var(--accent-red)' }}
-                  >
-                    🗑️
-                  </button>
+                      {/* 🗑️ Delete button */}
+                      <button
+                        onClick={async () => {
+                          if (!confirm('Remove this service?')) return;
+                          try {
+                            await api.deleteWorkerService(svc.worker_service_id);
+                            const res = await api.getMyServices();
+                            const freshProfs = res?.data?.professions || [];
+                            setLocalServices(prev => {
+                              const updated = { ...prev };
+                              freshProfs.forEach(p => {
+                                updated[p.id] = p.services || [];
+                              });
+                              return updated;
+                            });
+                          } catch (err) { alert('Failed to delete service'); }
+                        }}
+                        style={{ ...actionBtn, fontSize: 10, padding: '2px 8px', color: 'var(--accent-red)', borderColor: 'var(--accent-red)' }}
+                      >
+                        🗑️
+                      </button>
+                    </>
+                  )}
                 </div>
               ))
             )}
