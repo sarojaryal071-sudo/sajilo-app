@@ -159,6 +159,8 @@ function JobRow({ booking, statusBadgeKeys, onAction, w, c, r, s, overrideStyles
   );
 }
 
+console.log('ELEMENT RENDERER VERSION 2 – ' + new Date().toISOString());
+
 const ElementRenderer = ({ elementId, overrideData = {} }) => {
   const [workerInvoiceBooking, setWorkerInvoiceBooking] = React.useState(null);
 
@@ -2347,18 +2349,23 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
 
     // ── WORKER SERVICE MANAGER (Phase 11.1) ──────────────
         case "workerServiceManager": {
+      console.log('🔥 workerServiceManager FIRED – workerServices:', overrideData?.workerServices);
       const professions = overrideData?.workerServices || [];
       const [activeProfId, setActiveProfId] = React.useState(null);
       const [showAddForm, setShowAddForm] = React.useState(false);
       const [newCustomLabel, setNewCustomLabel] = React.useState('');
       const [newCustomPrice, setNewCustomPrice] = React.useState('');
+      const [newCustomNepali, setNewCustomNepali] = React.useState('');
       const [localServices, setLocalServices] = React.useState({});
       const [showChecklist, setShowChecklist] = React.useState(false);
       const [editingPriceId, setEditingPriceId] = React.useState(null);
       const [editPriceValue, setEditPriceValue] = React.useState('');
+  const [editingSvcId, setEditingSvcId] = React.useState(null);
+  const [editSvcLabel, setEditSvcLabel] = React.useState('');
+  const [editSvcNepali, setEditSvcNepali] = React.useState('');
       const [checkedServices, setCheckedServices] = React.useState(new Set());
 
-      
+
 
       const inputStyle = {
         padding: '8px 10px',
@@ -2458,6 +2465,7 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
           }
           setNewCustomLabel('');
           setNewCustomPrice('');
+          setNewCustomNepali('');
           setShowAddForm(false);
         } catch (err) { alert('Failed to add custom service: ' + err.message); }
       };
@@ -2668,6 +2676,9 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
               <input placeholder="Service name" value={newCustomLabel}
                 onChange={e => setNewCustomLabel(e.target.value)}
                 style={{ ...inputStyle, flex: 2 }} />
+              <input placeholder="Nepali (optional)" value={newCustomNepali}
+                onChange={e => setNewCustomNepali(e.target.value)}
+                style={{ ...inputStyle, flex: 1 }} />
               <input type="number" placeholder="Price" value={newCustomPrice}
                 onChange={e => setNewCustomPrice(e.target.value)}
                 style={{ ...inputStyle, flex: 1 }} />
