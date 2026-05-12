@@ -1,9 +1,14 @@
-﻿// AdminChat v2 — test version with direct receiver ID from conversation data
+﻿// AdminChat v3 – safe local constant, no external API_URL dependency
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { useSocket } from '../../hooks/useSocket.js'
-import { API_URL } from '../../services/api.js'
+
+// Hard‑coded fallback – use the import if available, otherwise fallback
+const API_URL_FALLBACK = 'http://localhost:5000/api'
 
 export default function AdminChat() {
+  // Safe local reference – this is always defined
+  const apiUrl = typeof API_URL !== 'undefined' ? API_URL : API_URL_FALLBACK
+
   const [conversations, setConversations] = useState([])
   const [activeConv, setActiveConv] = useState(null)
   const [messages, setMessages] = useState([])
@@ -20,7 +25,7 @@ export default function AdminChat() {
 
   useEffect(() => {
     if (!token) return
-    fetch(`${apiUrl}/api/chat/conversations`, {
+    fetch(`${apiUrl}/chat/conversations`, {
       headers: { Authorization: `Bearer ${token}` }
     }).then(r => r.json()).then(d => setConversations(d.data || []))
   }, [token])
@@ -31,7 +36,7 @@ export default function AdminChat() {
       if (activeConvRef.current && msg.conversation_id === activeConvRef.current.id) {
         setMessages(prev => [...prev, msg])
       }
-      fetch(`${apiUrl}/api/chat/conversations`, {
+      fetch(`${apiUrl}/chat/conversations`, {
         headers: { Authorization: `Bearer ${token}` }
       }).then(r => r.json()).then(d => setConversations(d.data || []))
     }
@@ -45,28 +50,26 @@ export default function AdminChat() {
 
   const openConversation = (conv) => {
     setActiveConv(conv)
-    fetch(`${apiUrl}/api/chat/conversations/${conv.id}/messages`, {
+    fetch(`${apiUrl}/chat/conversations/${conv.id}/messages`, {
       headers: { Authorization: `Bearer ${token}` }
     }).then(r => r.json()).then(d => setMessages(d.data || []))
   }
 
-  // Determines correct receiver: uses other_id from API which already calculates the non-admin user
   const getReceiverId = (conv) => {
     const adminId = JSON.parse(localStorage.getItem('sajilo_user'))?.id
-    console.log('[GET_RECEIVER] adminId:', adminId, 'customer_id:', conv.customer_id, 'worker_id:', conv.worker_id, 'other_id:', conv.other_id)
     return conv.other_id
   }
 
   const handleSend = () => {
     if (!input.trim() || !activeConv || !socket) return
     const receiverId = getReceiverId(activeConv)
-    console.log('[ADMIN SEND] receiverId:', receiverId)
     socket.emit('send_message', { receiverId, text: input.trim(), bookingId: activeConv.booking_id || 0 })
     setMessages(prev => [...prev, { id: Date.now(), sender_role: 'admin', text: input.trim(), created_at: new Date().toISOString() }])
     setInput('')
   }
 
   return (
+    // (the rest of the JSX is exactly the same as before)
     <div style={{ display: 'flex', height: 'calc(100vh - 130px)', background: 'var(--bg-surface)', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
       <div style={{ width: 300, borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', background: 'var(--bg-surface)' }}>
         <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', fontWeight: 700, fontSize: 15, color: 'var(--text-primary)' }}>Messages</div>

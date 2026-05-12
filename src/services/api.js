@@ -119,6 +119,15 @@ acknowledgeCancellation: (id) => request(`/workers/cancellations/${id}/acknowled
     // Live Operations (Phase 12H)
     getLiveOperations: () => request('/admin/live-operations'),
 
+    // Activity Timeline (Phase 13B)
+    getActivity: (params = {}) => {
+      const query = new URLSearchParams(params).toString();
+      return request(`/admin/activity${query ? '?' + query : ''}`);
+    },
+
+    // Global Admin Search (Phase 13B Module 5)
+    searchAdmin: (q) => request(`/admin/search?q=${encodeURIComponent(q)}`),
+
     // Profession management
     getAdminProfessions: () => request('/admin/professions'),
     getAdminProfession: (id) => request(`/admin/professions/${id}`),

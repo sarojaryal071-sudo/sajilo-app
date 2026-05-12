@@ -17,6 +17,8 @@ const adminNavigation = [
   // ── Communication Operations ─────────────────────────
   { id: 'chat',          label: 'Live Chat',          icon: '💬', path: '/admin/chat',          section: 'Operations',  domain: 'Communication Operations' },
   { id: 'liveops',       label: 'Live Operations',    icon: '📡', path: '/admin/live-operations', section: 'Operations',  domain: 'Marketplace Operations' },
+  { id: 'activity', label: 'Activity', icon: '📋', path: '/admin/activity', section: 'Operations', domain: 'Marketplace Operations' },
+   { id: 'search',        label: 'Search',             icon: '🔍', path: '/admin/search',         section: 'Operations',  domain: 'Marketplace Operations' },
   { id: 'notifications', label: 'Notifications',      icon: '🔔', path: '/admin/notifications', section: 'Operations',  domain: 'Communication Operations' },
 
   // ── Platform Configuration ───────────────────────────
@@ -24,6 +26,7 @@ const adminNavigation = [
   { id: 'uicontrol',     label: 'UI Control Panel',   icon: '🎨', path: '/admin/ui-control',   section: 'Platform',    domain: 'Platform Configuration' },
   { id: 'settings',      label: 'Settings',           icon: '⚙️', path: '/admin/settings',      section: 'System',      domain: 'Platform Configuration' },
   { id: 'audit',         label: 'Audit Log',          icon: '📜', path: '/admin/audit',         section: 'System',      domain: 'Platform Configuration' },
+  { id: 'deployment',    label: 'Deployment',         icon: '🖥️', path: '/admin/deployment',    section: 'System',      domain: 'Platform Configuration' },
 ]
 
 export default adminNavigation
