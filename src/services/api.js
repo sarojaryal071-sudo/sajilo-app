@@ -116,6 +116,9 @@ acknowledgeCancellation: (id) => request(`/workers/cancellations/${id}/acknowled
     // Admin analytics
     getAdminAnalytics: () => request('/admin/analytics'),
 
+    // Live Operations (Phase 12H)
+    getLiveOperations: () => request('/admin/live-operations'),
+
     // Profession management
     getAdminProfessions: () => request('/admin/professions'),
     getAdminProfession: (id) => request(`/admin/professions/${id}`),

@@ -1,6 +1,7 @@
 // src/contexts/ToastContext.jsx
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { useSocket } from '../hooks/useSocket.js';
+import { SOCKET_EVENTS } from '../config/socketEvents.js';
 import { getCurrentUser } from '../config/auth.js';
 
 const ToastContext = createContext();
@@ -62,11 +63,11 @@ export function ToastProvider({ children }) {
       });
     };
 
-    socket.on('notification.created', handleNotif);
+    socket.on(SOCKET_EVENTS.NOTIFICATION_CREATED, handleNotif);
     socket.on('new_message', handleMessage);
 
     return () => {
-      socket.off('notification.created', handleNotif);
+      socket.off(SOCKET_EVENTS.NOTIFICATION_CREATED, handleNotif);
       socket.off('new_message', handleMessage);
     };
   }, [socket, addToast]);

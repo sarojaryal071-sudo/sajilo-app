@@ -2,6 +2,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { api } from '../services/api.js';
 import { useSocket } from '../hooks/useSocket.js';
+import { SOCKET_EVENTS } from '../config/socketEvents.js';
 
 const NotificationContext = createContext();
 
@@ -45,10 +46,10 @@ export function NotificationProvider({ children }) {
       setUnreadCount(prev => prev + 1);
     };
 
-    socket.on('notification.created', handleNewNotification);
+    socket.on(SOCKET_EVENTS.NOTIFICATION_CREATED, handleNewNotification);
 
     return () => {
-      socket.off('notification.created', handleNewNotification);
+      socket.off(SOCKET_EVENTS.NOTIFICATION_CREATED, handleNewNotification);
     };
   }, [socket]);
 

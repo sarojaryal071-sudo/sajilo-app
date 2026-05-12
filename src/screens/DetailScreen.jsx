@@ -3,6 +3,7 @@ import Calendar from '../components/Calendar.jsx'
 import { useContent } from '../hooks/useContent.js'
 import { api, API_URL } from '../services/api.js'
 import { useSocket } from '../hooks/useSocket.js'
+import { SOCKET_EVENTS } from '../config/socketEvents.js'
 import { useBooking } from '../contexts/BookingContext.jsx'
 import { dispatchBookingCommand } from '../utils/bookingCommandDispatcher.js'
 
@@ -185,10 +186,10 @@ const effectiveRanges = (() => {
       }
     }
 
-    socket.on('worker.services.updated', handleServicesUpdated)
+    socket.on(SOCKET_EVENTS.WORKER_SERVICES_UPDATED, handleServicesUpdated)
 
     return () => {
-      socket.off('worker.services.updated', handleServicesUpdated)
+      socket.off(SOCKET_EVENTS.WORKER_SERVICES_UPDATED, handleServicesUpdated)
     }
   }, [workerId, socket])
 

@@ -31,6 +31,7 @@ import AdminCustomers from '../screens/admin/AdminCustomers.jsx'
 import WorkerPending from '../screens/worker/WorkerPending.jsx'
 import WorkerApply from '../screens/worker/WorkerApply.jsx'
 import AdminChat from '../screens/admin/AdminChat.jsx'
+import AdminLiveOps from '../screens/admin/AdminLiveOps.jsx'
 import InboxScreen from '../screens/InboxScreen.jsx'
 
 const routes = [
@@ -76,6 +77,7 @@ const routes = [
   { path: '/admin/customers', component: AdminCustomers, role: 'admin' },
   { path: '/admin/home', component: PlaceholderScreen, role: 'admin', label: 'Home' },
   { path: '/admin/chat', component: AdminChat, role: 'admin' },
+  { path: '/admin/live-operations', component: AdminLiveOps, role: 'admin' },
 ]
 
 export default routes

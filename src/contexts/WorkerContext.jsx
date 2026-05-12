@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { api } from '../services/api.js'
 import { getSocket } from '../services/realtime/socketClient'
+import { SOCKET_EVENTS } from '../config/socketEvents.js'
 import { dispatchBookingCommand } from '../utils/bookingCommandDispatcher.js'
 
 const WorkerContext = createContext()
@@ -71,19 +72,19 @@ export function WorkerProvider({ children }) {
 
     const handleRefresh = () => loadAll()
 
-    socket.on('booking.created', handleRefresh)
+    socket.on(SOCKET_EVENTS.BOOKING_CREATED, handleRefresh)
 
-    const lifecycleEvents = [
-      'booking.accepted', 'booking.rejected', 'booking.onway',
-      'booking.working', 'booking.completed', 'booking.cancelled',
-          'booking.updated',
-    'review.created',
-    'payment.updated',
+      const lifecycleEvents = [
+    SOCKET_EVENTS.BOOKING_ACCEPTED, SOCKET_EVENTS.BOOKING_REJECTED, SOCKET_EVENTS.BOOKING_ONWAY,
+    SOCKET_EVENTS.BOOKING_WORKING, SOCKET_EVENTS.BOOKING_COMPLETED, SOCKET_EVENTS.BOOKING_CANCELLED,
+    SOCKET_EVENTS.BOOKING_UPDATED,
+    SOCKET_EVENTS.REVIEW_CREATED,
+    SOCKET_EVENTS.PAYMENT_UPDATED,
   ]
   lifecycleEvents.forEach(event => socket.on(event, handleRefresh))
 
     return () => {
-      socket.off('booking.created', handleRefresh)
+      socket.off(SOCKET_EVENTS.BOOKING_CREATED, handleRefresh)
       lifecycleEvents.forEach(event => socket.off(event, handleRefresh))
     }
   }, [loadAll])
