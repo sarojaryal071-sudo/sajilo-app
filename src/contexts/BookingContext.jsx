@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react'
 import { api } from '../services/api.js'
 import { useSocket } from '../hooks/useSocket.js'
+import { SOCKET_EVENTS } from '../config/socketEvents.js'
 
 const BookingContext = createContext()
 
@@ -57,11 +58,11 @@ export function BookingProvider({ children }) {
     socket.on('connect', handleConnect)
 
         const lifecycleEvents = [
-    'booking.accepted', 'booking.rejected', 'booking.onway',
-    'booking.working', 'booking.completed', 'booking.cancelled',
-    'booking.updated',
-    'review.created',
-    'payment.updated',
+    SOCKET_EVENTS.BOOKING_ACCEPTED, SOCKET_EVENTS.BOOKING_REJECTED, SOCKET_EVENTS.BOOKING_ONWAY,
+    SOCKET_EVENTS.BOOKING_WORKING, SOCKET_EVENTS.BOOKING_COMPLETED, SOCKET_EVENTS.BOOKING_CANCELLED,
+    SOCKET_EVENTS.BOOKING_UPDATED,
+    SOCKET_EVENTS.REVIEW_CREATED,
+    SOCKET_EVENTS.PAYMENT_UPDATED,
   ]
 
   lifecycleEvents.forEach(event => {
@@ -70,7 +71,7 @@ export function BookingProvider({ children }) {
     })
   })
 
-  socket.on('booking.created', () => {
+  socket.on(SOCKET_EVENTS.BOOKING_CREATED, () => {
     fetchBookings()
   })
 
@@ -78,7 +79,7 @@ export function BookingProvider({ children }) {
     socket.off('connect')
     socket.off('disconnect')
     lifecycleEvents.forEach(event => socket.off(event))
-    socket.off('booking.created')
+    socket.off(SOCKET_EVENTS.BOOKING_CREATED)
   }
   
   }, [socket, fetchBookings])

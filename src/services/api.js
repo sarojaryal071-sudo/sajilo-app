@@ -128,6 +128,25 @@ acknowledgeCancellation: (id) => request(`/workers/cancellations/${id}/acknowled
     // Global Admin Search (Phase 13B Module 5)
     searchAdmin: (q) => request(`/admin/search?q=${encodeURIComponent(q)}`),
 
+    // Staff Management (Phase 13C Module 1)
+    getStaff: () => request('/admin/staff'),
+    createStaff: (body) => request('/admin/staff', { method: 'POST', body: JSON.stringify(body) }),
+    toggleStaff: (id, active) => request(`/admin/staff/${id}/toggle`, { method: 'PUT', body: JSON.stringify({ active }) }),
+
+    // Platform Policies (Phase 13C Module 2)
+    getPolicies: () => request('/admin/policies'),
+    updatePolicy: (key, value, description) => request(`/admin/policies/${key}`, {
+      method: 'PUT',
+      body: JSON.stringify({ value, description }),
+    }),
+
+    // Feature Flags (Phase 13C Module 3)
+    getFeatureFlags: () => request('/admin/feature-flags'),
+    toggleFeatureFlag: (flagName, enabled) => request(`/admin/feature-flags/${flagName}`, {
+      method: 'PUT',
+      body: JSON.stringify({ enabled }),
+    }),
+
     // Profession management
     getAdminProfessions: () => request('/admin/professions'),
     getAdminProfession: (id) => request(`/admin/professions/${id}`),

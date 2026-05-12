@@ -35,6 +35,9 @@ import AdminLiveOps from '../screens/admin/AdminLiveOps.jsx'
 import AdminActivity from '../screens/admin/AdminActivity.jsx'
 import AdminSearch from '../screens/admin/AdminSearch.jsx'
 import AdminDeployment from '../screens/admin/AdminDeployment.jsx'
+import AdminStaff from '../screens/admin/AdminStaff.jsx'
+import AdminPolicies from '../screens/admin/AdminPolicies.jsx'
+import AdminFeatureFlags from '../screens/admin/AdminFeatureFlags.jsx'
 import InboxScreen from '../screens/InboxScreen.jsx'
 
 const routes = [
@@ -84,6 +87,9 @@ const routes = [
   { path: '/admin/activity', component: AdminActivity, role: 'admin' },
   { path: '/admin/search', component: AdminSearch, role: 'admin' },
   { path: '/admin/deployment', component: AdminDeployment, role: 'admin' },
+  { path: '/admin/staff', component: AdminStaff, role: 'admin' },
+  { path: '/admin/policies', component: AdminPolicies, role: 'admin' },
+  { path: '/admin/feature-flags', component: AdminFeatureFlags, role: 'admin' },
 ]
 
 export default routes

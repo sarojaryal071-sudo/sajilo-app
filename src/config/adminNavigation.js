@@ -27,6 +27,9 @@ const adminNavigation = [
   { id: 'settings',      label: 'Settings',           icon: '⚙️', path: '/admin/settings',      section: 'System',      domain: 'Platform Configuration' },
   { id: 'audit',         label: 'Audit Log',          icon: '📜', path: '/admin/audit',         section: 'System',      domain: 'Platform Configuration' },
   { id: 'deployment',    label: 'Deployment',         icon: '🖥️', path: '/admin/deployment',    section: 'System',      domain: 'Platform Configuration' },
+  { id: 'staff',         label: 'Staff',              icon: '👤', path: '/admin/staff',         section: 'System',      domain: 'Platform Configuration' },
+  { id: 'policies',      label: 'Policies',           icon: '📜', path: '/admin/policies',      section: 'System',      domain: 'Platform Configuration' },
+  { id: 'featureflags',  label: 'Feature Flags',      icon: '🚩', path: '/admin/feature-flags', section: 'System',      domain: 'Platform Configuration' },
 ]
 
 export default adminNavigation

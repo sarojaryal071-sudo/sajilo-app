@@ -22,7 +22,7 @@ const handleAction = async (action, worker) => {
   let filtered = workers
   if (search) {
     const s = search.toLowerCase()
-    filtered = filtered.filter(w => (w.name || '').toLowerCase().includes(s) || (w.email || '').toLowerCase().includes(s) || (w.display_id || '').toLowerCase().includes(s))
+    filtered = filtered.filter(w => (w.name || '').toLowerCase().includes(s) || (w.email || '').toLowerCase().includes(s) || (w.client_id || '').toLowerCase().includes(s))
   }
 
   return (

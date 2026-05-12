@@ -10,10 +10,10 @@ export async function loginUser(email, password) {
   }
 }
 
-export async function registerUser(email, password, role, name, phone) {
+export async function registerUser(email, password, role, name) {
   try {
-    const result = await api.register({ email, password, role, name, phone })
-    return { success: true, user: result.data.user, token: result.data.token }
+    const result = await api.register({ email, password, role, name })
+    return { success: true, user: result.data.user }
   } catch (err) {
     return { success: false, error: err.message }
   }
