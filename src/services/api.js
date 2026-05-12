@@ -81,6 +81,8 @@ acknowledgeCancellation: (id) => request(`/workers/cancellations/${id}/acknowled
       body: JSON.stringify({ service_id: serviceId, profession_id: professionId, is_active: true }),
     }),
     deleteWorkerService: (id) => request(`/workers/me/services/${id}`, { method: 'DELETE' }),
+        getJobSizeRanges: () => request('/workers/me/job-size-ranges'),
+    saveJobSizeRanges: (body) => request('/workers/me/job-size-ranges', { method: 'PUT', body: JSON.stringify(body) }),
     getWorkerPublicServices: (workerId) => request(`/workers/${workerId}/services`),
   sendNotification: (body) => request('/notifications', { method: 'POST', body: JSON.stringify(body) }),
   submitWorkerApplication: (body) => request('/auth/worker/apply', { method: 'POST', body: JSON.stringify(body) }),

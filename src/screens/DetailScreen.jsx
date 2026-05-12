@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import Calendar from '../components/Calendar.jsx'
 import { useContent } from '../hooks/useContent.js'
-import { api } from '../services/api.js'
+import { api, API_URL } from '../services/api.js'
+import { useSocket } from '../hooks/useSocket.js'
 import { useBooking } from '../contexts/BookingContext.jsx'
 import { dispatchBookingCommand } from '../utils/bookingCommandDispatcher.js'
 
@@ -41,6 +42,7 @@ export default function DetailScreen({ navigate, workerId }) {
   const [cancelNote, setCancelNote] = useState('')
 
   const { bookings } = useBooking()
+  const { socket } = useSocket()
 
   // Find an active booking for this worker (any status that can be cancelled)
   const activeBooking = bookings?.find(
@@ -101,7 +103,11 @@ export default function DetailScreen({ navigate, workerId }) {
 
   const [worker, setWorker] = useState(null)
   const [workerServices, setWorkerServices] = useState([])
-  const [filterProfession, setFilterProfession] = useState(null)
+    const [workerRangesFull, setWorkerRangesFull] = useState({
+  default_ranges: { small_max_price: 1000, medium_max_price: 3000 },
+  profession_ranges: {}
+})
+    const [filterProfession, setFilterProfession] = useState(null)
 
   // Flatten all services and attach profession info
   const allServices = workerServices.flatMap(prof =>
@@ -117,14 +123,74 @@ export default function DetailScreen({ navigate, workerId }) {
     setExpandedSizes(prev => ({ ...prev, [size]: !prev[size] }));
   };
 
-  useEffect(() => {
+  // Compute effective ranges for grouping based on selected profession
+const effectiveRanges = (() => {
+  if (filterProfession && workerRangesFull.profession_ranges[filterProfession]) {
+    return workerRangesFull.profession_ranges[filterProfession];
+  }
+  return workerRangesFull.default_ranges;
+})();
+
+
+    useEffect(() => {
     api.getWorkerById(workerId).then(d => {
       if (d.success) setWorker(d.data)
     })
     api.getWorkerPublicServices(workerId).then(d => {
       if (d.success) setWorkerServices(d.data?.professions || [])
     }).catch(() => {})
+    // fetch custom ranges (public endpoint needed)
+    fetch(`${API_URL}/workers/${workerId}/job-size-ranges`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.success) {
+          const full = {
+            default_ranges: d.data.default_ranges || { small_max_price: 1000, medium_max_price: 3000 },
+            profession_ranges: d.data.profession_ranges || {}
+          };
+          setWorkerRangesFull(full);
+        }
+      })
+      .catch(() => {})
   }, [workerId])
+
+  // Real‑time refresh when worker updates services or ranges
+  useEffect(() => {
+    console.log('🔌 DetailScreen socket effect, socket:', socket);
+     if (!socket) {
+      console.warn('❌ No socket – live updates unavailable (probably not logged in)');
+      return;
+    }
+
+    const handleServicesUpdated = (payload) => {
+      console.log('📡 worker.services.updated received:', payload, 'current workerId:', workerId);
+      if (payload?.workerId === workerId) {
+        console.log('✅ Refetching services & ranges');
+        // Refetch public services and ranges
+        api.getWorkerPublicServices(workerId).then(d => {
+          if (d.success) setWorkerServices(d.data?.professions || [])
+        }).catch(() => {})
+        fetch(`${API_URL}/workers/${workerId}/job-size-ranges`)
+          .then(r => r.json())
+          .then(d => {
+            if (d.success) {
+              const full = {
+                default_ranges: d.data.default_ranges || { small_max_price: 1000, medium_max_price: 3000 },
+                profession_ranges: d.data.profession_ranges || {}
+              };
+              setWorkerRangesFull(full);
+            }
+          })
+          .catch(() => {})
+      }
+    }
+
+    socket.on('worker.services.updated', handleServicesUpdated)
+
+    return () => {
+      socket.off('worker.services.updated', handleServicesUpdated)
+    }
+  }, [workerId, socket])
 
   const formatDate = (dateStr) => {
     if (!dateStr) return ''
@@ -198,12 +264,15 @@ export default function DetailScreen({ navigate, workerId }) {
           ))}
         </div>
       )}
-            {['small', 'medium', 'large'].map(size => {
+
+      {['small', 'medium', 'large'].map(size => {
         const servicesInSize = filteredServices.filter(s => {
-          const price = parseFloat(s.worker_price) || 0;
-          if (size === 'small') return price >= 0 && price <= 1000;
-          if (size === 'medium') return price > 1000 && price <= 3000;
-          return price > 3000;
+                     const price = parseFloat(s.worker_price) || 0;
+            const { small_max_price, medium_max_price } = effectiveRanges;
+            const match = size === 'small' ? (price >= 0 && price <= small_max_price) :
+                          size === 'medium' ? (price > small_max_price && price <= medium_max_price) :
+                          (price > medium_max_price);
+            return match;
         });
         const isExpanded = expandedSizes[size];
         return (
@@ -222,9 +291,11 @@ export default function DetailScreen({ navigate, workerId }) {
                 <div style={{ fontSize: 'var(--font-body)', fontWeight: 600, color: 'var(--text-primary)' }}>
                   {size.charAt(0).toUpperCase() + size.slice(1)} job
                 </div>
-                <div style={{ fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)' }}>
-                  Rs {size === 'small' ? '500-1000' : size === 'medium' ? '1000-3000' : '3000+'}
-                </div>
+                                  <div style={{ fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)' }}>
+                    {size === 'small' ? `Rs 0–${effectiveRanges.small_max_price}` :
+                     size === 'medium' ? `Rs ${effectiveRanges.small_max_price}–${effectiveRanges.medium_max_price}` :
+                     `Rs ${effectiveRanges.medium_max_price}+`}
+                  </div>
               </div>
               <span style={{ fontSize: 'var(--font-body-sm)', fontWeight: 500, color: 'var(--text-secondary)' }}>
                 {servicesInSize.length} service{servicesInSize.length !== 1 && 's'}

@@ -2349,7 +2349,6 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
 
     // ── WORKER SERVICE MANAGER (Phase 11.1) ──────────────
         case "workerServiceManager": {
-      console.log('🔥 workerServiceManager FIRED – workerServices:', overrideData?.workerServices);
       const professions = overrideData?.workerServices || [];
       const [activeProfId, setActiveProfId] = React.useState(null);
       const [showAddForm, setShowAddForm] = React.useState(false);
@@ -2365,6 +2364,45 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
   const [editSvcNepali, setEditSvcNepali] = React.useState('');
       const [checkedServices, setCheckedServices] = React.useState(new Set());
 
+        // Job size ranges: per‑profession overrides + default fallback
+const [jobSizeRanges, setJobSizeRanges] = React.useState({
+  defaultRanges: { small_max_price: 1000, medium_max_price: 3000 },
+  professionRanges: {},   // e.g. { 2: { small_max_price: 1500, medium_max_price: 5000 } }
+});
+const [rangesLoading, setRangesLoading] = React.useState(true);
+
+// Local inputs for the currently active profession
+const [activeProfRange, setActiveProfRange] = React.useState({
+  small: '',
+  medium: '',
+});
+
+  // Fetch all job size ranges (default + per‑profession) on mount
+React.useEffect(() => {
+  api.getJobSizeRanges?.()
+    .then(res => {
+      if (res?.success && res.data) {
+        const data = res.data;
+        setJobSizeRanges({
+          defaultRanges: data.default_ranges || { small_max_price: 1000, medium_max_price: 3000 },
+          professionRanges: data.profession_ranges || {},
+        });
+      }
+    })
+    .catch(() => {})
+    .finally(() => setRangesLoading(false));
+}, []);
+
+// When activeProfId changes, pre‑fill the inputs with the right ranges
+React.useEffect(() => {
+  if (!activeProfId) return;
+  const profOverride = jobSizeRanges.professionRanges[activeProfId];
+  const source = profOverride || jobSizeRanges.defaultRanges;
+  setActiveProfRange({
+    small: source.small_max_price?.toString() || '',
+    medium: source.medium_max_price?.toString() || '',
+  });
+}, [activeProfId, jobSizeRanges]);
 
 
       const inputStyle = {
@@ -2502,8 +2540,9 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
         });
       };
 
+
       return (
-        <div style={{ padding: '0 16px' }}>
+        <div style={{ padding: '0 16px' }}>          
           {/* Profession pills */}
           <div style={{ display: 'flex', gap: 8, marginBottom: 16, overflowX: 'auto', paddingBottom: 4 }}>
             {professions.map(prof => (
@@ -2525,6 +2564,77 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
               </button>
             ))}
           </div>
+
+          {/* Per‑Profession Job Size Ranges (only when a profession is selected) */}
+{activeProfId && (
+  <div style={{
+    background: 'var(--bg-surface)', border: '1px solid var(--border)',
+    borderRadius: 'var(--radius-md)', padding: 12, marginBottom: 16,
+  }}>
+    <div style={{ fontSize: 'var(--font-body-sm)', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>
+      Job Size Ranges – {activeProf?.name || 'Profession'}
+    </div>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+      <span style={{ fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+        Small up to
+      </span>
+      <input
+        type="number"
+        value={activeProfRange.small}
+        onChange={e => setActiveProfRange(prev => ({ ...prev, small: e.target.value }))}
+        placeholder="1000"
+        style={{ ...inputStyle, width: 80 }}
+      />
+      <span style={{ fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)', marginLeft: 8, whiteSpace: 'nowrap' }}>
+        Medium up to
+      </span>
+      <input
+        type="number"
+        value={activeProfRange.medium}
+        onChange={e => setActiveProfRange(prev => ({ ...prev, medium: e.target.value }))}
+        placeholder="3000"
+        style={{ ...inputStyle, width: 80 }}
+      />
+      <button
+        onClick={async () => {
+          const sm = parseFloat(activeProfRange.small);
+          const mm = parseFloat(activeProfRange.medium);
+          if (isNaN(sm) || isNaN(mm) || sm <= 0 || mm <= 0 || sm >= mm) {
+            alert('Invalid ranges: small must be > 0, medium > 0, and small < medium');
+            return;
+          }
+          try {
+            await api.saveJobSizeRanges?.({
+              profession_id: activeProfId,
+              small_max_price: sm,
+              medium_max_price: mm,
+            });
+            // Update local state so the inputs don’t reset
+            setJobSizeRanges(prev => {
+              const updated = { ...prev };
+              if (activeProfId) {
+                updated.professionRanges = {
+                  ...prev.professionRanges,
+                  [activeProfId]: { small_max_price: sm, medium_max_price: mm },
+                };
+              }
+              return updated;
+            });
+            alert('Ranges saved');
+          } catch (err) {
+            alert(err.message || 'Failed to save ranges');
+          }
+        }}
+        style={{ ...actionBtn, background: 'var(--accent-blue)', color: '#fff', border: 'none', marginLeft: 8 }}
+      >
+        Save Ranges
+      </button>
+    </div>
+    <div style={{ fontSize: 'var(--font-caption)', color: 'var(--text-secondary)', marginTop: 6 }}>
+      Large jobs are above Rs {activeProfRange.medium || '—'}
+    </div>
+  </div>
+)}
 
                     {/* Services list (admin‑style) */}
           <div style={{ marginBottom: 16 }}>
