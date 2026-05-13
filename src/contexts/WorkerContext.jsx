@@ -57,7 +57,7 @@ export function WorkerProvider({ children }) {
     loadAll()
   }, [loadAll])
 
-  // Fetch today metrics from dashboard endpoint
+  // Fetch today + lifetime metrics from dashboard endpoint
   useEffect(() => {
     api.getWorkerDashboardMetrics()
       .then(res => {
@@ -66,6 +66,10 @@ export function WorkerProvider({ children }) {
             ...prev,
             today_earnings: res.data.today?.earnings || 0,
             today_jobs: res.data.today?.completedJobs || 0,
+            total_earnings: res.data.lifetime?.totalEarnings || prev?.total_earnings || 0,
+            completed_jobs: res.data.lifetime?.completedJobs || prev?.completed_jobs || 0,
+            total_earnings: res.data.lifetime?.totalEarnings || prev?.total_earnings || 0,
+            completed_jobs: res.data.lifetime?.completedJobs || prev?.completed_jobs || 0,
           }))
         }
       })

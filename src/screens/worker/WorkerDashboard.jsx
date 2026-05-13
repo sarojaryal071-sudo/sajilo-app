@@ -110,8 +110,8 @@ export default function WorkerDashboard() {
 
   // Lifetime stats for workerStatsBar
   const statsBarData = {
-    completed_jobs: dm?.lifetime?.completedJobs ?? 0,
-    total_earnings: dm?.lifetime?.totalEarnings ?? 0,
+    today_jobs: dm?.today?.completedJobs ?? 0,
+    today_earnings: dm?.today?.earnings ?? 0,
     rating: dm?.lifetime?.averageRating ?? '—',
   }
 

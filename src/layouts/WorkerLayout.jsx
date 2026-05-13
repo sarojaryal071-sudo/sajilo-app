@@ -201,7 +201,7 @@ function WorkerLayoutInner({ children, onLogout, onSOS }) {
       </div>
 
       {/* ── BODY: Sidebar + Content ── */}
-      <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+      <div className="worker-body-row" style={{ display: 'flex', flex: 1, minHeight: 0 }}>
         {/* Desktop Sidebar */}
         <div className="worker-sidebar" style={{
           width: w.desktop?.sidebar?.width || '240px',
@@ -278,7 +278,6 @@ function WorkerLayoutInner({ children, onLogout, onSOS }) {
           overflowY: 'auto',
           padding: w.desktop?.content?.padding || '24px',
           background: w.desktop?.content?.background || 'var(--bg-primary)',
-          paddingBottom: '80px',
         }}>
           {children}
         </div>
@@ -340,14 +339,13 @@ function WorkerLayoutInner({ children, onLogout, onSOS }) {
 
       <WorkerMobileDrawer isOpen={showDrawer} onClose={() => setShowDrawer(false)} navigate={navigate} lang={lang} setLang={setLang} dark={dark} setDark={setDark} onLogout={handleLogout} />
 
-                  <style>{`
+        <style>{`
         /* Hide desktop navbar by default */
         .worker-desktop-navbar { display: none; }
         /* Desktop: show navbar + sidebar, hide mobile bottom nav */
         @media (min-width: 1024px) {
           .worker-desktop-navbar { display: flex !important; }
           .worker-bottom-nav { display: none !important; }
-          .worker-content { padding-bottom: 24px !important; }
           .worker-mobile-online { display: none !important; }
         }
         /* Mobile: hide desktop navbar, sidebar; show bottom nav */

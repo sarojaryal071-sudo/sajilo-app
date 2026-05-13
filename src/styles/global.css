@@ -16,6 +16,7 @@
   --radius-md: 10px;
   --radius-lg: 14px;
   --font-family: system-ui, -apple-system, sans-serif;
+  --mobile-bottom-nav-height: 60px;
 }
 
 [data-theme="dark"] {
@@ -42,6 +43,10 @@ html, body, #root {
   width: 100%;
   margin: 0;
   padding: 0;
+  overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
 }
 
 body {
@@ -97,12 +102,12 @@ body {
 .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
 .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
 
-/* ── Auth page scroll lock ── */
+/* ── Auth page scroll ── */
 .auth-page {
   height: 100vh;
   height: 100dvh;
   overflow-y: auto;
-  overscroll-behavior-y: contain;
+  overscroll-behavior-y: auto;
   -webkit-overflow-scrolling: touch;
 }
 html.auth-locked,
@@ -112,47 +117,51 @@ html.auth-locked body {
   height: 100%;
 }
 
-/* ── Hide scrollbars but keep scroll functionality ── */
-* {
-  scrollbar-width: none !important;
-  -ms-overflow-style: none !important;
-}
-*::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
-}
-
-/* ── Full‑screen app (no outer gutters) ── */
-.main-content,
-.worker-content {
+/* ── Content scroll containers (thin scrollbar + smooth scroll) ── */
+.worker-content,
+.main-content {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  scroll-behavior: smooth;
   padding: 0 !important;
   margin: 0 !important;
+  padding-bottom: 80px !important;
 }
-@media (max-width: 768px) {
-  .main-content,
-  .worker-content {
-    padding-bottom: 80px !important;
-  }
+.worker-content::-webkit-scrollbar,
+.main-content::-webkit-scrollbar {
+  width: 4px;
+}
+.worker-content::-webkit-scrollbar-thumb,
+.main-content::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.15);
+  border-radius: 2px;
+}
+.worker-content::-webkit-scrollbar-track,
+.main-content::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-/* ── Single primary scroll container with native momentum ── */
-.main-content,
-.worker-content {
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;   /* iOS momentum */
-  overscroll-behavior-y: auto;         /* natural bounce */
-  touch-action: auto;                  /* let the browser handle momentum freely */
+
+/* ── Interactive cards — prevent zoom, allow scroll ── */
+.worker-card,
+[class*="card"],
+button,
+.clickable {
+  touch-action: manipulation;
 }
 
 /* ── Conversation overlay support ── */
 body.inbox-conversation-open {
-  overflow: hidden;                         /* prevent background page scroll */
+  overflow: hidden;
 }
 .inbox-conversation-open .mobile-bottom-nav,
 .inbox-conversation-open .worker-bottom-nav {
-  display: none !important;                 /* hide bottom tab bar */
+  display: none !important;
 }
 .inbox-conversation-open .navbar {
-  display: none !important;                 /* hide top navbar */
+  display: none !important;
 }
+
