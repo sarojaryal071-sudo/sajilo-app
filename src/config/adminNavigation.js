@@ -30,6 +30,7 @@ const adminNavigation = [
   { id: 'staff',         label: 'Staff',              icon: '👤', path: '/admin/staff',         section: 'System',      domain: 'Platform Configuration' },
   { id: 'policies',      label: 'Policies',           icon: '📜', path: '/admin/policies',      section: 'System',      domain: 'Platform Configuration' },
   { id: 'featureflags',  label: 'Feature Flags',      icon: '🚩', path: '/admin/feature-flags', section: 'System',      domain: 'Platform Configuration' },
+  { id: 'simulate',      label: 'Simulate',           icon: '🧪', path: '/admin/simulate',      section: 'System',      domain: 'Platform Configuration' },
 ]
 
 export default adminNavigation

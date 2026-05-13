@@ -10,7 +10,7 @@ export function WorkerProvider({ children }) {
   const [profile, setProfile] = useState(null)
   const [bookings, setBookings] = useState([])
   const [activeJob, setActiveJob] = useState(null)
-  const [earnings, setEarnings] = useState({ total_earnings: 0, completed_jobs: 0 })
+  const [earnings, setEarnings] = useState({ total_earnings: 0, completed_jobs: 0, today_earnings: 0, today_jobs: 0 })
   const [schedule, setSchedule] = useState([])
   const [services, setServices] = useState([])
   const [paymentMap, setPaymentMap] = useState({})
@@ -34,7 +34,10 @@ export function WorkerProvider({ children }) {
         }))
       }
       if (results[1].status === 'fulfilled') setBookings(results[1].value.data || [])
-      if (results[2].status === 'fulfilled') setEarnings(results[2].value.data || { total_earnings: 0, completed_jobs: 0 })
+      if (results[2].status === 'fulfilled') {
+        const earningsData = results[2].value.data || { total_earnings: 0, completed_jobs: 0 }
+        setEarnings(prev => ({ ...prev, ...earningsData }))
+      }
       if (results[3].status === 'fulfilled') setSchedule(results[3].value.data || [])
 
       // Fetch payment data once we have the worker ID
@@ -59,6 +62,21 @@ export function WorkerProvider({ children }) {
     loadAll()
   }, [loadAll])
 
+  // Fetch today metrics from dashboard endpoint
+  useEffect(() => {
+    api.getWorkerDashboardMetrics()
+      .then(res => {
+        if (res?.success && res.data) {
+          setEarnings(prev => ({
+            ...prev,
+            today_earnings: res.data.today?.earnings || 0,
+            today_jobs: res.data.today?.completedJobs || 0,
+          }))
+        }
+      })
+      .catch(() => {})
+  }, [])
+
   // Track the worker's active job (onway/working) for the dashboard map card
   useEffect(() => {
     const active = bookings.find(b => b.status === 'onway' || b.status === 'working')
@@ -72,7 +90,22 @@ export function WorkerProvider({ children }) {
 
     const handleRefresh = () => loadAll()
 
-    socket.on(SOCKET_EVENTS.BOOKING_CREATED, handleRefresh)
+    const handleTodayRefresh = () => {
+      handleRefresh()
+      api.getWorkerDashboardMetrics()
+        .then(res => {
+          if (res?.success && res.data) {
+            setEarnings(prev => ({
+              ...prev,
+              today_earnings: res.data.today?.earnings || 0,
+              today_jobs: res.data.today?.completedJobs || 0,
+            }))
+          }
+        })
+        .catch(() => {})
+    }
+
+    socket.on(SOCKET_EVENTS.BOOKING_CREATED, handleTodayRefresh)
 
       const lifecycleEvents = [
     SOCKET_EVENTS.BOOKING_ACCEPTED, SOCKET_EVENTS.BOOKING_REJECTED, SOCKET_EVENTS.BOOKING_ONWAY,
@@ -81,11 +114,11 @@ export function WorkerProvider({ children }) {
     SOCKET_EVENTS.REVIEW_CREATED,
     SOCKET_EVENTS.PAYMENT_UPDATED,
   ]
-  lifecycleEvents.forEach(event => socket.on(event, handleRefresh))
+  lifecycleEvents.forEach(event => socket.on(event, handleTodayRefresh))
 
     return () => {
-      socket.off(SOCKET_EVENTS.BOOKING_CREATED, handleRefresh)
-      lifecycleEvents.forEach(event => socket.off(event, handleRefresh))
+      socket.off(SOCKET_EVENTS.BOOKING_CREATED, handleTodayRefresh)
+      lifecycleEvents.forEach(event => socket.off(event, handleTodayRefresh))
     }
   }, [loadAll])
 

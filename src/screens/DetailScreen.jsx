@@ -5,6 +5,7 @@ import { api, API_URL } from '../services/api.js'
 import { useSocket } from '../hooks/useSocket.js'
 import { SOCKET_EVENTS } from '../config/socketEvents.js'
 import { useBooking } from '../contexts/BookingContext.jsx'
+import WorkerTrustIndicators from '../components/WorkerTrustIndicators.jsx'
 import { dispatchBookingCommand } from '../utils/bookingCommandDispatcher.js'
 
 const jobSizes = [
@@ -235,6 +236,7 @@ const effectiveRanges = (() => {
             {worker.role ? ` · ${worker.role}` : ''}
             {worker.location ? ` · ${worker.location}` : ''}
           </div>
+          <WorkerTrustIndicators workerId={workerId} />
         </div>
         <div style={{ background: 'var(--accent-orange-light)', color: 'var(--accent-orange)', fontSize: 'var(--font-body)', fontWeight: 700, padding: '6px 12px', borderRadius: 20 }}>Rs 500-2500/hr</div>
       </div>

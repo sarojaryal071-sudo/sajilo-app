@@ -126,8 +126,8 @@ const visualIdentityRegistry = {
     },
     content: {
       stats: [
-        { labelKey: "worker.jobsToday", dataSource: "WorkerContext.profile.completed_jobs" },
-        { labelKey: "worker.todayEarnings", dataSource: "WorkerContext.earnings.total_earnings" },
+        { labelKey: "worker.jobsToday", dataSource: "WorkerContext.earnings.today_jobs" },
+        { labelKey: "worker.todayEarnings", dataSource: "WorkerContext.earnings.today_earnings" },
         { labelKey: "worker.rating", dataSource: "WorkerContext.profile.rating" },
       ],
     },

@@ -6,15 +6,31 @@ import ElementRenderer from '../../components/ElementRenderer.jsx'
 import { useContent } from '../../hooks/useContent.js'
 import { api } from '../../services/api.js'
 import { getSocket } from '../../services/realtime/socketClient'
+import WorkerPerformanceCard from '../../components/WorkerPerformanceCard.jsx'
 
 export default function WorkerDashboard() {
   const navigate = useNavigate()
-  const { profile, earnings, bookings, loading, toggleOnline, activeJob } = useWorker()
+  const { profile, bookings, loading, toggleOnline, activeJob } = useWorker()
   const { activeBooking } = useBooking()
   const isOnline = profile?.is_online || false
 
   // ── Cancellation notices (from backend) ──
   const [unacknowledged, setUnacknowledged] = useState([])
+
+  // ── Dashboard metrics from centralized metrics engine ──
+  const [dashboardMetrics, setDashboardMetrics] = useState(null)
+
+  // Fetch dashboard metrics from unified endpoint
+  const fetchDashboardMetrics = async () => {
+    try {
+      const res = await api.getWorkerDashboardMetrics()
+      if (res?.success) setDashboardMetrics(res.data)
+    } catch (err) {
+      console.error('Failed to fetch dashboard metrics', err)
+    }
+  }
+
+  useEffect(() => { fetchDashboardMetrics() }, [])
 
   // Fetch unacknowledged cancellations on mount
   useEffect(() => {
@@ -30,14 +46,13 @@ export default function WorkerDashboard() {
     })()
   }, [])
 
-    // Listen for real‑time cancellation events and re‑fetch unacknowledged list
+  // Listen for real‑time cancellation events and re‑fetch unacknowledged list
   useEffect(() => {
     const socket = getSocket()
     if (!socket) return
 
     const handleBookingUpdated = (payload) => {
       if (payload && payload.status === 'cancelled') {
-        // Re‑fetch unacknowledged cancellations from server
         api.getUnacknowledgedCancellations()
           .then(res => {
             if (res?.success && Array.isArray(res.data)) {
@@ -46,10 +61,27 @@ export default function WorkerDashboard() {
           })
           .catch(console.error)
       }
+      // Refresh dashboard metrics on any booking change
+      fetchDashboardMetrics()
     }
 
     socket.on('booking.updated', handleBookingUpdated)
     return () => socket.off('booking.updated', handleBookingUpdated)
+  }, [])
+
+  // Listen for payment and review events to refresh metrics
+  useEffect(() => {
+    const socket = getSocket()
+    if (!socket) return
+
+    const handleRefresh = () => fetchDashboardMetrics()
+
+    socket.on('payment.updated', handleRefresh)
+    socket.on('review.created', handleRefresh)
+    return () => {
+      socket.off('payment.updated', handleRefresh)
+      socket.off('review.created', handleRefresh)
+    }
   }, [])
 
   // Acknowledge a cancellation (and remove from local list)
@@ -62,7 +94,7 @@ export default function WorkerDashboard() {
     }
   }
 
-  // Active bookings (exclude completed and cancelled – backend already handles status)
+  // Active bookings (exclude completed and cancelled)
   const activeBookings = (bookings || []).filter(
     b => b.status !== 'completed' && b.status !== 'cancelled'
   )
@@ -79,47 +111,28 @@ export default function WorkerDashboard() {
     goOnline: goOnlineContent || 'Go online to receive job requests',
   }
 
-  // ── Weekly earnings (sum of price per day, last 7 days) ──
-  const weeklyEarnings = (() => {
-    const days = []
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+  // ── Derive chart data from metrics engine ──
+  const dm = dashboardMetrics
 
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(today)
-      d.setDate(d.getDate() - i)
-      const dateStr = d.toISOString().split('T')[0]
-      const dayTotal = (bookings || [])
-        .filter(b => {
-          if (b.status !== 'completed') return false
-          const bd = new Date(b.updated_at)
-          return bd.toISOString().startsWith(dateStr)
-        })
-        .reduce((sum, b) => sum + (b.price || 0), 0)
-      days.push(dayTotal)
-    }
-    return days.every(v => v === 0) ? [] : days
-  })()
+  // Weekly earnings: array of 7 daily values for chart
+  const weeklyEarnings = dm?.weekly?.days
+    ? dm.weekly.days.map(d => d.earnings)
+    : []
 
-  // ── Monthly earnings (sum of price per month, last 12 months) ──
-  const monthlyEarnings = (() => {
-    const months = []
-    const now = new Date()
-    for (let i = 11; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-      const start = new Date(d.getFullYear(), d.getMonth(), 1)
-      const end = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999)
-      const monthTotal = (bookings || [])
-        .filter(b => {
-          if (b.status !== 'completed') return false
-          const bd = new Date(b.updated_at)
-          return bd >= start && bd <= end
-        })
-        .reduce((sum, b) => sum + (b.price || 0), 0)
-      months.push(monthTotal)
-    }
-    return months.every(v => v === 0) ? [] : months
-  })()
+  // Monthly earnings: array of 12 monthly values for chart
+  const monthlyEarnings = dm?.monthly?.months
+    ? dm.monthly.months.map(m => m.earnings)
+    : []
+
+  // Lifetime stats for workerStatsBar
+  const statsBarData = {
+    completed_jobs: dm?.lifetime?.completedJobs ?? profile?.completed_jobs ?? 0,
+    total_earnings: dm?.lifetime?.totalEarnings ?? 0,
+    rating: dm?.lifetime?.averageRating ?? profile?.rating ?? '—',
+  }
+
+  // Today stats for potential display
+  const todayData = dm?.today || { earnings: 0, completedJobs: 0 }
 
   if (loading) {
     return (
@@ -150,13 +163,11 @@ export default function WorkerDashboard() {
       <ElementRenderer elementId="dashboardMapCard" overrideData={{ activeBooking: activeJob }} />
       <ElementRenderer elementId="dashboardOnlineToggle" overrideData={{ isOnline, txt, onToggle: toggleOnline }} />
 
+      <WorkerPerformanceCard />
+
       <ElementRenderer
         elementId="workerStatsBar"
-        overrideData={{
-          completed_jobs: profile?.completed_jobs || 0,
-          total_earnings: earnings?.total_earnings || 0,
-          rating: profile?.rating || '—',
-        }}
+        overrideData={statsBarData}
       />
 
       {/* ── Cancellation notices (from backend) ── */}
@@ -197,11 +208,11 @@ export default function WorkerDashboard() {
       <ElementRenderer
         elementId="dashboardAnalytics"
         overrideData={{
-          earnings,
-          weeklyEarnings,
-          monthlyEarnings,
-          chartMode: 'weekly',        // default
-          onSetChartMode: (mode) => {},  // can be connected to state if needed later
+          earnings: { total_earnings: dm?.lifetime?.totalEarnings ?? 0 },
+          weeklyEarnings: weeklyEarnings.length > 0 ? weeklyEarnings : null,
+          monthlyEarnings: monthlyEarnings.length > 0 ? monthlyEarnings : null,
+          chartMode: 'weekly',
+          onSetChartMode: (mode) => {},
         }}
       />
     </div>

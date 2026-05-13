@@ -1,5 +1,7 @@
 // src/components/admin/AdminAnalyticsDashboard.jsx
 import { useAdminAnalytics } from '../../contexts/AdminAnalyticsContext.jsx';
+import { useState, useEffect } from 'react';
+import { api } from '../../services/api.js';
 
 export default function AdminAnalyticsDashboard() {
   const { analytics, loading } = useAdminAnalytics();
@@ -105,6 +107,9 @@ export default function AdminAnalyticsDashboard() {
           />
         ))}
       </div>
+
+      {/* ── Phase 14F: Worker Performance Intelligence ── */}
+      <PerformanceSections />
     </div>
   );
 }
@@ -186,5 +191,114 @@ function EmptyRow({ text }) {
     <div style={{ padding: '10px 0', color: 'var(--text-secondary)', fontSize: 'var(--font-body-sm)' }}>
       {text}
     </div>
+  );
+}
+
+// ── Phase 14F: Performance Intelligence Sections ──
+
+function PerformanceSections() {
+  const [flagged, setFlagged] = useState(null);
+  const [topPerformers, setTopPerformers] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchPerformance() {
+      try {
+        const [flaggedRes, topRes] = await Promise.all([
+          api.getFlaggedWorkers(),
+          api.getTopPerformers(),
+        ]);
+        if (flaggedRes?.success) setFlagged(flaggedRes.data);
+        if (topRes?.success) setTopPerformers(topRes.data);
+      } catch (e) {
+        // Silent — performance sections are additive
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchPerformance();
+  }, []);
+
+  if (loading) return null;
+  if (!flagged && !topPerformers) return null;
+
+  const hasFlaggedData = flagged && (
+    flagged.highCancellation?.length > 0 ||
+    flagged.lowCompletion?.length > 0 ||
+    flagged.lowRated?.length > 0 ||
+    flagged.inactive?.length > 0
+  );
+
+  return (
+    <>
+      {hasFlaggedData && (
+        <div style={{ marginBottom: 20 }}>
+          <SectionTitle title="⚠️ Flagged Workers" />
+
+          {flagged.highCancellation?.length > 0 && (
+            <div style={{ marginBottom: 8 }}>
+              <div style={{ fontSize: 'var(--font-caption)', fontWeight: 700, color: 'var(--accent-red)', marginBottom: 4 }}>
+                High Cancellation ({flagged.highCancellation.length})
+              </div>
+              {flagged.highCancellation.slice(0, 5).map((w, i) => (
+                <ListRow
+                  key={`hc-${i}`}
+                  left={w.workerName || w.workerId}
+                  right={`${w.cancellationRate.rate}%`}
+                  sub={`${w.workerClientId || '#' + w.workerId} · ${w.completionRate.rate}% completion`}
+                />
+              ))}
+            </div>
+          )}
+
+          {flagged.lowRated?.length > 0 && (
+            <div style={{ marginBottom: 8 }}>
+              <div style={{ fontSize: 'var(--font-caption)', fontWeight: 700, color: 'var(--accent-orange)', marginBottom: 4 }}>
+                Low Rated ({flagged.lowRated.length})
+              </div>
+              {flagged.lowRated.slice(0, 5).map((w, i) => (
+                <ListRow
+                  key={`lr-${i}`}
+                  left={w.workerName || w.workerId}
+                  right={`★ ${w.reviewAverage}`}
+                  sub={`${w.workerClientId || '#' + w.workerId} · ${w.reviewCount} reviews`}
+                />
+              ))}
+            </div>
+          )}
+
+          {flagged.inactive?.length > 0 && (
+            <div style={{ marginBottom: 8 }}>
+              <div style={{ fontSize: 'var(--font-caption)', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4 }}>
+                Inactive ({flagged.inactive.length})
+              </div>
+              {flagged.inactive.slice(0, 5).map((w, i) => (
+                <ListRow
+                  key={`ia-${i}`}
+                  left={w.workerName || w.workerId}
+                  right={`${w.lastActivity.daysSinceLastActivity}d`}
+                  sub={`${w.workerClientId || '#' + w.workerId} · Since last activity`}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {topPerformers && topPerformers.length > 0 && (
+        <div style={{ marginBottom: 20 }}>
+          <SectionTitle title="🏆 Top Performers (Trust-Based)" />
+                        {topPerformers.slice(0, 10).map((w, i) => (
+                <ListRow
+                  key={w.workerId}
+                  rank={i + 1}
+                  left={w.workerName || w.workerId}
+                  right={`${w.completionRate.rate}% · ★ ${w.reviewAverage}`}
+                  sub={`${w.workerClientId || '#' + w.workerId} · ${w.bookingVolume.totalCompleted} jobs`}
+                />
+              ))}
+        </div>
+      )}
+    </>
   );
 }

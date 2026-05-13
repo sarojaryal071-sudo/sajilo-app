@@ -10,6 +10,7 @@ export default function SearchScreen({ navigate }) {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedLocation, setSelectedLocation] = useState('')
   const [locations, setLocations] = useState([])
+  const [sortBy, setSortBy] = useState('rating')
 
   // Fetch available service areas
   useEffect(() => {
@@ -29,13 +30,14 @@ export default function SearchScreen({ navigate }) {
     const params = {}
     if (searchTerm.trim()) params.service = searchTerm.trim()
     if (selectedLocation) params.location = selectedLocation
+    if (sortBy) params.sortBy = sortBy
 
     setLoading(true)
     api.searchWorkers(params)
       .then(result => setWorkers(result.data || []))
       .catch(console.error)
       .finally(() => setLoading(false))
-  }, [searchTerm, selectedLocation])
+  }, [searchTerm, selectedLocation, sortBy])
 
   
   // Live update when a worker toggles online/offline
@@ -115,7 +117,7 @@ export default function SearchScreen({ navigate }) {
       </div>
 
       {/* Filter buttons */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20, overflowX: 'auto' }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20, overflowX: 'auto', alignItems: 'center' }}>
         {filters.map(f => (
           <button key={f.key} onClick={() => setActiveFilter(f.key)}
             style={{
@@ -127,6 +129,20 @@ export default function SearchScreen({ navigate }) {
             {f.label}
           </button>
         ))}
+                <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+          style={{
+            marginLeft: 'auto',
+            padding: '8px 12px', borderRadius: 20,
+            border: '1px solid var(--border)', background: 'var(--bg-surface2)',
+            color: 'var(--text-primary)', fontSize: 'var(--font-body-sm)',
+            cursor: 'pointer', flexShrink: 0,
+          }}
+        >
+          <option value="rating">⭐ Top Rated</option>
+          <option value="jobs">🔧 Most Jobs</option>
+        </select>
       </div>
 
       {loading ? (

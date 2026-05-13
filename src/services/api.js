@@ -147,6 +147,14 @@ acknowledgeCancellation: (id) => request(`/workers/cancellations/${id}/acknowled
       body: JSON.stringify({ enabled }),
     }),
 
+    // Simulation Tools (Phase 13C Module 5)
+    simulateBooking: (body) => request('/admin/simulate/booking', { method: 'POST', body: JSON.stringify(body) }),
+    simulateAccept: (body) => request('/admin/simulate/accept', { method: 'POST', body: JSON.stringify(body) }),
+    simulateComplete: (body) => request('/admin/simulate/complete', { method: 'POST', body: JSON.stringify(body) }),
+    simulateCancel: (body) => request('/admin/simulate/cancel', { method: 'POST', body: JSON.stringify(body) }),
+    simulatePayment: (body) => request('/admin/simulate/payment', { method: 'POST', body: JSON.stringify(body) }),
+    simulateNotification: (body) => request('/admin/simulate/notification', { method: 'POST', body: JSON.stringify(body) }),
+
     // Profession management
     getAdminProfessions: () => request('/admin/professions'),
     getAdminProfession: (id) => request(`/admin/professions/${id}`),
@@ -159,6 +167,14 @@ acknowledgeCancellation: (id) => request(`/workers/cancellations/${id}/acknowled
     createProfessionService: (body) => request('/admin/professions/services', { method: 'POST', body: JSON.stringify(body) }),
     updateProfessionService: (id, body) => request(`/admin/professions/services/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
     deleteProfessionService: (id) => request(`/admin/professions/services/${id}`, { method: 'DELETE' }),
+
+    // Performance (Phase 14F)
+    getMyPerformance: () => request('/performance/worker/me'),
+    getWorkerDashboardMetrics: () => request('/workers/view/me/dashboard'),
+    getMyPerformanceMetrics: () => request('/performance/worker/me/metrics'),
+    getWorkerPublicPerformance: (workerId) => request(`/performance/worker/${workerId}/public`),
+    getFlaggedWorkers: () => request('/admin/analytics/performance/flagged'),
+    getTopPerformers: (limit = 10) => request(`/admin/analytics/performance/top-performers?limit=${limit}`),
   }
   
 
