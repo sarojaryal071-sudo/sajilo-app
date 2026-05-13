@@ -61,28 +61,12 @@ export default function WorkerDashboard() {
           })
           .catch(console.error)
       }
-      // Refresh dashboard metrics on any booking change
-      fetchDashboardMetrics()
     }
 
     socket.on('booking.updated', handleBookingUpdated)
     return () => socket.off('booking.updated', handleBookingUpdated)
   }, [])
 
-  // Listen for payment and review events to refresh metrics
-  useEffect(() => {
-    const socket = getSocket()
-    if (!socket) return
-
-    const handleRefresh = () => fetchDashboardMetrics()
-
-    socket.on('payment.updated', handleRefresh)
-    socket.on('review.created', handleRefresh)
-    return () => {
-      socket.off('payment.updated', handleRefresh)
-      socket.off('review.created', handleRefresh)
-    }
-  }, [])
 
   // Acknowledge a cancellation (and remove from local list)
   const handleAcknowledge = async (cancellationId) => {
@@ -126,9 +110,9 @@ export default function WorkerDashboard() {
 
   // Lifetime stats for workerStatsBar
   const statsBarData = {
-    completed_jobs: dm?.lifetime?.completedJobs ?? profile?.completed_jobs ?? 0,
+    completed_jobs: dm?.lifetime?.completedJobs ?? 0,
     total_earnings: dm?.lifetime?.totalEarnings ?? 0,
-    rating: dm?.lifetime?.averageRating ?? profile?.rating ?? '—',
+    rating: dm?.lifetime?.averageRating ?? '—',
   }
 
   // Today stats for potential display

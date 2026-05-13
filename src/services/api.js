@@ -171,6 +171,22 @@ acknowledgeCancellation: (id) => request(`/workers/cancellations/${id}/acknowled
     // Performance (Phase 14F)
     getMyPerformance: () => request('/performance/worker/me'),
     getWorkerDashboardMetrics: () => request('/workers/view/me/dashboard'),
+
+    // Verification (Phase 17)
+    getMyVerification: () => request('/verification/me'),
+    submitVerification: (documents) => request('/verification/submit', { method: 'POST', body: JSON.stringify({ documents }) }),
+    checkVerification: (workerId) => request(`/verification/check/${workerId}`),
+
+    // Admin Verification Queue (Phase 17)
+    getVerificationQueue: () => request('/verification/admin/queue'),
+    approveVerification: (workerId) => request(`/verification/admin/${workerId}/approve`, { method: 'PUT' }),
+    rejectVerification: (workerId, reason, note) => request(`/verification/admin/${workerId}/reject`, { method: 'PUT', body: JSON.stringify({ reason, note }) }),
+
+    // Verification Review (Phase 17.2)
+    createDocumentReview: (body) => request('/verification/review/document', { method: 'POST', body: JSON.stringify(body) }),
+    getWorkerReviews: (workerId) => request(`/verification/review/worker/${workerId}`),
+    getMyReviewStatus: () => request('/verification/review/me'),
+    getPendingReviewDocuments: () => request('/verification/review/pending'),
     getMyPerformanceMetrics: () => request('/performance/worker/me/metrics'),
     getWorkerPublicPerformance: (workerId) => request(`/performance/worker/${workerId}/public`),
     getFlaggedWorkers: () => request('/admin/analytics/performance/flagged'),

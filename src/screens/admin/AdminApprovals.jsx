@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import { api } from '../../services/api.js'
 import ElementRenderer from '../../components/ElementRenderer.jsx'
+import AdminVerificationDetail from '../../components/admin/AdminVerificationDetail.jsx'
 
 export default function AdminApprovals() {
   const [workers, setWorkers] = useState([])
   const [search, setSearch] = useState('')
+  const [selectedWorker, setSelectedWorker] = useState(null)
 
   useEffect(() => { 
   api.getAdminWorkers({ status: 'pending' }).then(r => {
@@ -33,7 +35,18 @@ const handleAction = async (action, worker) => {
         placeholder="Search pending workers..."
         style={{ width: '100%', maxWidth: 400, padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border)', fontSize: 13, background: 'var(--bg-surface)', color: 'var(--text-primary)', outline: 'none', marginBottom: 16 }} />
 
-      <ElementRenderer elementId="adminWorkersTable" overrideData={{ data: filtered, onAction: handleAction }} />
+      <ElementRenderer elementId="adminWorkersTable" overrideData={{ data: filtered, onAction: handleAction, onReview: (w) => setSelectedWorker(w) }} />
+
+      {selectedWorker && (
+        <AdminVerificationDetail
+          worker={selectedWorker}
+          onClose={() => setSelectedWorker(null)}
+          onAction={(action, worker) => {
+            handleAction(action, worker)
+            setSelectedWorker(null)
+          }}
+        />
+      )}
     </div>
   )
 }

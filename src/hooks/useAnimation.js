@@ -1,32 +1,23 @@
 import { useEffect, useState } from 'react'
 import { useAnim, animated } from '../animations/index.js'
-
-// ──────────────────────────────────────────────
-// Fallback: used when backend is unreachable
-// ──────────────────────────────────────────────
-const FALLBACK_CONFIG = {
-  LoginScreen: { card: 'springCard' },
-  SignupScreen: { card: 'springCard' },
-  WorkerPending: { card: 'fadeIn' },
-}
-
-// In-memory cache so we don't fetch every render
-let cachedConfig = null
+import { getCategoryForRoute, getAnimationConfig } from '../config/interactionRegistry.js'
 
 /**
- * useAnimation — fetches admin animation config and returns animation props
- * @param {string} screen — screen name (e.g. 'SignupScreen')
- * @param {string} component — component name (e.g. 'card', 'title', 'button')
+ * useAnimation — reads from interactionRegistry for motion rules.
+ * Falls back gracefully if backend is unreachable.
+ * 
+ * @param {string} screen — screen name (e.g. 'LoginScreen')
+ * @param {string} component — component name (e.g. 'card', 'title')
  * @param {object} overrides — optional animation config overrides
  * @returns {{ style, animated, name }}
  */
-export function useAnimation(screen, component, overrides = {}) {
+export function useAnimation(screen, component = 'card', overrides = {}) {
   const [animName, setAnimName] = useState(() => {
-    // Start with cached or fallback immediately (no flicker)
-    if (cachedConfig?.[screen]?.[component]) {
-      return cachedConfig[screen][component]
-    }
-    return FALLBACK_CONFIG[screen]?.[component] || 'fadeIn'
+    // Determine category from current route
+    const pathname = window.location.pathname || '/'
+    const category = getCategoryForRoute(pathname)
+    const config = getAnimationConfig(category, component)
+    return config.animation
   })
 
   useEffect(() => {
@@ -38,13 +29,12 @@ export function useAnimation(screen, component, overrides = {}) {
         if (!res.ok) throw new Error('Failed to fetch')
         const data = await res.json()
         if (!cancelled) {
-          cachedConfig = { ...cachedConfig, [screen]: data.components || {} }
-          const name = data.components?.[component] || FALLBACK_CONFIG[screen]?.[component] || 'fadeIn'
+          const name = data.components?.[component] || animName
           setAnimName(name)
         }
       } catch {
-        // Keep fallback — already set in useState initializer
-        console.log(`🔍 useAnimation: using fallback for ${screen}/${component}`)
+        // Keep registry-based fallback — already set
+        console.log(`🔍 useAnimation: using registry fallback for ${screen}/${component}`)
       }
     }
 

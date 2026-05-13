@@ -2323,6 +2323,7 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
                         <div style={{ display: 'flex', gap: 6 }}>
                           {row.status === 'pending' && (
                             <>
+                              <button onClick={() => overrideData?.onReview?.(row)} style={{ padding: '4px 10px', borderRadius: 4, border: 'none', background: 'var(--accent-blue)', color: '#fff', cursor: 'pointer', fontSize: 12 }}>Review</button>
                               <button onClick={() => onAction?.('approve', row)} style={{ padding: '4px 10px', borderRadius: 4, border: 'none', background: 'var(--accent-green)', color: '#fff', cursor: 'pointer', fontSize: 12 }}>Approve</button>
                               <button onClick={() => onAction?.('reject', row)} style={{ padding: '4px 10px', borderRadius: 4, border: 'none', background: 'var(--accent-red)', color: '#fff', cursor: 'pointer', fontSize: 12 }}>Reject</button>
                             </>

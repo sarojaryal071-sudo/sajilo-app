@@ -18,7 +18,7 @@ import AdminDashboard from '../screens/admin/AdminDashboard.jsx'
 import AdminUsers from '../screens/admin/AdminUsers.jsx'
 import AdminWorkers from '../screens/admin/AdminWorkers.jsx'
 import AdminBookings from '../screens/admin/AdminBookings.jsx'
-import AdminAnalytics from '../screens/admin/AdminAnalytics.jsx'
+import AdminAnalytics from '../components/admin/AdminAnalyticsDashboard.jsx'
 import AdminProfessions from '../screens/admin/AdminProfessions.jsx'
 import AdminSettings from '../screens/admin/AdminSettings.jsx'
 import AdminApprovals from '../screens/admin/AdminApprovals.jsx'
@@ -29,6 +29,7 @@ import AdminUIControl from '../screens/admin/AdminUIControl.jsx'
 import AdminAudit from '../screens/admin/AdminAudit.jsx'
 import AdminCustomers from '../screens/admin/AdminCustomers.jsx'
 import WorkerPending from '../screens/worker/WorkerPending.jsx'
+import WorkerVerificationReview from '../screens/worker/WorkerVerificationReview.jsx'
 import WorkerApply from '../screens/worker/WorkerApply.jsx'
 import AdminChat from '../screens/admin/AdminChat.jsx'
 import AdminLiveOps from '../screens/admin/AdminLiveOps.jsx'
@@ -50,8 +51,9 @@ const routes = [
 
   { path: '/login', component: LoginScreen, public: true },
   { path: '/signup', component: SignupScreen, public: true },
-  { path: '/worker/apply', component: WorkerApply, public: true },
-  { path: '/worker/pending', component: WorkerPending, public: true },
+  { path: '/worker/apply', component: WorkerApply, role: 'worker' },
+  { path: '/worker/pending', component: WorkerPending, role: 'worker' },
+  { path: '/worker/review', component: WorkerVerificationReview, role: 'worker' },
 
 
   { path: '/', component: HomeScreen, role: 'customer' },

@@ -21,7 +21,6 @@ export function WorkerProvider({ children }) {
       const results = await Promise.allSettled([
         api.getWorkerProfile(),
         api.getWorkerBookings(),
-        api.getWorkerEarnings(),
         api.getWorkerSchedule(),
       ])
 
@@ -34,11 +33,7 @@ export function WorkerProvider({ children }) {
         }))
       }
       if (results[1].status === 'fulfilled') setBookings(results[1].value.data || [])
-      if (results[2].status === 'fulfilled') {
-        const earningsData = results[2].value.data || { total_earnings: 0, completed_jobs: 0 }
-        setEarnings(prev => ({ ...prev, ...earningsData }))
-      }
-      if (results[3].status === 'fulfilled') setSchedule(results[3].value.data || [])
+      if (results[2].status === 'fulfilled') setSchedule(results[2].value.data || [])
 
       // Fetch payment data once we have the worker ID
       if (profileData) {

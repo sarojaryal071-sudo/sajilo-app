@@ -24,6 +24,16 @@ function WorkerLayoutInner({ children, onLogout, onSOS }) {
   const w = workerConfig
 
   const isApproved = profile?.status === 'active'
+
+  // Guard: redirect non-approved workers away from dashboard
+  useEffect(() => {
+    if (profile && !isApproved) {
+      const allowedPaths = ['/worker/pending', '/worker/review', '/worker/apply']
+      if (!allowedPaths.includes(location.pathname)) {
+        navigate('/worker/pending', { replace: true })
+      }
+    }
+  }, [profile, isApproved, location.pathname, navigate])
   const sosEnabled = useFeatureFlag('sosEmergency')
   const showTopbar = useFeatureFlag('workerTopbar')
   const showTopbarName = useFeatureFlag('workerTopbarName')

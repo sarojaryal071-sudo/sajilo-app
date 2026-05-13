@@ -229,24 +229,6 @@ export default function WorkerPending() {
     )
   }
 
-  // ── REJECTED ──
-  if (appData?.user?.status === 'rejected') {
-    const handleReview = () => {
-      navigate('/worker/apply')
-    }
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--bg-primary)' }}>
-        <div style={{ maxWidth: 430, width: '90%', background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)', padding: 40, boxShadow: '0 4px 24px rgba(0,0,0,0.08)', textAlign: 'center' }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>⚠️</div>
-          <h2 style={{ fontSize: 'var(--font-large)', fontWeight: 800, color: 'var(--text-primary)', marginBottom: 12 }}>{rejectedTitle}</h2>
-          <p style={{ fontSize: 'var(--font-body)', color: 'var(--text-secondary)', marginBottom: 24, lineHeight: 1.6 }}>{rejectedMsg2}</p>
-          <button onClick={handleReview} style={{ width: '100%', padding: 14, borderRadius: 'var(--radius-md)', border: 'none', background: 'var(--accent-blue)', color: '#fff', fontSize: 'var(--font-body)', fontWeight: 600, cursor: 'pointer' }}>
-            {reviewLabel}
-          </button>
-        </div>
-      </div>
-    )
-  }
 
   // ── PENDING (default) ──
   return (
@@ -308,11 +290,20 @@ export default function WorkerPending() {
               </div>
             )}
 
+
             <div style={{ textAlign: 'center', padding: 16, background: getFooterBg(), borderRadius: 'var(--radius-md)' }}>
               <div style={{ fontSize: 28, marginBottom: 6 }}>{getFooterIcon()}</div>
               <p style={{ fontSize: 13, fontWeight: 600, color: getFooterColor(), margin: 0 }}>{getFooterMessage()}</p>
+              {isRejected && notes && (
+                <div style={{ textAlign: 'left', marginTop: 10, padding: '8px 12px', background: '#FEF2F2', borderRadius: 'var(--radius-sm)', border: '1px solid #FECACA' }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: '#DC2626', marginBottom: 2 }}>📋 {adminNote}</div>
+                  <p style={{ fontSize: 12, color: '#991B1B', margin: 0 }}>{notes}</p>
+                </div>
+              )}
               {isRejected && (
-                <button onClick={() => navigate('/worker/apply')} style={{ marginTop: 10, padding: '8px 18px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--accent-blue)', background: 'var(--accent-blue)', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>{reapply}</button>
+                <button onClick={() => navigate('/worker/review')} style={{ marginTop: 12, padding: '10px 20px', borderRadius: 'var(--radius-sm)', border: 'none', background: 'var(--accent-blue)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                  See Review & Resubmit
+                </button>
               )}
             </div>
           </Animated.div>
