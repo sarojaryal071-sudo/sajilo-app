@@ -115,6 +115,8 @@ acknowledgeCancellation: (id) => request(`/workers/cancellations/${id}/acknowled
 
     // Admin analytics
     getAdminAnalytics: () => request('/admin/analytics'),
+    getFinancialOverview: () => request('/ledger/financial/overview'),
+    getWorkerDueList: () => request('/ledger/financial/worker-dues'),
 
     // Live Operations (Phase 12H)
     getLiveOperations: () => request('/admin/live-operations'),
@@ -160,7 +162,7 @@ acknowledgeCancellation: (id) => request(`/workers/cancellations/${id}/acknowled
     getAdminProfession: (id) => request(`/admin/professions/${id}`),
     createAdminProfession: (body) => request('/admin/professions', { method: 'POST', body: JSON.stringify(body) }),
     updateAdminProfession: (id, body) => request(`/admin/professions/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
-        deleteAdminProfession: (id) => request(`/admin/professions/${id}`, { method: 'DELETE' }),
+    deleteAdminProfession: (id) => request(`/admin/professions/${id}`, { method: 'DELETE' }),
 
     // Profession Services
     getProfessionServices: (professionId) => request(`/admin/professions/${professionId}/services`),
@@ -191,7 +193,11 @@ acknowledgeCancellation: (id) => request(`/workers/cancellations/${id}/acknowled
     getWorkerPublicPerformance: (workerId) => request(`/performance/worker/${workerId}/public`),
     getFlaggedWorkers: () => request('/admin/analytics/performance/flagged'),
     getTopPerformers: (limit = 10) => request(`/admin/analytics/performance/top-performers?limit=${limit}`),
-  }
+    getPaymentChannels: () => request('/payment-channels'),
+    addPaymentChannel: (body) => request('/payment-channels', { method: 'POST', body: JSON.stringify(body) }),
+    updatePaymentChannel: (id, body) => request(`/payment-channels/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+    deletePaymentChannel: (id) => request(`/payment-channels/${id}`, { method: 'DELETE' }),
+    }
   
 
 export { setToken, removeToken, getToken }

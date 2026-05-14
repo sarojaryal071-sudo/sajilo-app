@@ -90,12 +90,42 @@ export default function InvoiceOverlay({ payment, booking, onClose, onPaymentCom
             valueColor={statusConfig.badgeColor}
           />
           <InvoiceRow label={labels.subtotal} value={`Rs ${payment.subtotal || 0}`} />
+          
+          {/* Discount (if any) */}
+          {payment.discount_amount > 0 && (
+            <InvoiceRow
+              label="Discount"
+              value={`− Rs ${payment.discount_amount}`}
+              valueColor="var(--accent-red)"
+            />
+          )}
+
+          {/* Extra charges (if any) */}
+          {payment.extra_items_json &&
+            Array.isArray(payment.extra_items_json) &&
+            payment.extra_items_json.length > 0 &&
+            payment.extra_items_json.map((item, i) => (
+              <InvoiceRow
+                key={i}
+                label={item.label || `Extra ${i + 1}`}
+                value={`+ Rs ${parseFloat(item.amount).toLocaleString()}`}
+                valueColor="var(--accent-green)"
+              />
+            ))}
+
           {payment.platform_fee > 0 && (
             <InvoiceRow label={labels.platformFee} value={`Rs ${payment.platform_fee}`} />
           )}
-          <InvoiceRow label={labels.workerAmount} value={`Rs ${payment.worker_amount || 0}`} />
+          <InvoiceRow 
+            label="Worker Earnings" 
+            value={`Rs ${(payment.final_total || payment.total || 0) - (payment.platform_fee || 0)}`} 
+          />
           <div style={{ borderTop: '1px solid var(--border)', marginTop: 4 }} />
-          <InvoiceRow label={labels.total} value={`Rs ${payment.total || 0}`} bold />
+          <InvoiceRow 
+            label={payment.status === 'paid' ? 'Total Paid' : 'Total'} 
+            value={`Rs ${payment.final_total || payment.total || 0}`} 
+            bold 
+          />
           {payment.invoice_number && (
             <InvoiceRow label={labels.invoiceNumber} value={payment.invoice_number} />
           )}

@@ -1,7 +1,7 @@
 // src/components/admin/AdminAnalyticsDashboard.jsx
 import { useAdminAnalytics } from '../../contexts/AdminAnalyticsContext.jsx';
 import { useState, useEffect } from 'react';
-import { api } from '../../services/api.js';
+import { api, API_URL } from '../../services/api.js';
 
 export default function AdminAnalyticsDashboard() {
   const { analytics, loading } = useAdminAnalytics();
@@ -108,6 +108,9 @@ export default function AdminAnalyticsDashboard() {
         ))}
       </div>
 
+      {/* ── Financial Operations ── */}
+      <FinancialSections />
+
       {/* ── Phase 14F: Worker Performance Intelligence ── */}
       <PerformanceSections />
     </div>
@@ -190,6 +193,161 @@ function EmptyRow({ text }) {
   return (
     <div style={{ padding: '10px 0', color: 'var(--text-secondary)', fontSize: 'var(--font-body-sm)' }}>
       {text}
+    </div>
+  );
+}
+
+// ── Phase: Financial Operations ──
+
+function FinancialSections() {
+  const [overview, setOverview] = useState(null);
+  const [workerDues, setWorkerDues] = useState(null);
+const [settleModal, setSettleModal] = useState(null); // { workerId, workerName }
+const [settleForm, setSettleForm] = useState({ amount: '', method: 'cash', note: '' });
+const [settleMsg, setSettleMsg] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchFinancials() {
+      try {
+        const [overviewRes, duesRes] = await Promise.all([
+          api.getFinancialOverview(),
+          api.getWorkerDueList(),
+        ]);
+        if (overviewRes?.success) setOverview(overviewRes.data);
+        if (duesRes?.success) setWorkerDues(duesRes.data);
+      } catch (e) {
+        // Silent – financial section is additive
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchFinancials();
+  }, []);
+
+  if (loading) return null;
+  if (!overview && !workerDues) return null;
+
+  return (
+    <div style={{ marginBottom: 20 }}>
+      <SectionTitle title="💰 Financial" />
+
+      {/* Overview Cards */}
+      {overview && (
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
+          gap: 10,
+          marginBottom: 16,
+        }}>
+          <StatCard label="Total Invoiced" value={`Rs ${(overview.totalInvoiced || 0).toLocaleString()}`} />
+          <StatCard label="Total Collected" value={`Rs ${(overview.totalCollected || 0).toLocaleString()}`} />
+          <StatCard label="Platform Commission" value={`Rs ${(overview.totalCommission || 0).toLocaleString()}`} />
+          <StatCard label="Outstanding Dues" value={`Rs ${(overview.outstandingCommission || 0).toLocaleString()}`} />
+          <StatCard label="Total Settled" value={`Rs ${(overview.totalSettled || 0).toLocaleString()}`} />
+        </div>
+      )}
+
+      {/* Worker Due List */}
+      {workerDues && workerDues.length > 0 && (
+        <div style={{ marginBottom: 12 }}>
+          <div style={{
+            fontSize: 'var(--font-body-sm)',
+            fontWeight: 700,
+            color: 'var(--text-primary)',
+            marginBottom: 8,
+          }}>
+            Worker Commission Dues
+          </div>
+          {workerDues.slice(0, 10).map((w, i) => (
+            <ListRow
+              key={w.workerId}
+              rank={i + 1}
+              left={w.workerName || w.workerClientId}
+              right={
+  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+    <span>Rs {(w.balanceDue || 0).toLocaleString()} due</span>
+    {w.balanceDue > 0 && (
+      <button onClick={() => setSettleModal({ workerId: w.workerId, workerName: w.workerName || w.workerClientId })} style={{
+        padding: '2px 8px', borderRadius: 4, border: '1px solid var(--accent-green)',
+        background: 'transparent', color: 'var(--accent-green)', fontSize: 10, fontWeight: 600, cursor: 'pointer'
+      }}>Settle</button>
+    )}
+  </div>
+}
+              sub={`Gross: Rs ${(w.grossEarnings || 0).toLocaleString()} · Commission: Rs ${(w.commissionOwed || 0).toLocaleString()} · Paid: Rs ${(w.commissionPaid || 0).toLocaleString()}`}
+            />
+          ))}
+        </div>
+      )}
+
+      {workerDues && workerDues.length === 0 && (
+        <EmptyRow text="No commission dues recorded yet" />
+      )}
+
+      {/* Settlement Modal */}
+{settleModal && (
+  <>
+    <div onClick={() => setSettleModal(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 9998 }} />
+    <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: '90%', maxWidth: 400, background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)', padding: 24, zIndex: 9999, boxShadow: '0 12px 40px rgba(0,0,0,0.15)' }}>
+      <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 16 }}>
+        Record Settlement — {settleModal.workerName}
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div>
+          <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Amount (Rs)</label>
+          <input type="number" value={settleForm.amount} onChange={e => setSettleForm(f => ({ ...f, amount: e.target.value }))}
+            style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)', fontSize: 13 }} />
+        </div>
+        <div>
+          <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Method</label>
+          <select value={settleForm.method} onChange={e => setSettleForm(f => ({ ...f, method: e.target.value }))}
+            style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)', fontSize: 13 }}>
+            <option value="cash">Cash</option>
+            <option value="bank">Bank Transfer</option>
+            <option value="esewa">eSewa</option>
+            <option value="khalti">Khalti</option>
+          </select>
+        </div>
+        <div>
+          <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Note (optional)</label>
+          <input value={settleForm.note} onChange={e => setSettleForm(f => ({ ...f, note: e.target.value }))}
+            style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg-surface2)', color: 'var(--text-primary)', fontSize: 13 }} />
+        </div>
+      </div>
+      {settleMsg && <div style={{ marginTop: 8, fontSize: 12, color: settleMsg.type === 'success' ? '#059669' : '#DC2626' }}>{settleMsg.text}</div>}
+      <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+        <button onClick={async () => {
+          if (!settleForm.amount || parseFloat(settleForm.amount) <= 0) return setSettleMsg({ type: 'error', text: 'Enter a valid amount' });
+          try {
+            const token = localStorage.getItem('sajilo_token');
+            const res = await fetch(`${API_URL}/ledger/settle`, {
+              method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ workerId: settleModal.workerId, amount: settleForm.amount, method: settleForm.method, note: settleForm.note }),
+            }).then(r => r.json());
+            if (res.success) {
+              setSettleMsg({ type: 'success', text: 'Settlement recorded!' });
+              setTimeout(() => { setSettleModal(null); setSettleForm({ amount: '', method: 'cash', note: '' }); setSettleMsg(null); }, 1000);
+              // Refresh data
+              const duesRes = await api.getWorkerDueList();
+              if (duesRes?.success) setWorkerDues(duesRes.data);
+              const overviewRes = await api.getFinancialOverview();
+              if (overviewRes?.success) setOverview(overviewRes.data);
+            } else {
+              setSettleMsg({ type: 'error', text: res.message || 'Failed' });
+            }
+          } catch { setSettleMsg({ type: 'error', text: 'Network error' }); }
+        }} style={{ flex: 1, padding: 10, borderRadius: 6, border: 'none', background: 'var(--accent-green)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+          Confirm Settlement
+        </button>
+        <button onClick={() => { setSettleModal(null); setSettleMsg(null); }} style={{ padding: 10, borderRadius: 6, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer' }}>
+          Cancel
+        </button>
+      </div>
+    </div>
+  </>
+)}
+
     </div>
   );
 }

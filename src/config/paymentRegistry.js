@@ -14,6 +14,16 @@ export const PAYMENT_STATUS_CONFIG = {
     badgeColor: '#3B82F6',   // blue
     textColor: '#FFFFFF',
   },
+  awaiting_cash_confirmation: {
+    label: 'Awaiting Cash',
+    badgeColor: '#3B82F6',   // blue (same as pending_cash for consistency)
+    textColor: '#FFFFFF',
+  },
+  awaiting_digital_confirmation: {
+    label: 'Awaiting Payment',
+    badgeColor: '#8B5CF6',   // purple
+    textColor: '#FFFFFF',
+  },
   paid: {
     label: 'Paid',
     badgeColor: '#10B981',   // green

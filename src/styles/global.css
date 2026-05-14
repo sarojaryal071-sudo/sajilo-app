@@ -16,7 +16,15 @@
   --radius-md: 10px;
   --radius-lg: 14px;
   --font-family: system-ui, -apple-system, sans-serif;
-  --mobile-bottom-nav-height: 60px;
+  --app-bottom-nav-height: 60px;
+  --app-safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ── Shell height only ── */
+[data-theme] {
+  height: 100vh;
+  height: 100dvh;
+  box-sizing: border-box;
 }
 
 [data-theme="dark"] {
@@ -124,11 +132,10 @@ html.auth-locked body {
   scrollbar-color: transparent transparent;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: contain;
   scroll-behavior: smooth;
   padding: 0 !important;
   margin: 0 !important;
-  padding-bottom: 80px !important;
+  padding-bottom: calc(var(--app-bottom-nav-height) + var(--app-safe-bottom) + 24px) !important;
 }
 .worker-content::-webkit-scrollbar,
 .main-content::-webkit-scrollbar {
@@ -165,3 +172,125 @@ body.inbox-conversation-open {
   display: none !important;
 }
 
+/* ── Phase 21: Universal Design Primitives ── */
+
+/* Card — universal card surface */
+.sajilo-card {
+  background: var(--color-surface, #ffffff);
+  border-radius: var(--radius-card, 12px);
+  padding: var(--spacing-card, 16px);
+  box-shadow: var(--shadow-card, 0 2px 12px rgba(0,0,0,0.08));
+  border: 1px solid var(--color-border, #e5e7eb);
+  transition: box-shadow var(--motion-subtle, 150ms) ease;
+}
+.sajilo-card:hover {
+  box-shadow: var(--shadow-medium, 0 2px 8px rgba(0,0,0,0.10));
+}
+
+/* Surface — flat panel without shadow */
+.sajilo-surface {
+  background: var(--color-surface, #ffffff);
+  border-radius: var(--radius-card, 12px);
+  border: 1px solid var(--color-border, #e5e7eb);
+}
+
+/* Elevated surface — with shadow */
+.sajilo-surface-elevated {
+  background: var(--color-surface-elevated, #ffffff);
+  border-radius: var(--radius-card, 12px);
+  box-shadow: var(--shadow-medium, 0 2px 8px rgba(0,0,0,0.10));
+}
+
+/* Button */
+.sajilo-button {
+  border-radius: var(--radius-button, 8px);
+  padding: var(--spacing-button, 10px 20px);
+  font-size: var(--font-size-md, 14px);
+  font-weight: var(--font-weight-medium, 500);
+  font-family: var(--font-family, system-ui, -apple-system, sans-serif);
+  cursor: pointer;
+  border: none;
+  transition: all var(--motion-fast, 100ms) ease;
+}
+.sajilo-button:active {
+  transform: scale(var(--motion-hover-scale, 1.02));
+}
+.sajilo-button-primary {
+  background: var(--color-primary, #1A6FD4);
+  color: #fff;
+}
+.sajilo-button-danger {
+  background: var(--color-danger, #D92B2B);
+  color: #fff;
+}
+.sajilo-button-success {
+  background: var(--color-success, #2D9E6B);
+  color: #fff;
+}
+
+/* Input */
+.sajilo-input {
+  border-radius: var(--radius-input, 8px);
+  padding: var(--spacing-input, 12px 14px);
+  font-size: var(--font-size-md, 14px);
+  font-family: var(--font-family, system-ui, -apple-system, sans-serif);
+  border: 1px solid var(--color-border, #e5e7eb);
+  background: var(--color-surface, #ffffff);
+  color: var(--color-text-primary, #1a1d23);
+  outline: none;
+  width: 100%;
+}
+
+/* Chip / Badge / Pill */
+.sajilo-chip {
+  border-radius: var(--radius-chip, 20px);
+  padding: 4px 12px;
+  font-size: var(--font-size-xs, 10px);
+  font-weight: var(--font-weight-medium, 500);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Overlay / Modal */
+.sajilo-overlay {
+  background: var(--color-surface, #ffffff);
+  border-radius: var(--radius-modal, 14px);
+  box-shadow: var(--shadow-modal, 0 8px 40px rgba(0,0,0,0.15));
+  padding: var(--spacing-lg, 24px);
+}
+
+/* Feed item / List row */
+.sajilo-feed-item {
+  background: var(--color-surface, #ffffff);
+  border-radius: var(--radius-card, 12px);
+  padding: var(--spacing-card, 16px);
+  box-shadow: var(--shadow-soft, 0 1px 3px rgba(0,0,0,0.08));
+  border: 1px solid var(--color-border, #e5e7eb);
+  margin-bottom: var(--spacing-sm, 8px);
+}
+
+/* Section title */
+.sajilo-section-title {
+  font-size: var(--font-size-lg, 18px);
+  font-weight: var(--font-weight-bold, 700);
+  color: var(--color-text-primary, #1a1d23);
+  font-family: var(--font-family, system-ui, -apple-system, sans-serif);
+  line-height: var(--line-height, 1.5);
+  margin-bottom: var(--spacing-md, 16px);
+}
+
+/* Body text */
+.sajilo-text {
+  font-size: var(--font-size-md, 14px);
+  color: var(--color-text-secondary, #6b7280);
+  line-height: var(--line-height, 1.5);
+}
+.sajilo-text-small {
+  font-size: var(--font-size-sm, 12px);
+  color: var(--color-text-secondary, #6b7280);
+}
+.sajilo-text-caption {
+  font-size: var(--font-size-xs, 10px);
+  color: var(--color-text-secondary, #6b7280);
+}

@@ -27,6 +27,24 @@ import { getPaymentStatusConfig, getPaymentMethodLabel } from '../config/payment
 import InvoiceOverlay from './reviews/InvoiceOverlay.jsx';
 import WorkerInvoiceOverlay from './reviews/WorkerInvoiceOverlay.jsx';
 
+
+/**
+ * resolveElement – metadata resolver (Phase 5)
+ * Returns component reference + props WITHOUT rendering JSX.
+ * This will eventually replace the switch/case mapping.
+ * Currently unused by the renderer – only for future migration.
+ */
+function resolveElement(type, context) {
+  // Default response for unknown types
+  return {
+    component: null,
+    props: {},
+    path: `unknown.${type}`,
+    type: type,
+  };
+}
+
+
 function JobRow({ booking, statusBadgeKeys, onAction, w, c, r, s, overrideStyles }) {
   const statusKey = statusBadgeKeys[booking.status]
   const statusLabel = useContent(statusKey, booking.status)
@@ -178,6 +196,13 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
   // Get style overrides from registry's styleRef → worker config
   const overrideStyles = useStyle(elementConfig.style?.styleRef, {});
 
+    const generateNodeId = () => {
+    const screen = elementConfig.screen || 'unknown';
+    const section = elementConfig.content?.section || elementId;
+    return `${screen}.${elementId}`;
+  };
+  const nodeId = generateNodeId();
+
   switch (elementConfig.type) {
 
     // ──────────────────────────────────────────────
@@ -192,6 +217,7 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
       const offlineSub = txt.goOnline || useContent(elementConfig.content?.offlineSubtitleKey, "Go online");
 
       return (
+        <div data-node-id={nodeId} data-node-type={elementConfig.type} data-node-path={nodeId} style={{ display: 'contents' }}>
         <div style={{
           background: isOnline ? (w.statusBannerOnline?.background || '#D1FAE5') : (w.statusBannerOffline?.background || '#FEE2E2'),
           borderLeft: `4px solid ${isOnline ? (w.statusBannerOnline?.borderLeftColor || c.accentGreen) : (w.statusBannerOffline?.borderLeftColor || c.accentRed)}`,
@@ -217,6 +243,7 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
             }}>
               {isOnline ? onlineSub : offlineSub}
             </div>
+            </div>
           </div>
         </div>
       );
@@ -230,6 +257,7 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
       const data = overrideData || {};
 
       return (
+        <div data-node-id={nodeId} data-node-type={elementConfig.type} data-node-path={nodeId} style={{ display: 'contents' }}>
         <div style={{
           display: 'flex',
           gap: w.statsBar?.gap || '10px',
@@ -268,6 +296,7 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
             );
           })}
         </div>
+        </div>
       );
     }
 
@@ -289,6 +318,7 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
       const buttonLabel = txt.viewTasks || "View Tasks";
 
       return (
+        <div data-node-id={nodeId} data-node-type={elementConfig.type} data-node-path={nodeId} style={{ display: 'contents' }}>
         <div style={{
           background: w.activeTaskCard?.background || c.bgSurface,
           border: w.activeTaskCard?.border || `2px solid ${c.accentOrange}`,
@@ -326,6 +356,7 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
           }}>
             {buttonLabel}
           </button>
+        </div>
         </div>
       );
     }
@@ -602,7 +633,7 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
                     whiteSpace: 'nowrap',
                     marginLeft: 8,
                   }}>
-                    Rs {job.price || 0}
+                    Rs {overrideData.paymentMap?.[job.id]?.final_total || job.price || 0}
                   </span>
                 </div>
 
@@ -672,7 +703,7 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
                       }}>
                         {((status) => {
                           const method = getPaymentMethodLabel(overrideData.paymentMap[job.id].method);
-                          if (status === 'pending_cash') return `Pay by ${method}`;
+                          if (status === 'pending_cash' || status === 'awaiting_cash_confirmation') return `Pay by ${method}`;
                           return `${getPaymentStatusConfig(status).label} · ${method}`;
                         })(overrideData.paymentMap[job.id].status)}
                       </span>
@@ -699,8 +730,9 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
                     )}
 
                     {/* Confirm Cash Received (pending_cash + cash method) */}
-                    {overrideData.paymentMap?.[job.id]?.status === 'pending_cash' &&
-                     overrideData.paymentMap?.[job.id]?.method === 'cash' && (
+                    {(overrideData.paymentMap?.[job.id]?.status === 'pending_cash' ||
+                    overrideData.paymentMap?.[job.id]?.status === 'awaiting_cash_confirmation') &&
+                    overrideData.paymentMap?.[job.id]?.method === 'cash' && (
                       <button
                         onClick={() => api.markCashPaid(job.id).catch(err => alert(err.message))}
                         style={{
@@ -1972,7 +2004,7 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
                   }}>
                     {((status) => {
                       const method = getPaymentMethodLabel(overrideData.paymentMap[booking.id].method);
-                      if (status === 'pending_cash') return `Pay by ${method}`;
+                      if (status === 'pending_cash' || status === 'awaiting_cash_confirmation') return `Pay by ${method}`;
                       if (status === 'paid') return `Paid by ${method}`;
                       return `${getPaymentStatusConfig(status).label} · ${method}`;
                     })(overrideData.paymentMap[booking.id].status)}
@@ -2050,7 +2082,7 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
                     Price:
                   </span>
                   <span style={{ fontWeight: 600, marginLeft: 6, color: 'var(--accent-green)' }}>
-                    Rs {booking.price || 0}
+                    Rs {overrideData.paymentMap?.[booking.id]?.final_total || booking.price || 0}
                   </span>
                 </div>
                 {showRewardPoints && (
@@ -2059,7 +2091,7 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
                       Reward Points:
                     </span>
                     <span style={{ fontWeight: 600, marginLeft: 6, color: 'var(--text-primary)' }}>
-                      {Math.round((booking.price || 0) * rewardRate)} pts
+                      {Math.round((overrideData.paymentMap?.[booking.id]?.final_total || booking.price || 0) * rewardRate)} pts
                     </span>
                   </div>
                 )}
