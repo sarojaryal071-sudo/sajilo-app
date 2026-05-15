@@ -1,16 +1,11 @@
 // src/components/reviews/WorkerInvoiceOverlay.jsx
 import React, { useState, useMemo } from 'react';
 import { api } from '../../services/api.js';
-import { getPaymentMethodLabel } from '../../config/paymentRegistry.js';
 
 /**
  * WorkerInvoiceOverlay
- * Allows worker to review, edit, and confirm the invoice before it’s sent to the client.
- * Props:
- *   payment  - payment object
- *   booking  - booking object
- *   onClose  - callback to close overlay
- *   onConfirmed - callback after successful confirmation (triggers context refresh)
+ * Allows worker to review, edit, and confirm the invoice.
+ * The worker only sets the final amount – the client chooses the payment method later.
  */
 export default function WorkerInvoiceOverlay({ payment, booking, onClose, onConfirmed }) {
   // Editable fields
@@ -24,7 +19,6 @@ export default function WorkerInvoiceOverlay({ payment, booking, onClose, onConf
       amount: parseFloat(item.amount) || 0,
     }))
   );
-  const [paymentMethod, setPaymentMethod] = useState(payment?.method || 'cash');
   const [saving, setSaving] = useState(false);
 
   // Base amount from payment
@@ -53,10 +47,11 @@ export default function WorkerInvoiceOverlay({ payment, booking, onClose, onConf
     }
     setSaving(true);
     try {
+      // Always use 'cash' as the default method – client can override later
       await api.confirmInvoice(booking.id, {
         discount_amount: discount,
         extra_items: extraItems.filter(it => it.label.trim() !== '' || it.amount > 0),
-        payment_method: paymentMethod,
+        payment_method: 'cash',
       });
       if (onConfirmed) onConfirmed();
       onClose();
@@ -208,63 +203,6 @@ export default function WorkerInvoiceOverlay({ payment, booking, onClose, onConf
         }}>
           <span>Final Total</span>
           <span>Rs {finalPreview.toFixed(2)}</span>
-        </div>
-
-        {/* Payment method selector */}
-        <div style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)', marginBottom: 8 }}>
-            Payment Method
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {/* Cash */}
-            <label style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              padding: '8px 12px', borderRadius: 'var(--radius-sm)',
-              border: `2px solid ${paymentMethod === 'cash' ? 'var(--accent-green)' : 'var(--border)'}`,
-              background: paymentMethod === 'cash' ? 'var(--accent-green-light)' : 'var(--bg-surface2)',
-              cursor: 'pointer',
-            }}>
-              <input
-                type="radio"
-                name="paymentMethod"
-                value="cash"
-                checked={paymentMethod === 'cash'}
-                onChange={() => setPaymentMethod('cash')}
-                style={{ accentColor: 'var(--accent-green)' }}
-              />
-              <span style={{ fontSize: 'var(--font-body-sm)', color: 'var(--text-primary)', fontWeight: 500 }}>
-                Cash
-              </span>
-            </label>
-
-            {/* Wallet (disabled placeholder) */}
-            <label style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              padding: '8px 12px', borderRadius: 'var(--radius-sm)',
-              border: `2px solid var(--border)`,
-              background: 'var(--bg-surface2)',
-              opacity: 0.5, cursor: 'not-allowed',
-            }}>
-              <input type="radio" disabled />
-              <span style={{ fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)' }}>
-                Wallet <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>(Coming Soon)</span>
-              </span>
-            </label>
-
-            {/* Reward Points (disabled placeholder) */}
-            <label style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              padding: '8px 12px', borderRadius: 'var(--radius-sm)',
-              border: `2px solid var(--border)`,
-              background: 'var(--bg-surface2)',
-              opacity: 0.5, cursor: 'not-allowed',
-            }}>
-              <input type="radio" disabled />
-              <span style={{ fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)' }}>
-                Reward Points <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>(Coming Soon)</span>
-              </span>
-            </label>
-          </div>
         </div>
 
         {/* Confirm button */}

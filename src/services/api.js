@@ -117,7 +117,9 @@ acknowledgeCancellation: (id) => request(`/workers/cancellations/${id}/acknowled
     getAdminAnalytics: () => request('/admin/analytics'),
     getFinancialOverview: () => request('/ledger/financial/overview'),
     getWorkerDueList: () => request('/ledger/financial/worker-dues'),
+    getWorkerLedgerEntries: (workerId) => request(`/ledger/worker/${workerId}`),
 
+    
     // Live Operations (Phase 12H)
     getLiveOperations: () => request('/admin/live-operations'),
 
@@ -197,7 +199,10 @@ acknowledgeCancellation: (id) => request(`/workers/cancellations/${id}/acknowled
     addPaymentChannel: (body) => request('/payment-channels', { method: 'POST', body: JSON.stringify(body) }),
     updatePaymentChannel: (id, body) => request(`/payment-channels/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
     deletePaymentChannel: (id) => request(`/payment-channels/${id}`, { method: 'DELETE' }),
-    }
+  
+    initiateDigitalPayment: (bookingId) => request(`/payments/booking/${bookingId}/initiate-digital`, { method: 'PUT' }),
+    confirmDigitalPayment: (bookingId) => request(`/payments/booking/${bookingId}/confirm-digital`, { method: 'PUT' }),
+  }
   
 
 export { setToken, removeToken, getToken }
