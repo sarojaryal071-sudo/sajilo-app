@@ -783,8 +783,8 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
 
                     {/* Confirm Cash Received (pending_cash + cash method) */}
                     {(overrideData.paymentMap?.[job.id]?.status === 'pending_cash' ||
-                    overrideData.paymentMap?.[job.id]?.status === 'awaiting_cash_confirmation') &&
-                    overrideData.paymentMap?.[job.id]?.method === 'cash' && (
+                      overrideData.paymentMap?.[job.id]?.status === 'awaiting_cash_confirmation') &&
+                     overrideData.paymentMap?.[job.id]?.method === 'cash' && (
                       <button
                         onClick={() => api.markCashPaid(job.id).catch(err => alert(err.message))}
                         style={{
@@ -802,6 +802,7 @@ const ElementRenderer = ({ elementId, overrideData = {} }) => {
                         Confirm Cash Received
                       </button>
                     )}
+
                   </div>
                 )}
 
