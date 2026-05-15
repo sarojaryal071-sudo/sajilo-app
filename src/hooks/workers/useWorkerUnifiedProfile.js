@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { api } from '../../services/api.js';
+import { api, API_URL } from '../../services/api.js';
 
 /**
  * useWorkerUnifiedProfile
@@ -36,7 +36,7 @@ export default function useWorkerUnifiedProfile(workerId) {
           ...(token && { Authorization: `Bearer ${token}` }),
         };
 
-        const response = await fetch(`http://localhost:5000/api${endpoint}`, { headers });
+        const response = await fetch(`${API_URL}${endpoint}`, { headers });
         const data = await response.json();
 
         if (!cancelled) {

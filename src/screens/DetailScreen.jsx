@@ -61,7 +61,14 @@ export default function DetailScreen({ navigate, workerId }) {
         serviceName: worker.job || 'General Service',
         jobSize: selectedJob,
         urgency,
-        selectedServices: selectedServiceIds.map(id => ({ service_id: id })),
+        selectedServices: selectedServiceIds.map(worker_service_id => {
+        const svc = allServices.find(s => s.worker_service_id === worker_service_id);
+        return {
+        service_id: svc?.service_id || null,
+        custom_label: svc?.custom_label || null,
+    worker_service_id: svc?.worker_service_id || null,
+  };
+}),
       })
       navigate('/bookings')
     } catch (err) {
@@ -315,11 +322,11 @@ const effectiveRanges = (() => {
                     <div
                       key={svc.service_id || svc.custom_label}
                       onClick={() => {
-                        setSelectedServiceIds(prev =>
-                          prev.includes(svc.service_id)
-                            ? prev.filter(id => id !== svc.service_id)
-                            : [...prev, svc.service_id]
-                        );
+                      setSelectedServiceIds(prev =>
+                      prev.includes(svc.worker_service_id)
+                      ? prev.filter(id => id !== svc.worker_service_id)
+                      : [...prev, svc.worker_service_id]
+                      );
                       }}
                       style={{
                         display: 'flex', alignItems: 'center', gap: 10,
@@ -507,8 +514,8 @@ const effectiveRanges = (() => {
           {(() => {
             if (booking) return 'Booking...';
             const total = selectedServiceIds.reduce((sum, id) => {
-              const svc = allServices.find(s => s.service_id === id);
-              return sum + (parseFloat(svc?.worker_price) || 0);
+            const svc = allServices.find(s => s.worker_service_id === id);
+            return sum + (parseFloat(svc?.worker_price) || 0);
             }, 0);
             if (total > 0) return `${txt.book} · Rs ${total.toLocaleString()}`;
             return `${txt.book} (select services)`;
