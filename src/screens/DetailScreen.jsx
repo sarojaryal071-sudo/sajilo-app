@@ -338,7 +338,7 @@ const effectiveRanges = (() => {
                         onClick={(e) => e.stopPropagation()}
                         style={{
                           width: 16, height: 16, borderRadius: '50%',
-                          border: selectedServiceIds.includes(svc.service_id)
+                          border: selectedServiceIds.includes(svc.worker_service_id)
                             ? '4px solid var(--accent-blue)'
                             : '2px solid var(--border)',
                           background: selectedServiceIds.includes(svc.service_id) ? 'var(--accent-blue)' : '#fff',
