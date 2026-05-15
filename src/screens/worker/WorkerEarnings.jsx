@@ -5,7 +5,6 @@ import { api } from '../../services/api.js'
 import { groupBookingsByCompletedDate } from '../../utils/dateGrouping.js'
 import { getSocket } from '../../services/realtime/socketClient'
 
-
 const FILTERS = [
   { key: 'all', label: 'All' },
   { key: 'today', label: 'Today' },
@@ -18,8 +17,9 @@ export default function WorkerEarnings() {
   const { profile, bookings, earnings, loading, paymentMap } = useWorker()
   const [filter, setFilter] = useState('all')
   const [ledgerEntries, setLedgerEntries] = useState([])
+  const [dashboardMetrics, setDashboardMetrics] = useState(null)
 
-    // Fetch ledger entries on mount and refresh on payment/booking updates
+  // ── Fetch ledger entries (for statement view) ──
   const fetchLedger = () => {
     if (!profile?.id) return
     api.getWorkerLedgerEntries(profile.id)
@@ -29,16 +29,30 @@ export default function WorkerEarnings() {
       .catch(() => {})
   }
 
+  // ── Fetch dashboard metrics (for operational filters) ──
+  const fetchDashboardMetrics = () => {
+    if (!profile?.id) return
+    api.getWorkerDashboardMetrics()
+      .then(res => {
+        if (res?.success) setDashboardMetrics(res.data)
+      })
+      .catch(() => {})
+  }
+
   useEffect(() => {
     fetchLedger()
+    fetchDashboardMetrics()
   }, [profile?.id])
 
-  // Listen for socket events that affect earnings
+  // ── Socket listeners for real‑time refresh ──
   useEffect(() => {
     const socket = getSocket()
     if (!socket) return
 
-    const handleRefresh = () => fetchLedger()
+    const handleRefresh = () => {
+      fetchLedger()
+      fetchDashboardMetrics()
+    }
 
     socket.on('payment.updated', handleRefresh)
     socket.on('booking.updated', handleRefresh)
@@ -49,29 +63,45 @@ export default function WorkerEarnings() {
     }
   }, [profile?.id])
 
-  // Normalize filter boundaries
-  const now = new Date()
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  const startOfWeek = new Date(now)
-  startOfWeek.setDate(now.getDate() - now.getDay())
-  startOfWeek.setHours(0, 0, 0, 0)
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+  // ── Derive hero card data from METRICS ENGINE based on filter ──
+  const dm = dashboardMetrics
+  const heroEarnings = useMemo(() => {
+    if (!dm) return { total_earnings: earnings?.total_earnings || 0, completed_jobs: earnings?.completed_jobs || 0 }
 
-  // Compute filtered ledger entries
+    switch (filter) {
+      case 'today':
+        return {
+          total_earnings: dm.today?.earnings || 0,
+          completed_jobs: dm.today?.completedJobs || 0,
+        }
+      case 'week':
+        return {
+          total_earnings: dm.weekly?.totalEarnings || 0,
+          completed_jobs: dm.lifetime?.completedJobs || 0,
+        }
+      case 'month':
+        return {
+          total_earnings: dm.monthly?.totalEarnings || 0,
+          completed_jobs: dm.lifetime?.completedJobs || 0,
+        }
+      case 'statement':
+      case 'all':
+      default:
+        return {
+          total_earnings: dm.lifetime?.totalEarnings || earnings?.total_earnings || 0,
+          completed_jobs: dm.lifetime?.completedJobs || earnings?.completed_jobs || 0,
+        }
+    }
+  }, [dm, filter, earnings])
+
+  // ── Ledger‑based calculations (only for statement view) ──
+  const showStatement = filter === 'statement'
+
   const filteredEntries = useMemo(() => {
-    if (filter === 'statement') return ledgerEntries // show all for statement view
-    return ledgerEntries.filter(entry => {
-      const entryDate = new Date(entry.created_at)
-      switch (filter) {
-        case 'today': return entryDate >= startOfToday
-        case 'week':  return entryDate >= startOfWeek
-        case 'month': return entryDate >= startOfMonth
-        default:      return true
-      }
-    })
-  }, [ledgerEntries, filter])
+    if (!showStatement) return []
+    return ledgerEntries
+  }, [ledgerEntries, showStatement])
 
-  // Derive ALL financial metrics from filteredEntries
   const invoiced = filteredEntries
     .filter(e => e.event_type === 'invoice_finalized')
     .reduce((sum, e) => sum + parseFloat(e.amount || 0), 0)
@@ -87,22 +117,107 @@ export default function WorkerEarnings() {
   const netEarnings = collected - commission
   const outstandingDues = commission - settled
 
-  // Show statement view when "Statement" filter is selected
-  const showStatement = filter === 'statement'
+  // ── Operational KPI cards (metrics engine) ──
+  const operationalKPIs = useMemo(() => {
+    if (!dm) return []
+    const data = filter === 'today' ? dm.today
+      : filter === 'week' ? { earnings: dm.weekly?.totalEarnings, completedJobs: dm.lifetime?.completedJobs }
+      : filter === 'month' ? { earnings: dm.monthly?.totalEarnings, completedJobs: dm.lifetime?.completedJobs }
+      : { earnings: dm.lifetime?.totalEarnings, completedJobs: dm.lifetime?.completedJobs }
+
+    return [
+      { label: 'Earnings', value: `Rs ${(data?.earnings || 0).toLocaleString()}`, color: 'var(--accent-blue)' },
+      { label: 'Jobs Done', value: data?.completedJobs || 0, color: 'var(--accent-green)' },
+    ]
+  }, [dm, filter])
+
+
+      // Normalize filter boundaries (used by job history filtering)
+  const now = new Date()
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const startOfWeek = new Date(now)
+  startOfWeek.setDate(now.getDate() - now.getDay())
+  startOfWeek.setHours(0, 0, 0, 0)
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+
+  
+  // ── Filter completed jobs based on selected period ──
+  const completedJobs = (bookings || []).filter(b => b.status === 'completed')
+
+  const filteredBookings = useMemo(() => {
+    if (showStatement) return [] // statement uses ledger rows, not bookings
+    if (filter === 'all') return completedJobs
+
+    return completedJobs.filter(b => {
+      // Use payment confirmation date if available, else job completion date
+      const payment = paymentMap?.[b.id]
+      const dateStr = payment?.paid_at || b.updated_at || b.created_at
+      if (!dateStr) return false
+      const date = new Date(dateStr)
+
+      switch (filter) {
+        case 'today': return date >= startOfToday
+        case 'week':  return date >= startOfWeek
+        case 'month': return date >= startOfMonth
+        default:      return true
+      }
+    })
+  }, [completedJobs, paymentMap, filter, showStatement, startOfToday, startOfWeek, startOfMonth])
+
+  // ── Financial Overview (ledger‑derived, follows active filter) ──
+  const financialOverviewEntries = useMemo(() => {
+    if (showStatement) return ledgerEntries
+    if (filter === 'all') return ledgerEntries
+    return ledgerEntries.filter(entry => {
+      const entryDate = new Date(entry.created_at)
+      switch (filter) {
+        case 'today': return entryDate >= startOfToday
+        case 'week':  return entryDate >= startOfWeek
+        case 'month': return entryDate >= startOfMonth
+        default:      return true
+      }
+    })
+  }, [ledgerEntries, filter, showStatement, startOfToday, startOfWeek, startOfMonth])
+
+  const overviewInvoiced = financialOverviewEntries
+    .filter(e => e.event_type === 'invoice_finalized')
+    .reduce((sum, e) => sum + parseFloat(e.amount || 0), 0)
+  const overviewCollected = financialOverviewEntries
+    .filter(e => e.event_type === 'payment_confirmed')
+    .reduce((sum, e) => sum + parseFloat(e.amount || 0), 0)
+  const overviewCommission = financialOverviewEntries
+    .filter(e => e.event_type === 'invoice_finalized')
+    .reduce((sum, e) => sum + parseFloat(e.metadata?.commission_amount || 0), 0)
+  const overviewSettled = financialOverviewEntries
+    .filter(e => e.event_type === 'settlement_recorded')
+    .reduce((sum, e) => sum + parseFloat(e.amount || 0), 0)
+  const overviewNet = overviewCollected - overviewCommission
+  const overviewDues = overviewCommission - overviewSettled
 
   if (loading) {
     return <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-secondary)' }}>Loading...</div>
   }
 
-  const completedJobs = (bookings || []).filter(b => b.status === 'completed')
-  const grouped = groupBookingsByCompletedDate(completedJobs)
+  const grouped = groupBookingsByCompletedDate(filteredBookings)
 
   return (
     <div style={{ padding: '0 16px' }}>
       <ElementRenderer elementId="earningsHeading" overrideData={{}} />
-      
-      {/* Hero Card – dynamic from ledger */}
-      <ElementRenderer elementId="earningsHeroCard" overrideData={{ earnings }} />
+
+      {/* Hero Card – metrics engine driven + ledger financial overview */}
+      <ElementRenderer
+        elementId="earningsHeroCard"
+        overrideData={{
+          earnings: heroEarnings,
+          financialOverview: !showStatement && ledgerEntries.length > 0 ? {
+            invoiced: overviewInvoiced,
+            collected: overviewCollected,
+            commission: overviewCommission,
+            net: overviewNet,
+            dues: overviewDues,
+          } : null,
+        }}
+      />
 
       {/* ── Filter Buttons ── */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 16, overflowX: 'auto' }}>
@@ -116,10 +231,11 @@ export default function WorkerEarnings() {
         ))}
       </div>
 
-      {/* ── Statement View ── */}
+
+      {/* ── Statement View (ledger‑driven) ── */}
       {showStatement && ledgerEntries.length > 0 && (
         <>
-          {/* Summary Cards */}
+          {/* Ledger Summary Cards */}
           <div style={{
             display: 'grid', gridTemplateColumns: '1fr 1fr',
             gap: 8, marginBottom: 16,
@@ -192,15 +308,15 @@ export default function WorkerEarnings() {
         </>
       )}
 
-      {/* ── Legacy Job History (shown for non-statement filters or empty ledger) ── */}
+      {/* ── Legacy Job History (non‑statement filters) ── */}
       {!showStatement && (
         <>
           <ElementRenderer elementId="earningsHistoryHeading" overrideData={{}} />
           <ElementRenderer elementId="earningsJobItem" overrideData={{ bookings: grouped, paymentMap }} />
         </>
       )}
-      
-      {/* Show empty state if statement selected but no ledger entries */}
+
+      {/* Empty state for statement when no ledger entries */}
       {showStatement && ledgerEntries.length === 0 && (
         <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-secondary)', fontSize: 13 }}>
           No ledger entries yet. Complete and finalize jobs to see your financial statement.
