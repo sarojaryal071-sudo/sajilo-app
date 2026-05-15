@@ -1,86 +1,54 @@
-// src/components/admin/AdminAnalyticsDashboard.jsx
 import { useAdminAnalytics } from '../../contexts/AdminAnalyticsContext.jsx';
 import { useState, useEffect } from 'react';
 import { api, API_URL } from '../../services/api.js';
 
-export default function AdminAnalyticsDashboard() {
+export default function AdminOverviewSnapshots() {
   const { analytics, loading } = useAdminAnalytics();
 
-  if (loading || !analytics) {
-    return (
-      <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-secondary)' }}>
-        Loading analytics...
-      </div>
-    );
-  }
+  if (loading || !analytics) return null;
 
   const {
-    totalRevenue,
-    pendingRevenue,
-    bookingCounts,
-    paymentStatusBreakdown,
-    paymentMethodDistribution,
-    averageInvoiceValue,
     topEarningWorkers,
     topRatedWorkers,
     cancellationStats,
     recentLowRatings,
-    workerActivityStats,
-    bookingsTrend,
-    revenueTrend,
   } = analytics;
 
-  // Derived counts
-  const totalBookings = Object.values(bookingCounts || {}).reduce((a, b) => a + b, 0);
-  const completedBookings = bookingCounts?.completed || 0;
-  const cancelledBookings = bookingCounts?.cancelled || 0;
-  const pendingPayments = (paymentStatusBreakdown || []).filter(s => s.status === 'pending_cash' || s.status === 'unpaid').reduce((a, b) => a + b.count, 0);
-  const activeWorkers = workerActivityStats?.online || 0;
-
   return (
-    <div style={{ padding: '16px 0' }}>
-      {/* Top stat cards */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
-        gap: 12,
-        marginBottom: 20,
-      }}>
-        <StatCard label="Total Revenue" value={`Rs ${(totalRevenue || 0).toLocaleString()}`} />
-        <StatCard label="Pending Revenue" value={`Rs ${(pendingRevenue || 0).toLocaleString()}`} />
-        <StatCard label="Completed Jobs" value={completedBookings} />
-        <StatCard label="Active Workers" value={activeWorkers} />
-        <StatCard label="Cancelled" value={cancelledBookings} />
-        <StatCard label="Total Bookings" value={totalBookings} />
-      </div>
+    <div>
+      {/* Top Earning Workers */}
+      {topEarningWorkers?.length > 0 && (
+        <div style={{ marginBottom: 20 }}>
+          <SectionTitle title="Top Earning Workers" />
+          {topEarningWorkers.map((w, i) => (
+            <ListRow
+              key={w.id}
+              rank={i + 1}
+              left={w.name}
+              right={`Rs ${parseFloat(w.total_earned).toLocaleString()}`}
+              sub={`${w.completed_jobs} jobs`}
+            />
+          ))}
+        </div>
+      )}
 
-      {/* Ranked lists */}
-      <div style={{ marginBottom: 20 }}>
-        <SectionTitle title="Top Earning Workers" />
-        {topEarningWorkers?.map((w, i) => (
-          <ListRow
-            key={w.id}
-            rank={i + 1}
-            left={w.name}
-            right={`Rs ${parseFloat(w.total_earned).toLocaleString()}`}
-            sub={`${w.completed_jobs} jobs`}
-          />
-        ))}
-      </div>
+      {/* Top Rated Workers */}
+      {topRatedWorkers?.length > 0 && (
+        <div style={{ marginBottom: 20 }}>
+          <SectionTitle title="Top Rated Workers" />
+          {topRatedWorkers.map((w, i) => (
+            <ListRow
+              key={w.id}
+              rank={i + 1}
+              left={w.name}
+              right={`★ ${parseFloat(w.avg_rating).toFixed(1)}`}
+              sub={`${w.review_count} reviews`}
+            />
+          ))}
+        </div>
+      )}
 
-      <div style={{ marginBottom: 20 }}>
-        <SectionTitle title="Top Rated Workers" />
-        {topRatedWorkers?.map((w, i) => (
-          <ListRow
-            key={w.id}
-            rank={i + 1}
-            left={w.name}
-            right={`★ ${parseFloat(w.avg_rating).toFixed(1)}`}
-            sub={`${w.review_count} reviews`}
-          />
-        ))}
-      </div>
-
+      {/* Recent Low Ratings */}
       <div style={{ marginBottom: 20 }}>
         <SectionTitle title="Recent Low Ratings" />
         {recentLowRatings?.length === 0 ? (
@@ -97,61 +65,39 @@ export default function AdminAnalyticsDashboard() {
         )}
       </div>
 
-      <div style={{ marginBottom: 20 }}>
-        <SectionTitle title="Cancellation Stats" />
-        {cancellationStats?.map((c, i) => (
-          <ListRow
-            key={i}
-            left={c.cancelled_by_role === 'customer' ? 'By Customer' : 'By Worker'}
-            right={c.count}
-          />
-        ))}
-      </div>
+      {/* Cancellation Stats */}
+      {cancellationStats?.length > 0 && (
+        <div style={{ marginBottom: 20 }}>
+          <SectionTitle title="Cancellation Snapshot" />
+          {cancellationStats.map((c, i) => (
+            <ListRow
+              key={i}
+              left={c.cancelled_by_role === 'customer' ? 'By Customer' : 'By Worker'}
+              right={c.count}
+            />
+          ))}
+        </div>
+      )}
 
-
-      {/* ── Phase 14F: Worker Performance Intelligence ── */}
+      {/* Flagged Workers + Top Performers (Trust-Based) */}
       <PerformanceSections />
     </div>
   );
 }
 
-// ── Reusable stat card ──
-function StatCard({ label, value }) {
-  return (
-    <div style={{
-      background: 'var(--bg-surface)',
-      border: '1px solid var(--border)',
-      borderRadius: 'var(--radius-md)',
-      padding: 16,
-      textAlign: 'center',
-    }}>
-      <div style={{ fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)', marginBottom: 4 }}>
-        {label}
-      </div>
-      <div style={{ fontSize: 'var(--font-title)', fontWeight: 800, color: 'var(--accent-blue)' }}>
-        {value}
-      </div>
-    </div>
-  );
-}
-
-// ── Reusable dense row ──
+// ── Reusable helpers (duplicated to keep file self‑contained) ──
 function ListRow({ rank, left, sub, right }) {
   return (
     <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: '10px 0',
-      borderBottom: '1px solid var(--border)',
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      padding: '10px 0', borderBottom: '1px solid var(--border)',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
         {rank && (
           <span style={{
             width: 20, height: 20, borderRadius: '50%',
             background: 'var(--accent-blue-light)',
-            color: 'var(--accent-blue)',
-            fontSize: 11, fontWeight: 700,
+            color: 'var(--accent-blue)', fontSize: 11, fontWeight: 700,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexShrink: 0,
           }}>
@@ -195,8 +141,7 @@ function EmptyRow({ text }) {
   );
 }
 
-// ── Phase 14F: Performance Intelligence Sections ──
-
+// ── Performance Sections (Flagged Workers + Top Performers) ──
 function PerformanceSections() {
   const [flagged, setFlagged] = useState(null);
   const [topPerformers, setTopPerformers] = useState(null);
@@ -212,7 +157,7 @@ function PerformanceSections() {
         if (flaggedRes?.success) setFlagged(flaggedRes.data);
         if (topRes?.success) setTopPerformers(topRes.data);
       } catch (e) {
-        // Silent — performance sections are additive
+        // Silent
       } finally {
         setLoading(false);
       }
@@ -235,7 +180,6 @@ function PerformanceSections() {
       {hasFlaggedData && (
         <div style={{ marginBottom: 20 }}>
           <SectionTitle title="⚠️ Flagged Workers" />
-
           {flagged.highCancellation?.length > 0 && (
             <div style={{ marginBottom: 8 }}>
               <div style={{ fontSize: 'var(--font-caption)', fontWeight: 700, color: 'var(--accent-red)', marginBottom: 4 }}>
@@ -251,7 +195,6 @@ function PerformanceSections() {
               ))}
             </div>
           )}
-
           {flagged.lowRated?.length > 0 && (
             <div style={{ marginBottom: 8 }}>
               <div style={{ fontSize: 'var(--font-caption)', fontWeight: 700, color: 'var(--accent-orange)', marginBottom: 4 }}>
@@ -267,7 +210,6 @@ function PerformanceSections() {
               ))}
             </div>
           )}
-
           {flagged.inactive?.length > 0 && (
             <div style={{ marginBottom: 8 }}>
               <div style={{ fontSize: 'var(--font-caption)', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4 }}>
@@ -289,15 +231,15 @@ function PerformanceSections() {
       {topPerformers && topPerformers.length > 0 && (
         <div style={{ marginBottom: 20 }}>
           <SectionTitle title="🏆 Top Performers (Trust-Based)" />
-                        {topPerformers.slice(0, 10).map((w, i) => (
-                <ListRow
-                  key={w.workerId}
-                  rank={i + 1}
-                  left={w.workerName || w.workerId}
-                  right={`${w.completionRate.rate}% · ★ ${w.reviewAverage}`}
-                  sub={`${w.workerClientId || '#' + w.workerId} · ${w.bookingVolume.totalCompleted} jobs`}
-                />
-              ))}
+          {topPerformers.slice(0, 10).map((w, i) => (
+            <ListRow
+              key={w.workerId}
+              rank={i + 1}
+              left={w.workerName || w.workerId}
+              right={`${w.completionRate.rate}% · ★ ${w.reviewAverage}`}
+              sub={`${w.workerClientId || '#' + w.workerId} · ${w.bookingVolume.totalCompleted} jobs`}
+            />
+          ))}
         </div>
       )}
     </>

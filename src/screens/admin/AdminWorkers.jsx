@@ -39,6 +39,43 @@ export default function AdminWorkers() {
     <div>
       <h2 style={{ fontSize: 'var(--font-heading)', fontWeight: 700, marginBottom: 16, color: 'var(--text-primary)' }}>Workers</h2>
 
+      {/* Workers by Status Chart */}
+      {(() => {
+        const statusCounts = {
+          active: workers.filter(w => w.status === 'active').length,
+          pending: workers.filter(w => w.status !== 'active' && w.status !== 'inactive').length,
+          inactive: workers.filter(w => w.status === 'inactive').length,
+        };
+        const maxCount = Math.max(statusCounts.active, statusCounts.pending, statusCounts.inactive, 1);
+        return (
+          <div style={{ background: 'var(--bg-surface)', borderRadius: 12, border: '1px solid var(--border)', padding: 20, marginBottom: 16 }}>
+            <h3 style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 16 }}>
+              Workers by Status
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {[
+                { label: 'Active', count: statusCounts.active, color: '#16A34A', bg: '#dcfce7' },
+                { label: 'Pending', count: statusCounts.pending, color: '#D97706', bg: '#fef3c7' },
+                { label: 'Inactive', count: statusCounts.inactive, color: '#DC2626', bg: '#fee2e2' },
+              ].map((bar) => (
+                <div key={bar.label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ width: 70, fontSize: 12, color: 'var(--text-secondary)' }}>{bar.label}</span>
+                  <div style={{ flex: 1, height: 24, background: 'var(--bg-surface2)', borderRadius: 6, overflow: 'hidden' }}>
+                    <div style={{
+                      height: '100%', width: `${(bar.count / maxCount) * 100}%`,
+                      background: bar.color, borderRadius: 6, transition: 'width 0.5s',
+                      display: 'flex', alignItems: 'center', paddingLeft: 8,
+                    }}>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: '#fff' }}>{bar.count}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Search + Filters */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
         <input type="text" value={search} onChange={e => setSearch(e.target.value)}

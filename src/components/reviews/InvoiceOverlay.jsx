@@ -2,14 +2,29 @@
 // Phase 8 — Lightweight invoice overlay for client.
 // Now supports Pay with Cash button when payment is pending_cash.
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useContent } from '../../hooks/useContent.js'
 import { getPaymentStatusConfig, getPaymentMethodLabel, INVOICE_LABELS } from '../../config/paymentRegistry.js'
-import { api } from '../../services/api.js'
+import { api, API_URL } from '../../services/api.js'
 
 export default function InvoiceOverlay({ payment, booking, onClose, onPaymentCompleted }) {
   const labels = INVOICE_LABELS
-const [cashIntentSent, setCashIntentSent] = useState(false)
+  const [cashIntentSent, setCashIntentSent] = useState(false)
+  const [channels, setChannels] = useState([])
+  const [paidChannels, setPaidChannels] = useState({})
+
+  // Fetch worker payment channels on mount
+  useEffect(() => {
+    if (booking?.worker_id) {
+      const token = localStorage.getItem('sajilo_token')
+      fetch(`${API_URL}/payment-channels/public/${booking.worker_id}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      })
+        .then(r => r.json())
+        .then(d => { if (d?.success) setChannels(d.data || []) })
+        .catch(() => {})
+    }
+  }, [booking?.worker_id])
 
   if (!payment || !booking) return null
 
@@ -106,7 +121,7 @@ const [cashIntentSent, setCashIntentSent] = useState(false)
           )}
         </div>
 
-        {/* Pay with Cash button (only when pending_cash or awaiting_cash_confirmation) */}
+                {/* Pay with Cash button (only when pending_cash or awaiting_cash_confirmation) */}
         {(payment.status === 'pending_cash' || payment.status === 'awaiting_cash_confirmation') && (
           cashIntentSent ? (
             <div style={{
@@ -124,23 +139,67 @@ const [cashIntentSent, setCashIntentSent] = useState(false)
               ✅ Waiting for worker confirmation
             </div>
           ) : (
-            <button
-              onClick={handlePayCash}
-              style={{
-                width: '100%',
-                padding: '12px 0',
-                borderRadius: 'var(--radius-sm)',
-                border: 'none',
-                background: 'var(--accent-green)',
-                color: '#fff',
-                fontSize: 16,
-                fontWeight: 700,
-                cursor: 'pointer',
-              }}
-            >
+            <button onClick={handlePayCash} style={{
+              width: '100%',
+              padding: '12px 0',
+              borderRadius: 'var(--radius-sm)',
+              border: 'none',
+              background: 'var(--accent-green)',
+              color: '#fff',
+              fontSize: 16,
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}>
               💵 Pay with Cash
             </button>
           )
+        )}
+
+        {/* Digital payment options */}
+        {channels.length > 0 && (payment.status === 'pending_cash' || payment.status === 'awaiting_cash_confirmation') && (
+          <div style={{ marginTop: 16 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 8 }}>Pay via</div>
+            {channels.filter(c => c.is_active !== false).map(ch => (
+              <div key={ch.id} style={{ padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                  <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)' }}>
+                    {ch.provider?.toUpperCase()}
+                  </div>
+                  {ch.qr_image_url && <img src={ch.qr_image_url} alt="QR" style={{ width: 80, height: 80, borderRadius: 6 }} />}
+                </div>
+                {ch.masked_account_number && (
+                  <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 2 }}>
+                    {ch.masked_account_number}
+                  </div>
+                )}
+                {ch.display_name && (
+                  <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 6 }}>
+                    {ch.display_name}
+                  </div>
+                )}
+                {paidChannels[ch.id] ? (
+                  <div style={{ padding: 6, background: '#ECFDF5', borderRadius: 4, color: '#059669', fontSize: 12, textAlign: 'center' }}>
+                    ✅ Payment completed
+                  </div>
+                ) : (
+                  <button
+                    onClick={async () => {
+                      try {
+                        await api.confirmDigitalPayment(booking.id, { payment_channel_id: ch.id, provider: ch.provider })
+                        setPaidChannels(prev => ({ ...prev, [ch.id]: true }))
+                      } catch (err) { alert(err.message) }
+                    }}
+                    style={{
+                      padding: '6px 12px', borderRadius: 6, border: '1px solid var(--accent-blue)',
+                      background: 'transparent', color: 'var(--accent-blue)', fontSize: 12, fontWeight: 600, cursor: 'pointer'
+                    }}
+                  >
+                    Pay via {ch.provider}
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
         )}
 
         {/* Close button */}

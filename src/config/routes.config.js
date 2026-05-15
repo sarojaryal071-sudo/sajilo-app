@@ -18,7 +18,7 @@ import AdminDashboard from '../screens/admin/AdminDashboard.jsx'
 import AdminUsers from '../screens/admin/AdminUsers.jsx'
 import AdminWorkers from '../screens/admin/AdminWorkers.jsx'
 import AdminBookings from '../screens/admin/AdminBookings.jsx'
-import AdminAnalytics from '../components/admin/AdminAnalyticsDashboard.jsx'
+import AdminAnalytics from '../screens/admin/AdminAnalytics.jsx'
 import AdminProfessions from '../screens/admin/AdminProfessions.jsx'
 import AdminSettings from '../screens/admin/AdminSettings.jsx'
 import AdminApprovals from '../screens/admin/AdminApprovals.jsx'
@@ -28,6 +28,7 @@ import AdminDisputes from '../screens/admin/AdminDisputes.jsx'
 import AdminUIControl from '../screens/admin/AdminUIControl.jsx'
 import AdminAudit from '../screens/admin/AdminAudit.jsx'
 import AdminCustomers from '../screens/admin/AdminCustomers.jsx'
+import AdminFinancial from '../screens/admin/AdminFinancial.jsx'
 import WorkerPending from '../screens/worker/WorkerPending.jsx'
 import WorkerVerificationReview from '../screens/worker/WorkerVerificationReview.jsx'
 import WorkerApply from '../screens/worker/WorkerApply.jsx'
@@ -73,6 +74,7 @@ const routes = [
   { path: '/admin/dashboard', component: AdminDashboard, role: 'admin' },
   { path: '/admin/users', component: AdminUsers, role: 'admin' },
   { path: '/admin/workers', component: AdminWorkers, role: 'admin' },
+  { path: '/admin/financial', component: AdminFinancial, role: 'admin' },
   { path: '/admin/bookings', component: AdminBookings, role: 'admin' },
   { path: '/admin/analytics', component: AdminAnalytics, role: 'admin' },
   { path: '/admin/professions', component: AdminProfessions, role: 'admin' },

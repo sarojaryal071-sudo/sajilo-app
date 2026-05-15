@@ -1,36 +1,47 @@
 const adminNavigation = [
-  // ── Marketplace Operations ────────────────────────────
-  { id: 'dashboard',     label: 'Dashboard',          icon: '📊', path: '/admin/dashboard',     section: 'Overview',    domain: 'Marketplace Operations' },
-  { id: 'bookings',      label: 'Bookings',           icon: '📋', path: '/admin/bookings',      section: 'Operations',  domain: 'Marketplace Operations' },
-  { id: 'disputes',      label: 'Disputes',           icon: '⚠️', path: '/admin/disputes',      section: 'Operations',  domain: 'Marketplace Operations' },
+  // ── 🏠 OVERVIEW ──────────────────────────────────────
+  { id: 'dashboard',     label: 'Dashboard',          icon: '🏠', path: '/admin/dashboard',     section: 'Overview' },
 
-  // ── Financial Operations ─────────────────────────────
-  // (future pages will be added here; currently empty)
+  // ── 📊 ANALYTICS ─────────────────────────────────────
+  { id: 'analytics',     label: 'Analytics Dashboard', icon: '📊', path: '/admin/analytics',     section: 'Analytics' },
 
-  // ── Workforce Operations ─────────────────────────────
-  { id: 'workers',       label: 'Workers',            icon: '👷', path: '/admin/workers',       section: 'People',      domain: 'Workforce Operations' },
-  { id: 'approvals',     label: 'Worker Approvals',   icon: '✅', path: '/admin/approvals',     section: 'Operations',  domain: 'Workforce Operations' },
+  // ── 📋 OPERATIONS ────────────────────────────────────
+  { id: 'bookings',      label: 'Bookings',           icon: '📋', path: '/admin/bookings',      section: 'Operations' },
+  { id: 'liveops',       label: 'Live Operations',    icon: '📡', path: '/admin/live-operations', section: 'Operations' },
+  { id: 'activity',      label: 'Activity Timeline',  icon: '🕒', path: '/admin/activity',      section: 'Operations' },
+  { id: 'search',        label: 'Global Search',      icon: '🔍', path: '/admin/search',        section: 'Operations' },
 
-  // ── Customer Operations ──────────────────────────────
-  { id: 'customers',     label: 'Customers',          icon: '👥', path: '/admin/customers',     section: 'People',      domain: 'Customer Operations' },
+  // ── 👥 PEOPLE ────────────────────────────────────────
+  { id: 'workers',       label: 'Workers Table',      icon: '👷', path: '/admin/workers',       section: 'People' },
+  { id: 'customers',     label: 'Customers Table',    icon: '👥', path: '/admin/customers',     section: 'People' },
 
-  // ── Communication Operations ─────────────────────────
-  { id: 'chat',          label: 'Live Chat',          icon: '💬', path: '/admin/chat',          section: 'Operations',  domain: 'Communication Operations' },
-  { id: 'liveops',       label: 'Live Operations',    icon: '📡', path: '/admin/live-operations', section: 'Operations',  domain: 'Marketplace Operations' },
-  { id: 'activity', label: 'Activity', icon: '📋', path: '/admin/activity', section: 'Operations', domain: 'Marketplace Operations' },
-   { id: 'search',        label: 'Search',             icon: '🔍', path: '/admin/search',         section: 'Operations',  domain: 'Marketplace Operations' },
-  { id: 'notifications', label: 'Notifications',      icon: '🔔', path: '/admin/notifications', section: 'Operations',  domain: 'Communication Operations' },
+  // ── 💰 FINANCIAL ─────────────────────────────────────
+  // TODO: Replace with dedicated financial overview page
+  { id: 'financial',     label: 'Financial Overview', icon: '💰', path: '/admin/financial', section: 'Financial' },
 
-  // ── Platform Configuration ───────────────────────────
-  { id: 'categories',    label: 'Service Categories', icon: '🗂️', path: '/admin/categories',    section: 'Platform',    domain: 'Platform Configuration' },
-  { id: 'uicontrol',     label: 'UI Control Panel',   icon: '🎨', path: '/admin/ui-control',   section: 'Platform',    domain: 'Platform Configuration' },
-  { id: 'settings',      label: 'Settings',           icon: '⚙️', path: '/admin/settings',      section: 'System',      domain: 'Platform Configuration' },
-  { id: 'audit',         label: 'Audit Log',          icon: '📜', path: '/admin/audit',         section: 'System',      domain: 'Platform Configuration' },
-  { id: 'deployment',    label: 'Deployment',         icon: '🖥️', path: '/admin/deployment',    section: 'System',      domain: 'Platform Configuration' },
-  { id: 'staff',         label: 'Staff',              icon: '👤', path: '/admin/staff',         section: 'System',      domain: 'Platform Configuration' },
-  { id: 'policies',      label: 'Policies',           icon: '📜', path: '/admin/policies',      section: 'System',      domain: 'Platform Configuration' },
-  { id: 'featureflags',  label: 'Feature Flags',      icon: '🚩', path: '/admin/feature-flags', section: 'System',      domain: 'Platform Configuration' },
-  { id: 'simulate',      label: 'Simulate',           icon: '🧪', path: '/admin/simulate',      section: 'System',      domain: 'Platform Configuration' },
+  // ── 🛡️ TRUST & SAFETY ────────────────────────────────
+  { id: 'verification',  label: 'Verification Queue', icon: '🆔', path: '/admin/approvals', section: 'Trust & Safety' },
+  { id: 'disputes',      label: 'Disputes',           icon: '⚠️', path: '/admin/disputes',      section: 'Trust & Safety' },
+  // { id: 'support',      label: 'Support Tickets',    icon: '🎫', path: '/admin/support',       section: 'Trust & Safety' },
+
+  // ── 💬 COMMUNICATION ─────────────────────────────────
+  { id: 'notifications', label: 'Notifications Manager', icon: '🔔', path: '/admin/notifications', section: 'Communication' },
+  { id: 'chat',          label: 'Chat Monitor',       icon: '💬', path: '/admin/chat',          section: 'Communication' },
+
+  // ── 🔧 PLATFORM ──────────────────────────────────────
+  { id: 'uistudio',      label: 'UI Studio',          icon: '🎨', path: '/admin/ui-control',    section: 'Platform' },
+  { id: 'categories',    label: 'Service Categories', icon: '🗂️', path: '/admin/categories',    section: 'Platform' },
+  // Professions screen exists; route expected at /admin/professions
+  { id: 'professions',   label: 'Professions',        icon: '📋', path: '/admin/professions',   section: 'Platform' },
+  { id: 'featureflags',  label: 'Feature Flags',      icon: '🚩', path: '/admin/feature-flags', section: 'Platform' },
+  { id: 'deployment',    label: 'Deployment',         icon: '🖥️', path: '/admin/deployment',    section: 'Platform' },
+  { id: 'simulate',      label: 'Simulate',           icon: '🧪', path: '/admin/simulate',      section: 'Platform' },
+  { id: 'policies',      label: 'Policies',           icon: '📜', path: '/admin/policies',      section: 'Platform' },
+
+  // ── ⚙️ SYSTEM ───────────────────────────────────────
+  { id: 'audit',         label: 'Audit Log',          icon: '📜', path: '/admin/audit',         section: 'System' },
+  { id: 'staff',         label: 'Staff',              icon: '👤', path: '/admin/staff',         section: 'System' },
+  { id: 'settings',      label: 'System Settings',    icon: '⚙️', path: '/admin/settings',      section: 'System' },
 ]
 
 export default adminNavigation

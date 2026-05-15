@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import adminNavigation from '../config/adminNavigation.js'
 
-const sections = ['Overview', 'People', 'Operations', 'Platform', 'System']
+const sections = [...new Set(adminNavigation.map(item => item.section))]
 
 export default function AdminLayout({ children }) {
   const navigate = useNavigate()

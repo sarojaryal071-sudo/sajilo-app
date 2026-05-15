@@ -202,7 +202,7 @@ acknowledgeCancellation: (id) => request(`/workers/cancellations/${id}/acknowled
   
     initiateCashPayment: (bookingId) => request(`/payments/booking/${bookingId}/initiate-cash-payment`, { method: 'POST' }),
     initiateDigitalPayment: (bookingId) => request(`/payments/booking/${bookingId}/initiate-digital`, { method: 'PUT' }),
-    confirmDigitalPayment: (bookingId) => request(`/payments/booking/${bookingId}/confirm-digital`, { method: 'PUT' }),
+    confirmDigitalPayment: (bookingId, body) => request(`/payments/booking/${bookingId}/confirm-digital`, { method: 'PUT', body: JSON.stringify(body) }),
   }
   
 
