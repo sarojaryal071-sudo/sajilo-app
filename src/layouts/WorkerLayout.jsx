@@ -82,7 +82,7 @@ function WorkerLayoutInner({ children, onLogout, onSOS }) {
   console.log('[WORKER LAYOUT] Rendering - about to return JSX')
   
   return (
-    <div data-theme={dark ? 'dark' : 'light'} style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)', fontFamily: 'var(--font-family)' }}>
+    <div data-theme={dark ? 'dark' : 'light'} style={{ display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)', fontFamily: 'var(--font-family)' }}>
       
             {/* ── MOBILE ONLINE TOGGLE (hidden on desktop) ── */}
       <div className="worker-mobile-online" style={{

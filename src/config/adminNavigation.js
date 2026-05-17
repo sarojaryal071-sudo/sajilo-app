@@ -17,7 +17,7 @@ const adminNavigation = [
 
   // ── 💰 FINANCIAL ─────────────────────────────────────
   // TODO: Replace with dedicated financial overview page
-  { id: 'financial',     label: 'Financial Overview', icon: '💰', path: '/admin/financial', section: 'Financial' },
+  { id: 'financial',     label: 'Finance',            icon: '💰', path: '/admin/financial', section: 'Financial' },
 
   // ── 🛡️ TRUST & SAFETY ────────────────────────────────
   { id: 'verification',  label: 'Verification Queue', icon: '🆔', path: '/admin/approvals', section: 'Trust & Safety' },

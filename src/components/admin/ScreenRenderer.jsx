@@ -3,10 +3,11 @@ import { WorkerProvider } from '../../contexts/WorkerContext.jsx';
 import { BookingProvider } from '../../contexts/BookingContext.jsx';
 import { NotificationProvider } from '../../contexts/NotificationContext.jsx';
 import { ToastProvider } from '../../contexts/ToastContext.jsx';
+import { PreviewProvider } from '../../contexts/PreviewSandboxContext.jsx';
 import React, { Suspense, useEffect, useRef } from 'react';
 import visualIdentityRegistry from '../../config/visualIdentityRegistry.js';
 
-export default function ScreenRenderer({ panel, screenKey, tokens, theme, onNodeClick }) {
+export default function ScreenRenderer({ panel, screenKey, tokens, theme, onNodeClick, previewMode = false }) {
   const containerRef = useRef(null);
   const Component = getScreenComponent(panel, screenKey);
 
@@ -71,17 +72,23 @@ export default function ScreenRenderer({ panel, screenKey, tokens, theme, onNode
       }}
       style={{ width: '100%', height: '100%', overflow: 'hidden', pointerEvents: 'auto' }}
     >
-      <ScreenSandbox>
+                  <ScreenSandbox>
         <Suspense fallback={<div style={{ padding: 40, textAlign: 'center', color: 'var(--text-secondary)' }}>Loading screen...</div>}>
-          <NotificationProvider>
-            <ToastProvider>
-              <BookingProvider>
-                <WorkerProvider>
-                  <Component navigate={() => {}} t={(key) => key} title={screenKey} />
-                </WorkerProvider>
-              </BookingProvider>
-            </ToastProvider>
-          </NotificationProvider>
+          {previewMode ? (
+            <PreviewProvider>
+              <Component navigate={() => {}} t={(key) => key} title={screenKey} />
+            </PreviewProvider>
+          ) : (
+            <NotificationProvider>
+              <ToastProvider>
+                <BookingProvider>
+                  <WorkerProvider>
+                    <Component navigate={() => {}} t={(key) => key} title={screenKey} />
+                  </WorkerProvider>
+                </BookingProvider>
+              </ToastProvider>
+            </NotificationProvider>
+          )}
         </Suspense>
       </ScreenSandbox>
     </div>

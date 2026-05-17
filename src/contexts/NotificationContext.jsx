@@ -98,3 +98,5 @@ export function useNotifications() {
 }
 // compatibility alias for older imports using singular
 export const useNotification = useNotifications;
+
+export { NotificationContext }

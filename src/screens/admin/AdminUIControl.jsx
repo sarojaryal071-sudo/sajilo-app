@@ -4,7 +4,16 @@ import { getControlConfig } from '../../config/studioControlRegistry.js'
 import { sceneGraph, getElementById } from '../../config/sceneGraph.js'
 import ScreenRenderer from '../../components/admin/ScreenRenderer.jsx';
 import { getScreensForPanel } from '../../config/screenRegistry.js';
-
+import defaultBranding from '../../config/defaultBranding.js';
+import defaultContentConfig from '../../config/defaultContentConfig.js';
+import defaultLayouts from '../../config/defaultLayouts.js';
+import LayoutBlockEditor from '../../components/admin/ui-studio/LayoutBlockEditor.jsx';
+import { API_URL } from '../../services/api.js';
+import ContentEditor from '../../components/admin/ui-studio/ContentEditor.jsx';
+import VariantEditor from '../../components/admin/ui-studio/VariantEditor.jsx';
+import defaultUiVariants from '../../config/defaultUiVariants.js';
+import { useColorGrading } from '../../ui-studio/grading/useColorGrading.js';
+import { computeColor } from '../../ui-studio/grading/ColorGradingEngine.js';
 
 
 const FLAG_LABELS = {
@@ -20,6 +29,10 @@ const STUDIO_CATEGORIES = [
   { key: 'motion', label: 'Motion', icon: '🎬' },
   { key: 'layout', label: 'Layout', icon: '📐' },
   { key: 'components', label: 'Components', icon: '🧩' },
+  { key: 'branding', label: 'Branding', icon: '🏷️' },
+  { key: 'content', label: 'Content', icon: '📝' },
+  { key: 'layouts', label: 'Layouts', icon: '📐' },
+  { key: 'variants', label: 'Variants', icon: '🎭' },
   { key: 'publish', label: 'Publish', icon: '🚀' },
 ]
 
@@ -40,8 +53,7 @@ export default function AdminUIControl() {
   const [activeNode, setActiveNode] = useState(null)
 
   const handleNodeSelect = (nodeId) => {
-    console.log('getElementById result:', el);
-    if (!nodeId) { setActiveNode(null); console.log('cleared activeNode'); return; }
+    if (!nodeId) { setActiveNode(null); return; }
     const el = getElementById(nodeId);
     setActiveNode(el ? { id: nodeId, ...el } : null);
   };
@@ -53,12 +65,12 @@ export default function AdminUIControl() {
     if (activeNode?.id) {
       const el = document.querySelector(`[data-node-id="${activeNode.id}"]`);
       if (el) { el.style.outline = '2px solid var(--accent-blue)'; el.style.outlineOffset = '2px'; el.dataset.selected = 'true'; }
-      // Auto-scroll right panel to top to show inspector
       if (rightPanelRef.current) {
         rightPanelRef.current.scrollTop = 0;
       }
     }
   }, [activeNode]);
+
   const defaultTokens = {
     shadowBlur: 8,
     shadowOpacity: 12,
@@ -71,6 +83,31 @@ export default function AdminUIControl() {
   };
 
   const [draftTokens, setDraftTokens] = useState(defaultTokens);
+    const [draftBranding, setDraftBranding] = useState(() => {
+    // Initialize from published config if available (not yet, so use defaults)
+    return JSON.parse(JSON.stringify(defaultBranding));
+  });
+
+      const [draftContent, setDraftContent] = useState(() => {
+    return JSON.parse(JSON.stringify(defaultContentConfig));
+  });
+
+  const [draftLayouts, setDraftLayouts] = useState(() => {
+    return JSON.parse(JSON.stringify(defaultLayouts));
+  });
+
+  const [draftVariants, setDraftVariants] = useState(() => {
+    return JSON.parse(JSON.stringify(defaultUiVariants));
+  });
+
+    const {
+    grading: draftGrading,
+    setColorGrading,
+    resetGrading,
+    setGrading: setDraftGrading,
+  } = useColorGrading();
+
+
   const [configMessage, setConfigMessage] = useState(null)
   const previewRef = useRef(null)
   const rightPanelRef = useRef(null);
@@ -121,18 +158,16 @@ export default function AdminUIControl() {
   const toggleFlag = (key) => { setFlags(prev => { const u = { ...prev, [key]: { enabled: !prev[key].enabled } }; localStorage.setItem('sajilo_flags', JSON.stringify(u)); return u }) }
   const toggleNavItem = (id) => { setNavItems(prev => { const u = prev.map(n => n.id === id ? { ...n, enabled: !n.enabled } : n); localStorage.setItem('sajilo_nav_config', JSON.stringify(u)); return u }) }
   const handleSaveFlags = () => { localStorage.setItem('sajilo_flags', JSON.stringify(flags)); localStorage.setItem('sajilo_nav_config', JSON.stringify(navItems)); setSaved(true); setTimeout(() => setSaved(false), 2000) }
-  const handleSaveDraft = async () => { try { const t = localStorage.getItem('sajilo_token'); const r = await fetch(`/api/ui-config/${activeScope}/draft`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${t}` }, body: JSON.stringify({ config: draftTokens }) }).then(r => r.json()); setConfigMessage(r.success ? { type: 'success', text: 'Draft saved' } : { type: 'error', text: r.message }) } catch { setConfigMessage({ type: 'error', text: 'Failed' }) } }
+  const handleSaveDraft = async () => { try { const t = localStorage.getItem('sajilo_token'); const r = await fetch(`${API_URL}/ui-config/${activeScope}/draft`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${t}` }, body: JSON.stringify({ config: { ...draftTokens, branding: draftBranding, content: draftContent, layouts: draftLayouts, variants: draftVariants, colorsGrading: draftGrading } }) }).then(r => r.json()); setConfigMessage(r.success ? { type: 'success', text: 'Draft saved' } : { type: 'error', text: r.message }) } catch { setConfigMessage({ type: 'error', text: 'Failed' }) } }
   const handlePublish = async () => {
   try {
     const t = localStorage.getItem('sajilo_token');
-    // Step 1: Save draft first
-    await fetch(`/api/ui-config/${activeScope}/draft`, {
+    await fetch(`${API_URL}/ui-config/${activeScope}/draft`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${t}` },
-      body: JSON.stringify({ config: draftTokens }),
+      body: JSON.stringify({ config: { ...draftTokens, branding: draftBranding, content: draftContent, layouts: draftLayouts, variants: draftVariants, colorsGrading: draftGrading } }),
     });
-    // Step 2: Publish
-    const r = await fetch(`/api/ui-config/${activeScope}/publish`, {
+    const r = await fetch(`${API_URL}/ui-config/${activeScope}/publish`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${t}` },
     }).then(r => r.json());
@@ -149,6 +184,8 @@ export default function AdminUIControl() {
   const setColor = (k, v) => setDraftTokens(prev => ({ ...prev, colors: { ...prev.colors, [k]: v } }))
 
   const toolBtn = { padding: '4px 10px', borderRadius: 4, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', fontSize: 11, cursor: 'pointer', fontWeight: 500, whiteSpace: 'nowrap' };
+
+  const inputStyle = { width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border)', fontSize: 12, background: 'var(--bg-surface)', color: 'var(--text-primary)', outline: 'none', marginBottom: 4 };
 
   return (
     <div style={{ 
@@ -206,7 +243,6 @@ export default function AdminUIControl() {
                     <div
                       onClick={() => {
                         setExpandedSections(prev => ({ ...prev, [sectionKey]: !isExpanded }));
-                        // Switch preview to this screen
                         const screens = getScreensForPanel(previewMode);
                         const match = screens.find(s => s.key === sectionKey);
                         if (match) setActiveScreen(match.key);
@@ -320,11 +356,23 @@ export default function AdminUIControl() {
               overflowY: 'auto',
               background: 'var(--bg-primary)',
             }}>
+            {/* Preview branding header */}
+            <div style={{ padding: '8px 16px', background: 'var(--bg-surface)', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 10 }}>
+              {draftBranding.logos.primary && (
+                <img src={draftBranding.logos.primary} alt="" style={{ height: 24 }} onError={(e) => e.target.style.display='none'} />
+              )}
+              <span style={{ fontWeight: 600, fontSize: 14 }}>{draftBranding.appName}</span>
+            </div>
+                        {/* Preview content banner */}
+            <div style={{ padding: '4px 16px', background: 'var(--accent-blue-light)', fontSize: 11, color: 'var(--accent-blue)', textAlign: 'center' }}>
+              {draftContent.home?.heroTitle || 'Welcome to Sajilo'}
+            </div>
             <ScreenRenderer 
             panel={previewMode} 
             screenKey={activeScreen} 
             tokens={draftTokens} 
             theme={theme}
+            previewMode={true}
           />
             </div>
           </div>
@@ -398,27 +446,61 @@ export default function AdminUIControl() {
                     {activeCategory === 'appearance' && (
             <div>
               <SectionTitle title="Brand Colors" />
-              <ColorModule label="Primary" color={theme.primaryColor} onChange={v => setTheme(prev => ({ ...prev, primaryColor: v }))} draftTokens={draftTokens} />
-              <ColorModule label="Accent" color={theme.accentColor} onChange={v => setTheme(prev => ({ ...prev, accentColor: v }))} draftTokens={draftTokens} />
+              <ColorModule
+                label="Primary"
+                color={theme.primaryColor}
+                onChange={v => setTheme(prev => ({ ...prev, primaryColor: v }))}
+                draftTokens={draftTokens}
+                grading={draftGrading['primary'] || { saturation: 0, brightness: 0, warmth: 0, opacity: 100 }}
+                onGradingChange={(field, value) => setColorGrading('primary', field, value)}
+              />
+              <ColorModule label="Accent" color={theme.accentColor} onChange={v => setTheme(prev => ({ ...prev, accentColor: v }))} draftTokens={draftTokens}
+                grading={draftGrading['accent'] || { saturation: 0, brightness: 0, warmth: 0, opacity: 100 }}
+                onGradingChange={(field, value) => setColorGrading('accent', field, value)}
+              />
 
               <div style={{ marginTop: 16 }}>
                 <SectionTitle title="Surfaces" />
-                <ColorModule label="Background" color={draftTokens.colors?.background ?? '#f0f2f6'} onChange={v => setColor('background', v)} draftTokens={draftTokens} />
-                <ColorModule label="Surface" color={draftTokens.colors?.surface ?? '#ffffff'} onChange={v => setColor('surface', v)} draftTokens={draftTokens} />
-                <ColorModule label="Border" color={draftTokens.colors?.border ?? '#e5e7eb'} onChange={v => setColor('border', v)} draftTokens={draftTokens} />
+                <ColorModule label="Background" color={draftTokens.colors?.background ?? '#f0f2f6'} onChange={v => setColor('background', v)} draftTokens={draftTokens}
+                  grading={draftGrading['background'] || { saturation: 0, brightness: 0, warmth: 0, opacity: 100 }}
+                  onGradingChange={(field, value) => setColorGrading('background', field, value)}
+                />
+                <ColorModule label="Surface" color={draftTokens.colors?.surface ?? '#ffffff'} onChange={v => setColor('surface', v)} draftTokens={draftTokens}
+                  grading={draftGrading['surface'] || { saturation: 0, brightness: 0, warmth: 0, opacity: 100 }}
+                  onGradingChange={(field, value) => setColorGrading('surface', field, value)}
+                />
+                <ColorModule label="Border" color={draftTokens.colors?.border ?? '#e5e7eb'} onChange={v => setColor('border', v)} draftTokens={draftTokens}
+                  grading={draftGrading['border'] || { saturation: 0, brightness: 0, warmth: 0, opacity: 100 }}
+                  onGradingChange={(field, value) => setColorGrading('border', field, value)}
+                />
               </div>
 
               <div style={{ marginTop: 16 }}>
                 <SectionTitle title="Typography" />
-                <ColorModule label="Text" color={draftTokens.colors?.textPrimary ?? '#1a1d23'} onChange={v => setColor('textPrimary', v)} draftTokens={draftTokens} />
-                <ColorModule label="Text Secondary" color={draftTokens.colors?.textSecondary ?? '#6b7280'} onChange={v => setColor('textSecondary', v)} draftTokens={draftTokens} />
+                <ColorModule label="Text" color={draftTokens.colors?.textPrimary ?? '#1a1d23'} onChange={v => setColor('textPrimary', v)} draftTokens={draftTokens}
+                  grading={draftGrading['textPrimary'] || { saturation: 0, brightness: 0, warmth: 0, opacity: 100 }}
+                  onGradingChange={(field, value) => setColorGrading('textPrimary', field, value)}
+                />
+                <ColorModule label="Text Secondary" color={draftTokens.colors?.textSecondary ?? '#6b7280'} onChange={v => setColor('textSecondary', v)} draftTokens={draftTokens}
+                  grading={draftGrading['textSecondary'] || { saturation: 0, brightness: 0, warmth: 0, opacity: 100 }}
+                  onGradingChange={(field, value) => setColorGrading('textSecondary', field, value)}
+                />
               </div>
 
               <div style={{ marginTop: 16 }}>
                 <SectionTitle title="Feedback" />
-                <ColorModule label="Success" color={draftTokens.colors?.success ?? '#2D9E6B'} onChange={v => setColor('success', v)} draftTokens={draftTokens} />
-                <ColorModule label="Danger" color={draftTokens.colors?.danger ?? '#D92B2B'} onChange={v => setColor('danger', v)} draftTokens={draftTokens} />
-                <ColorModule label="Warning" color={draftTokens.colors?.warning ?? '#E8720C'} onChange={v => setColor('warning', v)} draftTokens={draftTokens} />
+                <ColorModule label="Success" color={draftTokens.colors?.success ?? '#2D9E6B'} onChange={v => setColor('success', v)} draftTokens={draftTokens}
+                  grading={draftGrading['success'] || { saturation: 0, brightness: 0, warmth: 0, opacity: 100 }}
+                  onGradingChange={(field, value) => setColorGrading('success', field, value)}
+                />
+                <ColorModule label="Danger" color={draftTokens.colors?.danger ?? '#D92B2B'} onChange={v => setColor('danger', v)} draftTokens={draftTokens}
+                  grading={draftGrading['danger'] || { saturation: 0, brightness: 0, warmth: 0, opacity: 100 }}
+                  onGradingChange={(field, value) => setColorGrading('danger', field, value)}
+                />
+                <ColorModule label="Warning" color={draftTokens.colors?.warning ?? '#E8720C'} onChange={v => setColor('warning', v)} draftTokens={draftTokens}
+                  grading={draftGrading['warning'] || { saturation: 0, brightness: 0, warmth: 0, opacity: 100 }}
+                  onGradingChange={(field, value) => setColorGrading('warning', field, value)}
+                />
               </div>
             </div>
           )}
@@ -524,6 +606,123 @@ export default function AdminUIControl() {
             </div>
           )}
 
+                    {activeCategory === 'branding' && (
+            <div>
+              <SectionTitle title="Branding & Assets" />
+              
+              <div style={{ marginBottom: 12 }}>
+                <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4 }}>App Name</label>
+                <input
+                  type="text"
+                  value={draftBranding.appName}
+                  onChange={e => setDraftBranding(prev => ({ ...prev, appName: e.target.value }))}
+                  style={inputStyle}
+                />
+              </div>
+              <div style={{ marginBottom: 12 }}>
+                <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4 }}>Tagline</label>
+                <input
+                  type="text"
+                  value={draftBranding.appTagline}
+                  onChange={e => setDraftBranding(prev => ({ ...prev, appTagline: e.target.value }))}
+                  style={inputStyle}
+                />
+              </div>
+
+              <SectionTitle title="Logos" />
+              {Object.entries(draftBranding.logos).map(([key, value]) => (
+                <div key={key} style={{ marginBottom: 10 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4 }}>{key.charAt(0).toUpperCase()+key.slice(1)} Logo URL</label>
+                  <input
+                    type="text"
+                    value={value}
+                    onChange={e => setDraftBranding(prev => ({ ...prev, logos: { ...prev.logos, [key]: e.target.value } }))}
+                    style={inputStyle}
+                  />
+                </div>
+              ))}
+
+              <SectionTitle title="Images" />
+              {Object.entries(draftBranding.images).map(([key, value]) => (
+                <div key={key} style={{ marginBottom: 10 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4 }}>{key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</label>
+                  <input
+                    type="text"
+                    value={value}
+                    onChange={e => setDraftBranding(prev => ({ ...prev, images: { ...prev.images, [key]: e.target.value } }))}
+                    style={inputStyle}
+                  />
+                </div>
+              ))}
+
+              <SectionTitle title="Icons" />
+              {Object.entries(draftBranding.icons).map(([key, value]) => (
+                <div key={key} style={{ marginBottom: 10 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4 }}>{key.charAt(0).toUpperCase()+key.slice(1)} URL</label>
+                  <input
+                    type="text"
+                    value={value}
+                    onChange={e => setDraftBranding(prev => ({ ...prev, icons: { ...prev.icons, [key]: e.target.value } }))}
+                    style={inputStyle}
+                  />
+                </div>
+              ))}
+
+              <SectionTitle title="Typography" />
+              <div style={{ marginBottom: 10 }}>
+                <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4 }}>Heading Font</label>
+                <input
+                  type="text"
+                  value={draftBranding.typography.headingFont}
+                  onChange={e => setDraftBranding(prev => ({ ...prev, typography: { ...prev.typography, headingFont: e.target.value } }))}
+                  style={inputStyle}
+                />
+              </div>
+              <div style={{ marginBottom: 10 }}>
+                <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 4 }}>Body Font</label>
+                <input
+                  type="text"
+                  value={draftBranding.typography.bodyFont}
+                  onChange={e => setDraftBranding(prev => ({ ...prev, typography: { ...prev.typography, bodyFont: e.target.value } }))}
+                  style={inputStyle}
+                />
+              </div>
+            </div>
+          )}
+
+          {activeCategory === 'content' && (
+            <div>
+              <SectionTitle title="Content & CMS" />
+              <ContentEditor
+                content={draftContent}
+                onChange={setDraftContent}
+              />
+            </div>
+          )}
+
+                    {activeCategory === 'variants' && (
+            <div>
+              <SectionTitle title="Variants & Behavior" />
+              <VariantEditor
+                variants={draftVariants}
+                onChange={setDraftVariants}
+              />
+            </div>
+          )}
+
+
+          {activeCategory === 'layouts' && (
+            <div>
+              <SectionTitle title="Homepage Layout" />
+              <LayoutBlockEditor
+                blocks={draftLayouts.homepage}
+                onChange={(newBlocks) => setDraftLayouts(prev => ({ ...prev, homepage: newBlocks }))}
+              />
+            </div>
+          )}
+
+          
+
           {activeCategory === 'publish' && (
             <div>
               <SectionTitle title="Publish" />
@@ -625,7 +824,7 @@ function ChatPreview({ tokens, theme }) {
   )
 }
 
-function ColorModule({ label, color, onChange, draftTokens }) {
+function ColorModule({ label, color, onChange, draftTokens, grading, onGradingChange }) {
   const [open, setOpen] = useState(false);
   return (
     <div style={{ marginBottom: 4, borderRadius: 6, overflow: 'hidden' }}>
@@ -648,10 +847,22 @@ function ColorModule({ label, color, onChange, draftTokens }) {
       {/* Expanded grading controls */}
       {open && (
         <div style={{ padding: '8px 10px 12px 32px', background: 'var(--bg-surface2)', borderBottomLeftRadius: 6, borderBottomRightRadius: 6 }}>
-          <StudioControl label="Saturation" controlKey="grading.saturation" value={0} onChange={() => {}} color={color} />
-          <StudioControl label="Brightness" controlKey="grading.brightness" value={0} onChange={() => {}} color={color} />
-          <StudioControl label="Warmth" controlKey="grading.warmth" value={0} onChange={() => {}} color={color} />
-          <StudioControl label="Opacity" controlKey="grading.opacity" value={100} onChange={() => {}} color={color} />
+          <StudioControl label="Saturation" controlKey="grading.saturation"
+            value={grading?.saturation ?? 0}
+            onChange={(v) => onGradingChange?.('saturation', v)}
+            color={color} isBipolar />
+          <StudioControl label="Brightness" controlKey="grading.brightness"
+            value={grading?.brightness ?? 0}
+            onChange={(v) => onGradingChange?.('brightness', v)}
+            color={color} isBipolar />
+          <StudioControl label="Warmth" controlKey="grading.warmth"
+            value={grading?.warmth ?? 0}
+            onChange={(v) => onGradingChange?.('warmth', v)}
+            color={color} isBipolar />
+          <StudioControl label="Opacity" controlKey="grading.opacity"
+            value={grading?.opacity ?? 100}
+            onChange={(v) => onGradingChange?.('opacity', v)}
+            color={color} />
         </div>
       )}
     </div>

@@ -190,7 +190,7 @@ export default function AppShell() {
     <ToastProvider>
     <ToastContainer />
     <div className="app-shell" data-theme={dark ? 'dark' : 'light'} style={{
-      height: '100vh', width: '100vw', background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column', fontFamily: 'var(--font-family)',
+      width: '100vw', background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column', fontFamily: 'var(--font-family)',
     }}>
       {showLayout && <Navbar dark={dark} setDark={handleSetDark} lang={lang} setLang={setLang} navigate={navigate} t={t} onSOS={() => setShowSOS(true)} />}
       <div className="layout-row" style={{ display: 'flex', flex: 1, minHeight: 0 }}>

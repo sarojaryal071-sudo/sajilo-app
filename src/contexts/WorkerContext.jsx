@@ -187,3 +187,5 @@ export function WorkerProvider({ children }) {
 export function useWorker() {
   return useContext(WorkerContext)
 }
+
+export { WorkerContext }

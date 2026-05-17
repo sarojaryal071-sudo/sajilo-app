@@ -131,3 +131,5 @@ export function BookingProvider({ children }) {
 export function useBooking() {
   return useContext(BookingContext)
 }
+
+export { BookingContext }

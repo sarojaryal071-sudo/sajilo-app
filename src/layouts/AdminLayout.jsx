@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import adminNavigation from '../config/adminNavigation.js'
+import useNavigationVisibility from '../hooks/useNavigationVisibility.js'
 
 const sections = [...new Set(adminNavigation.map(item => item.section))]
 
@@ -101,6 +102,7 @@ export default function AdminLayout({ children }) {
               </div>
               {adminNavigation
                 .filter(item => item.section === section)
+                .filter(item => useNavigationVisibility(item.id))
                 .map((item) => (
                   <button key={item.id} onClick={() => navigate(item.path)} style={{
                     display: 'flex', alignItems: 'center', gap: 10,

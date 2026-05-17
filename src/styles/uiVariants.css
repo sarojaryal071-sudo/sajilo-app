@@ -1,0 +1,75 @@
+/* ── UI Variant Behaviour Classes ── */
+
+/* Buttons */
+.ui-button-filled {
+  background: var(--accent-blue);
+  color: #fff;
+  border: none;
+}
+.ui-button-outline {
+  background: transparent;
+  border: 1px solid var(--accent-blue);
+  color: var(--accent-blue);
+}
+.ui-button-soft {
+  background: var(--accent-blue-light);
+  color: var(--accent-blue);
+  border: none;
+}
+.ui-button-glass {
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: inherit;
+}
+
+/* Cards */
+.ui-card-flat {
+  box-shadow: none;
+  border: 1px solid var(--border);
+}
+.ui-card-elevated {
+  box-shadow: var(--shadow-card, 0 2px 12px rgba(0,0,0,0.08));
+}
+.ui-card-glass {
+  background: rgba(255,255,255,0.6);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.3);
+}
+.ui-card-soft {
+  background: var(--bg-surface2);
+  border: 1px solid var(--border);
+}
+
+/* Hover behaviours */
+.ui-card-hover-lift:hover {
+  transform: translateY(-2px);
+  transition: transform 0.2s ease;
+}
+.ui-card-hover-glow:hover {
+  box-shadow: 0 4px 16px var(--accent-blue-light);
+}
+.ui-card-hover-scale:hover {
+  transform: scale(1.02);
+}
+
+/* Inputs */
+.ui-input-filled {
+  background: var(--bg-surface2);
+  border: 1px solid transparent;
+}
+.ui-input-outline {
+  background: transparent;
+  border: 1px solid var(--border);
+}
+.ui-input-soft {
+  background: var(--accent-blue-light);
+  border: 1px solid var(--accent-blue);
+}
+
+/* Radius helpers */
+.ui-radius-none { border-radius: 0; }
+.ui-radius-soft { border-radius: 6px; }
+.ui-radius-rounded { border-radius: 12px; }
+.ui-radius-pill { border-radius: 999px; }
+.ui-radius-modal { border-radius: 14px; }

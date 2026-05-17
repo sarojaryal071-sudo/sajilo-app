@@ -1,16 +1,8 @@
-import { useMemo } from 'react'
+import { useUIConfig } from '../contexts/UIConfigContext.jsx';
+import { defaultFeatures } from '../config/defaultFeatureFlags.js';
 
-export function useFeatureFlag(key) {
-  const enabled = useMemo(() => {
-    try {
-      const savedFlags = localStorage.getItem('sajilo_flags')
-      if (!savedFlags) return true
-      const flags = JSON.parse(savedFlags)
-      return flags[key]?.enabled ?? true
-    } catch {
-      return true
-    }
-  }, [key])
-
-  return enabled
+export function useFeatureFlag(flagKey) {
+  const { features } = useUIConfig();
+  const flags = { ...defaultFeatures, ...(features || {}) };
+  return !!flags[flagKey];
 }

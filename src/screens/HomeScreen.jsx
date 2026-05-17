@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { api, API_URL } from '../services/api.js'
 import ConfigContainer from '../components/ConfigContainer.jsx'
@@ -8,6 +7,8 @@ import { useContent } from '../hooks/useContent.js'
 import { useStyle } from '../hooks/useStyle.js'
 import { useIsMobile } from '../hooks/useIsMobile.js'
 import { getSocket } from '../services/realtime/socketClient'
+import DynamicBlockRenderer from '../components/dynamic/DynamicBlockRenderer.jsx'
+import useLayoutConfig from '../hooks/useLayoutConfig.js'
 
 // ── Helper for horizontal category buttons (hooks safe) ──
 function CategoryButton({ service, isActive, onClick }) {
@@ -73,6 +74,7 @@ export default function HomeScreen({ navigate, t }) {
   const [categories, setCategories] = useState([])
   const [categoriesLoading, setCategoriesLoading] = useState(true)
   const isMobile = useIsMobile()
+  const { homepageLayout } = useLayoutConfig()
 
   // Fetch all online workers on mount
   useEffect(() => {
@@ -361,45 +363,51 @@ export default function HomeScreen({ navigate, t }) {
       {/* ── Original HomeScreen content (hidden when search results are active to reduce clutter) ── */}
       {!showSearchResults && (
         <>
-          <ConfigContainer id="promoBanners">
-            <BannerCarousel />
-          </ConfigContainer>
-
-          <ConfigContainer id="primaryServices">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <h3 style={sectionTitleStyle}>{txt.primary}</h3>
-              <button onClick={() => setSelectedCategory(null)} style={{ fontSize: 12, color: 'var(--accent-blue)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 500 }}>
-                {txt.all}
-              </button>
-            </div>
-            {renderTileGrid(primaryServices)}
-          </ConfigContainer>
-
-          {secondaryServices.length > 0 && (
-            <ConfigContainer id="secondaryServices">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                <h3 style={sectionTitleStyle}>{txt.secondary}</h3>
-              </div>
-              {renderTileGrid(secondaryServices)}
-            </ConfigContainer>
-          )}
-
-          <h3 style={sectionTitleStyle}>{txt.nearbyWorkers}</h3>
-          {loading ? (
-            <div style={{ textAlign: 'center', padding: 20 }}>Loading workers…</div>
-          ) : workers.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-secondary)' }}>
-              <div style={{ fontSize: 40, marginBottom: 8 }}>👷</div>
-              <p>{txt.noWorkers}</p>
-            </div>
+          {homepageLayout && homepageLayout.length > 0 ? (
+            <DynamicBlockRenderer blocks={homepageLayout} />
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
-              {workers.map(worker => (
-                <div key={worker.id} onClick={() => navigate(`/detail/${worker.id}`)} style={{ cursor: 'pointer' }}>
-                  <WorkerCard worker={worker} />
+            <>
+              <ConfigContainer id="promoBanners">
+                <BannerCarousel />
+              </ConfigContainer>
+
+              <ConfigContainer id="primaryServices">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                  <h3 style={sectionTitleStyle}>{txt.primary}</h3>
+                  <button onClick={() => setSelectedCategory(null)} style={{ fontSize: 12, color: 'var(--accent-blue)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 500 }}>
+                    {txt.all}
+                  </button>
                 </div>
-              ))}
-            </div>
+                {renderTileGrid(primaryServices)}
+              </ConfigContainer>
+
+              {secondaryServices.length > 0 && (
+                <ConfigContainer id="secondaryServices">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                    <h3 style={sectionTitleStyle}>{txt.secondary}</h3>
+                  </div>
+                  {renderTileGrid(secondaryServices)}
+                </ConfigContainer>
+              )}
+
+              <h3 style={sectionTitleStyle}>{txt.nearbyWorkers}</h3>
+              {loading ? (
+                <div style={{ textAlign: 'center', padding: 20 }}>Loading workers…</div>
+              ) : workers.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-secondary)' }}>
+                  <div style={{ fontSize: 40, marginBottom: 8 }}>👷</div>
+                  <p>{txt.noWorkers}</p>
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+                  {workers.map(worker => (
+                    <div key={worker.id} onClick={() => navigate(`/detail/${worker.id}`)} style={{ cursor: 'pointer' }}>
+                      <WorkerCard worker={worker} />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </>
       )}
