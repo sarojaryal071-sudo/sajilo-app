@@ -9,6 +9,7 @@ import { WorkerProvider, useWorker } from '../contexts/WorkerContext.jsx'
 import { BookingProvider } from '../contexts/BookingContext.jsx'
 import { useFeatureFlag } from '../hooks/useFeatureFlag.js'
 import { useNotification } from '../contexts/NotificationContext.jsx'
+import { useUnifiedNotifications } from '../governance/useUnifiedNotifications.js'
 import conversationState from '../services/chat/ConversationStateManager.js'
 import workerConfig from '../config/ui/worker.config.js'
 import EmergencyModal from '../components/EmergencyModal.jsx'
@@ -40,6 +41,7 @@ function WorkerLayoutInner({ children, onLogout, onSOS }) {
   const showTopbar = useFeatureFlag('workerTopbar')
   const showTopbarName = useFeatureFlag('workerTopbarName')
   const { unreadCount } = useNotification()
+  const { unreadCount: unifiedUnread } = useUnifiedNotifications()
   const [convUnread, setConvUnread] = useState(conversationState.getUnreadCount())
   const [showNotif, setShowNotif] = useState(false)
   
@@ -289,13 +291,13 @@ function WorkerLayoutInner({ children, onLogout, onSOS }) {
         >
           <span style={{ fontSize: 18 }}>🔔</span>
           <span style={{ fontSize: 10, fontWeight: 500 }}>Alerts</span>
-          {unreadCount + convUnread > 0 && (
+          {unifiedUnread > 0 && (
             <span style={{
               position: 'absolute', top: 2, right: 'calc(50% - 20px)',
               background: 'var(--accent-red)', color: '#fff',
               fontSize: 9, fontWeight: 700, width: 16, height: 16,
               borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>{unreadCount + convUnread }</span>
+            }}>{unifiedUnread}</span>
           )}
         </button>
         {sosEnabled && (

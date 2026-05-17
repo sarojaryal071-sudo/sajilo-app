@@ -12,8 +12,6 @@ export default function LoginForm({ onSubmit, loading, error, success, navigate 
   const [rememberMe, setRememberMe] = useState(false)
   const shakeError = adminAnimationConfig?.shakeError || {}
 
-  const showGoogle = useFeatureFlag('googleLogin')
-  const showApple = useFeatureFlag('appleLogin')
   const showForgotPassword = useFeatureFlag('forgotPassword')
   const showRememberMe = useFeatureFlag('rememberMe')
   const showTerms = useFeatureFlag('termsText')
@@ -159,18 +157,24 @@ export default function LoginForm({ onSubmit, loading, error, success, navigate 
         </div>
       </AuthSection>
 
-      <AuthSection visible={showGoogle || showApple}>
+            <AuthSection visible={true}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {showGoogle && (
-            <button type="button" style={{ width: '100%', padding: '12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', background: 'var(--bg-surface)', color: 'var(--text-primary)', fontSize: 13, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-              G {useContent('auth.login.google')}
-            </button>
-          )}
-          {showApple && (
-            <button type="button" style={{ width: '100%', padding: '12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', background: '#000', color: '#fff', fontSize: 13, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-               {useContent('auth.login.apple')}
-            </button>
-          )}
+          <button type="button" style={{
+            width: '100%', padding: '12px', borderRadius: 'var(--radius-md)',
+            border: '1px solid var(--border)', background: 'var(--bg-surface)',
+            color: 'var(--text-primary)', fontSize: 13, fontWeight: 500,
+            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          }}>
+            G {useContent('auth.login.google')}
+          </button>
+          <button type="button" style={{
+            width: '100%', padding: '12px', borderRadius: 'var(--radius-md)',
+            border: '1px solid var(--border)', background: '#000', color: '#fff',
+            fontSize: 13, fontWeight: 500, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          }}>
+             {useContent('auth.login.apple')}
+          </button>
         </div>
       </AuthSection>
 
