@@ -5,18 +5,22 @@ import { useFeatureFlag } from '../hooks/useFeatureFlag.js'
 import { useNotification } from '../contexts/NotificationContext.jsx'
 import conversationState from '../services/chat/ConversationStateManager.js'
 import { API_URL } from '../services/api.js'
+import { useUnifiedNotifications } from '../governance/useUnifiedNotifications.js';
 
 export default function MobileBottomNav({ navigate, t, onMore, onSOS }) {
   const location = useLocation()
   const sosEnabled = useFeatureFlag('sosEmergency')
   const notifEnabled = useFeatureFlag('notifications')
   const { notifications, unreadCount } = useNotification()
+    const { unreadCount: g2UnreadCount } = useUnifiedNotifications();
+
 
   const [convUnread, setConvUnread] = useState(conversationState.getUnreadCount())
   useEffect(() => {
     const unsub = conversationState.onChange(count => setConvUnread(count))
     return unsub
   }, [])
+
 
   // Seed unread conversation count from server on mount
   useEffect(() => {
@@ -72,13 +76,13 @@ export default function MobileBottomNav({ navigate, t, onMore, onSOS }) {
         }}>
           <span style={{ fontSize: mobile.bottomNav.iconSize }}>🔔</span>
           <span style={{ fontSize: mobile.bottomNav.labelSize, fontWeight: mobile.bottomNav.labelWeight }}>Alerts</span>
-          {unreadCount + convUnread > 0 && (
+          {g2UnreadCount > 0 && (
             <span style={{
               position: 'absolute', top: 2, right: 'calc(50% - 20px)',
               background: 'var(--accent-red)', color: '#fff',
               fontSize: 9, fontWeight: 700, width: 16, height: 16,
               borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>{unreadCount + convUnread}</span>
+            }}>{g2UnreadCount}</span>
           )}
         </button>
       )}

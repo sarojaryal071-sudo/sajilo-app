@@ -5,6 +5,9 @@ import useContentConfig from './useContentConfig.js' // from Phase U7
 const STORAGE_KEY = 'sajilo_lang'
 
 export function useContent(key, fallback = '') {
+  if (typeof key !== 'string' || key.length === 0) {
+    return fallback || '';
+  }
   const [lang, setLang] = useState(() => localStorage.getItem(STORAGE_KEY) || 'en')
 
   useEffect(() => {

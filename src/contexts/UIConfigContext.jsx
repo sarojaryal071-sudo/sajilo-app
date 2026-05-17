@@ -150,6 +150,7 @@ export function UIConfigProvider({ children }) {
     presets,
     colorsGrading,
     uiConfig,
+    controlConfig: uiConfig,
     loading,
     error,
     getToken,

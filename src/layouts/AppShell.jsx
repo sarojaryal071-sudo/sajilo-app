@@ -16,9 +16,6 @@ import AdminMobileBlock from '../screens/admin/AdminMobileBlock.jsx'
 import AdminLayout from './AdminLayout.jsx'
 import { WorkerProvider } from '../contexts/WorkerContext.jsx'
 import { reconnectSocket } from '../services/realtime/socketClient.js'
-import { BookingProvider } from '../contexts/BookingContext.jsx'
-import { NotificationProvider } from '../contexts/NotificationContext.jsx'
-import { ToastProvider } from '../contexts/ToastContext.jsx'
 import ToastContainer from '../components/ToastContainer.jsx'
 import AuthFlow from '../navigation/AuthFlow.jsx'
 
@@ -32,7 +29,7 @@ export default function AppShell() {
     localStorage.setItem('sajilo_theme', newVal ? 'dark' : 'light')
   }
 
-    const handleLogin = (userData) => {
+  const handleLogin = (userData) => {
     console.log("🔍 LOGIN: Setting user", {
       email: userData?.email, role: userData?.role, status: userData?.status
     })
@@ -48,7 +45,6 @@ export default function AppShell() {
   const navigate = useNavigate()
   const location = useLocation()
   const t = translations[lang]
-
 
   useEffect(() => {
     console.log("🔍 APP STATE", {
@@ -72,20 +68,6 @@ export default function AppShell() {
       navigate('/login')
     }
   }, [user, authChecked, location.pathname, navigate])
-
-    // useEffect(() => {
-  //   if (!user || !authChecked) return
-  //   if (user.role === 'worker' && user.status === 'pending') {
-  //     const hasApplied = user.application_submitted || user.phone
-  //     if (hasApplied && location.pathname !== '/worker/pending') {
-  //       console.log("🔍 REDIRECT: Pending (applied) → /worker/pending")
-  //       navigate('/worker/pending', { replace: true })
-  //     } else if (!hasApplied && location.pathname !== '/worker/apply') {
-  //       console.log("🔍 REDIRECT: Pending (no app) → /worker/apply")
-  //       navigate('/worker/apply', { replace: true })
-  //     }
-  //   }
-  // }, [user, authChecked, location.pathname, navigate])
 
   const handleLogout = () => {
     console.log("🔍 LOGOUT: Clearing user")
@@ -122,8 +104,6 @@ export default function AppShell() {
     }
   }
 
-  
-
   if (user && user.role === 'worker' && user.status === 'pending' && location.pathname === '/worker/apply') {
     const route = routes.find(r => r.path === '/worker/apply')
     if (route) {
@@ -137,8 +117,7 @@ export default function AppShell() {
     console.log("🔍 WORKER ROUTES:", { status: user.status, totalRoutes: workerRoutes.length, paths: workerRoutes.map(r => r.path) })
 
     return (
-      <NotificationProvider>      {/* ← add provider */}
-      <ToastProvider>
+      <>
         <ToastContainer />
         <WorkerLayout user={user} onLogout={handleLogout} onSOS={() => setShowSOS(true)}>
           <main style={{ flex: 1, overflowY: 'auto', background: 'var(--bg-primary)', padding: 0 }}>
@@ -152,15 +131,13 @@ export default function AppShell() {
             </Routes>
           </main>
         </WorkerLayout>
-         </ToastProvider>
-      </NotificationProvider>
+      </>
     )
   }
 
   if (user && user.role === 'admin') {
     return (
-      <NotificationProvider>
-        <ToastProvider>
+      <>
         <ToastContainer />
         <AdminLayout>
           <Routes>
@@ -170,60 +147,54 @@ export default function AppShell() {
             })}
           </Routes>
         </AdminLayout>
-        </ToastProvider>
-      </NotificationProvider>
+      </>
     )
   }
 
-   const isAdminOrWorker = user && user.role === 'admin'
+  const isAdminOrWorker = user && user.role === 'admin'
   const showLayout = user && !isAdminOrWorker && location.pathname !== '/login' && location.pathname !== '/signup' && location.pathname !== '/welcome'
 
-  // Public routes (login, signup, worker/apply) when user is not authenticated
   if (!showLayout) {
     return <AuthFlow onLogin={handleLogin} />
   }
 
-  // Authenticated main layout (customer only—admin/worker handled earlier)
+  // Customer layout – providers are now in AppProviders
   return (
-    <BookingProvider>
-    <NotificationProvider>      {/* ← add provider */}
-    <ToastProvider>
-    <ToastContainer />
-    <div className="app-shell" data-theme={dark ? 'dark' : 'light'} style={{
-      width: '100vw', background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column', fontFamily: 'var(--font-family)',
-    }}>
-      {showLayout && <Navbar dark={dark} setDark={handleSetDark} lang={lang} setLang={setLang} navigate={navigate} t={t} onSOS={() => setShowSOS(true)} />}
-      <div className="layout-row" style={{ display: 'flex', flex: 1, minHeight: 0 }}>
-        {showLayout && <div className="desktop-sidebar" style={{ flexShrink: 0 }}><Sidebar t={t} /></div>}
-        <main className="main-content" style={{ flex: 1, minWidth: 0, minHeight: 0, padding: showLayout ? 28 : 0, overflowY: 'auto', background: 'var(--bg-primary)' }}>
-          <Routes>
-            {routes.filter(r => r.role !== 'worker' && r.role !== 'admin').map(route => {
-              const Component = route.component
-              const element = <Component navigate={navigate} t={t} onLogin={handleLogin} title={route.label} />
-              if (route.public) return <Route key={route.path} path={route.path} element={element} />
-              if (route.role === 'admin') return <Route key={route.path} path={route.path} element={<RequireRole role={route.role}>{element}</RequireRole>} />
-              return <Route key={route.path} path={route.path} element={<RequireAuth>{element}</RequireAuth>} />
-            })}
-          </Routes>
-        </main>
-        {showLayout && <div className="desktop-right" style={{ flexShrink: 0 }}><RightPanel t={t} /></div>}
+    <>
+      <ToastContainer />
+      <div className="app-shell" data-theme={dark ? 'dark' : 'light'} style={{
+        width: '100vw', background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column', fontFamily: 'var(--font-family)',
+      }}>
+        {showLayout && <Navbar dark={dark} setDark={handleSetDark} lang={lang} setLang={setLang} navigate={navigate} t={t} onSOS={() => setShowSOS(true)} />}
+        <div className="layout-row" style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+          {showLayout && <div className="desktop-sidebar" style={{ flexShrink: 0 }}><Sidebar t={t} /></div>}
+          <main className="main-content" style={{ flex: 1, minWidth: 0, minHeight: 0, padding: showLayout ? 28 : 0, overflowY: 'auto', background: 'var(--bg-primary)' }}>
+            <Routes>
+              {routes.filter(r => r.role !== 'worker' && r.role !== 'admin').map(route => {
+                const Component = route.component
+                const element = <Component navigate={navigate} t={t} onLogin={handleLogin} title={route.label} />
+                if (route.public) return <Route key={route.path} path={route.path} element={element} />
+                if (route.role === 'admin') return <Route key={route.path} path={route.path} element={<RequireRole role={route.role}>{element}</RequireRole>} />
+                return <Route key={route.path} path={route.path} element={<RequireAuth>{element}</RequireAuth>} />
+              })}
+            </Routes>
+          </main>
+          {showLayout && <div className="desktop-right" style={{ flexShrink: 0 }}><RightPanel t={t} /></div>}
+        </div>
+        {showLayout && <MobileBottomNav navigate={navigate} t={t} onMore={() => setShowDrawer(!showDrawer)} onSOS={() => setShowSOS(true)} />}
+        <MobileDrawer isOpen={showDrawer} onClose={() => setShowDrawer(false)} navigate={navigate} t={t} lang={lang} setLang={setLang} />
+        {showSOS && <EmergencyModal onClose={() => setShowSOS(false)} />}
+        <style>{`
+          @media (max-width: 768px) {
+            .desktop-sidebar, .desktop-right { display: none !important; }
+            .navbar { display: none !important; }
+            .layout-row { flex-direction: column !important; }
+            .main-content { padding: 16px !important; padding-bottom: 80px !important; }
+            .services-grid { grid-template-columns: repeat(2, 1fr) !important; }
+            .workers-grid { grid-template-columns: 1fr !important; }
+          }
+        `}</style>
       </div>
-      {showLayout && <MobileBottomNav navigate={navigate} t={t} onMore={() => setShowDrawer(!showDrawer)} onSOS={() => setShowSOS(true)} />}
-      <MobileDrawer isOpen={showDrawer} onClose={() => setShowDrawer(false)} navigate={navigate} t={t} lang={lang} setLang={setLang} />
-      {showSOS && <EmergencyModal onClose={() => setShowSOS(false)} />}
-      <style>{`
-        @media (max-width: 768px) {
-          .desktop-sidebar, .desktop-right { display: none !important; }
-          .navbar { display: none !important; }
-          .layout-row { flex-direction: column !important; }
-          .main-content { padding: 16px !important; padding-bottom: 80px !important; }
-          .services-grid { grid-template-columns: repeat(2, 1fr) !important; }
-          .workers-grid { grid-template-columns: 1fr !important; }
-        }
-      `}</style>
-    </div>
-    </ToastProvider>
-    </NotificationProvider>
-    </BookingProvider>
+    </>
   )
 }

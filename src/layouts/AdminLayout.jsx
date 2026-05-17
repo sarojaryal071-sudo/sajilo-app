@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import adminNavigation from '../config/adminNavigation.js'
 import useNavigationVisibility from '../hooks/useNavigationVisibility.js'
+import NotificationBellV2 from '../governance/NotificationBellV2.jsx';
 
 const sections = [...new Set(adminNavigation.map(item => item.section))]
 
@@ -61,7 +62,8 @@ export default function AdminLayout({ children }) {
             {dark ? '☀️' : '🌙'}
           </button>
           <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Admin</span>
-          <button onClick={handleLogout} style={{
+            <NotificationBellV2 userNotificationsEnabled={false} />      
+           <button onClick={handleLogout} style={{
             padding: '6px 14px', borderRadius: 6,
             border: '1px solid var(--accent-red)', background: 'transparent',
             color: 'var(--accent-red)', fontSize: 13, fontWeight: 600, cursor: 'pointer',

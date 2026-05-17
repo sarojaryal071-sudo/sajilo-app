@@ -17,18 +17,18 @@ export function applyUiTokens(tokenTree, grading = {}) {
   if (!tokenTree) return;
   const flat = flattenTokens(tokenTree);
 
+    // Inject ONLY colour tokens (all other categories are locked to defaults)
   for (const [tokenPath, value] of Object.entries(flat)) {
+    if (!tokenPath.startsWith('colors.')) continue;
+
     const cssVar = uiTokenCssVariableMap[tokenPath];
     if (!cssVar) continue;
 
     let finalValue = value;
-    // If this is a color token and grading exists for it, compute the graded color
-    if (tokenPath.startsWith('colors.')) {
-      const colorKey = tokenPath.split('.')[1]; // e.g. 'primary'
-      const colorGrading = grading[colorKey];
-      if (colorGrading) {
-        finalValue = computeColor(value, colorGrading);
-      }
+    const colorKey = tokenPath.split('.')[1];
+    const colorGrading = grading[colorKey];
+    if (colorGrading) {
+      finalValue = computeColor(value, colorGrading);
     }
     document.documentElement.style.setProperty(cssVar, finalValue);
   }

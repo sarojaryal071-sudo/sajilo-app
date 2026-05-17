@@ -202,10 +202,11 @@ export default function WorkerEarnings() {
 
   return (
     <div style={{ padding: '0 16px' }}>
-      <ElementRenderer elementId="earningsHeading" overrideData={{}} />
+      <ElementRenderer key="earningsHero" elementId="earningsHero" overrideData={{}} />
 
       {/* Hero Card – metrics engine driven + ledger financial overview */}
       <ElementRenderer
+        key="earningsHeroCard"
         elementId="earningsHeroCard"
         overrideData={{
           earnings: heroEarnings,
@@ -311,8 +312,8 @@ export default function WorkerEarnings() {
       {/* ── Legacy Job History (non‑statement filters) ── */}
       {!showStatement && (
         <>
-          <ElementRenderer elementId="earningsHistoryHeading" overrideData={{}} />
-          <ElementRenderer elementId="earningsJobItem" overrideData={{ bookings: grouped, paymentMap }} />
+          <ElementRenderer key="earningsHistoryHeading" elementId="earningsHistoryHeading" overrideData={{}} />
+          <ElementRenderer key="earningsJobItem" elementId="earningsJobItem" overrideData={{ bookings: grouped, paymentMap }} />
         </>
       )}
 

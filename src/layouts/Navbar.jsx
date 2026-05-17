@@ -1,18 +1,87 @@
-import { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import navbar from '../config/ui/navbar.config.js'
 import { useFeatureFlag } from '../hooks/useFeatureFlag.js'
 import { useNotification } from '../contexts/NotificationContext.jsx'
 import conversationState from '../services/chat/ConversationStateManager.js'
+import NotificationBellV2 from '../governance/NotificationBellV2.jsx'
 
 console.log("NAVBAR ACTIVE FILE:", import.meta.url)
 console.log("LOADED NAVBAR FILE:", import.meta.url)
+
+// ── Minimal error boundary – falls back to original bell on crash ──
+class ErrorBoundaryFallback extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() { return { hasError: true }; }
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback ? this.props.fallback() : null;
+    }
+    return this.props.children;
+  }
+}
+
+// ── Original notification bell (unchanged, kept as reusable helper) ──
+function OriginalBell({ notifications, unreadCount, convUnread, showNotif, setShowNotif, notifRef, t }) {
+  return (
+    <div ref={notifRef} style={{ position: 'relative', flexShrink: 0 }}>
+      <button onClick={() => setShowNotif(!showNotif)} style={{
+        width: 34, height: 34, borderRadius: 7, display: 'flex',
+        alignItems: 'center', justifyContent: 'center',
+        background: showNotif ? 'var(--accent-blue-light)' : 'var(--bg-surface2)',
+        border: '1px solid var(--border)', cursor: 'pointer', fontSize: 16,
+        position: 'relative',
+      }}>
+        🔔
+        {unreadCount + convUnread > 0 && (
+          <span style={{
+            position: 'absolute', top: -4, right: -4,
+            background: 'var(--accent-red)', color: '#fff',
+            fontSize: 10, fontWeight: 700, width: 18, height: 18,
+            borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>{unreadCount + convUnread}</span>
+        )}
+      </button>
+
+      {showNotif && (
+        <div style={{
+          position: 'absolute', top: 42, right: 0, width: 320, maxHeight: 360,
+          background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.15)', border: '1px solid var(--border)',
+          overflowY: 'auto', zIndex: 200,
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 16px', borderBottom: '1px solid var(--border)' }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{t.notifTitle || 'Notifications'}</span>
+            <button onClick={() => setShowNotif(false)} style={{ background: 'none', border: 'none', fontSize: 12, color: 'var(--accent-blue)', cursor: 'pointer', fontWeight: 500 }}>✕</button>
+          </div>
+          {notifications.length === 0 ? (
+            <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-secondary)', fontSize: 13 }}>{t.notifEmpty || 'No new notifications'}</div>
+          ) : (
+            notifications.map(n => (
+              <div key={n.id} style={{ padding: '12px 16px', display: 'flex', gap: 10, alignItems: 'flex-start', borderBottom: '1px solid var(--border)', cursor: 'pointer' }}>
+                <span style={{ fontSize: 18, flexShrink: 0 }}>{n.icon}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.4 }}>{n.text}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 4 }}>{n.time}</div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Navbar({ dark, setDark, lang, setLang, navigate, t, onSOS }) {
   const location = useLocation()
   const currentPath = location.pathname
   const [showNotif, setShowNotif] = useState(false)
   const notifRef = useRef(null)
+  const USE_G2_BELL = true   // ← toggle to true to test the new bell
 
   const savedNav = localStorage.getItem('sajilo_nav_config')
   const navConfig = savedNav ? JSON.parse(savedNav) : null
@@ -36,14 +105,12 @@ export default function Navbar({ dark, setDark, lang, setLang, navigate, t, onSO
   const notifEnabled = useFeatureFlag('notifications')
   const { notifications, unreadCount } = useNotification()
 
-  // Conversation unread count
   const [convUnread, setConvUnread] = useState(() => conversationState.getUnreadCount())
   useEffect(() => {
     const unsub = conversationState.onChange(count => setConvUnread(count))
     return unsub
   }, [])
 
-  // Close dropdown on outside click
   useEffect(() => {
     const handleClick = (e) => {
       if (notifRef.current && !notifRef.current.contains(e.target)) setShowNotif(false)
@@ -98,57 +165,9 @@ export default function Navbar({ dark, setDark, lang, setLang, navigate, t, onSO
         </button>
       )}
 
-      {/* Notification Bell — 🔧 admin can disable via feature flag */}
-      {notifEnabled && (
-        <div ref={notifRef} style={{ position: 'relative', flexShrink: 0 }}>
-          <button onClick={() => setShowNotif(!showNotif)} style={{
-            width: 34, height: 34, borderRadius: 7, display: 'flex',
-            alignItems: 'center', justifyContent: 'center',
-            background: showNotif ? 'var(--accent-blue-light)' : 'var(--bg-surface2)',
-            border: '1px solid var(--border)', cursor: 'pointer', fontSize: 16,
-            position: 'relative',
-          }}>
-            🔔
-            {unreadCount + convUnread > 0 && (
-              <span style={{
-                position: 'absolute', top: -4, right: -4,
-                background: 'var(--accent-red)', color: '#fff',
-                fontSize: 10, fontWeight: 700, width: 18, height: 18,
-                borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>{unreadCount + convUnread}</span>
-            )}
-          </button>
+      {notifEnabled && <NotificationBellV2 />}
 
-          {/* Notifications Dropdown */}
-          {showNotif && (
-            <div style={{
-              position: 'absolute', top: 42, right: 0, width: 320, maxHeight: 360,
-              background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.15)', border: '1px solid var(--border)',
-              overflowY: 'auto', zIndex: 200,
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 16px', borderBottom: '1px solid var(--border)' }}>
-                <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{t.notifTitle || 'Notifications'}</span>
-                <button onClick={() => setShowNotif(false)} style={{ background: 'none', border: 'none', fontSize: 12, color: 'var(--accent-blue)', cursor: 'pointer', fontWeight: 500 }}>✕</button>
-              </div>
-              {notifications.length === 0 ? (
-                <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-secondary)', fontSize: 13 }}>{t.notifEmpty || 'No new notifications'}</div>
-              ) : (
-                notifications.map(n => (
-                  <div key={n.id} style={{ padding: '12px 16px', display: 'flex', gap: 10, alignItems: 'flex-start', borderBottom: '1px solid var(--border)', cursor: 'pointer' }}>
-                    <span style={{ fontSize: 18, flexShrink: 0 }}>{n.icon}</span>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.4 }}>{n.text}</div>
-                      <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 4 }}>{n.time}</div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
+      
       <select value={lang} onChange={handleLangChange} style={{
         padding: '5px 8px', borderRadius: 6, border: '1px solid var(--border)',
         background: 'var(--bg-surface2)', color: 'var(--text-primary)',

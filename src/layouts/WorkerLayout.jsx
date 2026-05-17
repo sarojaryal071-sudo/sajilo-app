@@ -12,6 +12,8 @@ import { useNotification } from '../contexts/NotificationContext.jsx'
 import conversationState from '../services/chat/ConversationStateManager.js'
 import workerConfig from '../config/ui/worker.config.js'
 import EmergencyModal from '../components/EmergencyModal.jsx'
+import NotificationBellV2 from '../governance/NotificationBellV2.jsx';
+
 
 function WorkerLayoutInner({ children, onLogout, onSOS }) {
   const navigate = useNavigate()
@@ -39,7 +41,8 @@ function WorkerLayoutInner({ children, onLogout, onSOS }) {
   const showTopbarName = useFeatureFlag('workerTopbarName')
   const { unreadCount } = useNotification()
   const [convUnread, setConvUnread] = useState(conversationState.getUnreadCount())
-
+  const [showNotif, setShowNotif] = useState(false)
+  
   useEffect(() => {
     const unsub = conversationState.onChange(count => setConvUnread(count))
     return unsub
@@ -151,37 +154,7 @@ function WorkerLayoutInner({ children, onLogout, onSOS }) {
             <option value="ne">ने</option>
           </select>
 
-          {/* Notifications */}
-          <button onClick={() => navigate('/inbox')} style={{
-  width: w.desktop?.navbar?.control?.width || '36px',
-  height: w.desktop?.navbar?.control?.height || '36px',
-  borderRadius: w.desktop?.navbar?.control?.borderRadius || '8px',
-  border: w.desktop?.navbar?.control?.border || '1px solid var(--border)',
-  background: w.desktop?.navbar?.control?.background || 'var(--bg-surface2)',
-  cursor: 'pointer',
-  fontSize: w.desktop?.navbar?.control?.fontSize || '16px',
-  color: w.desktop?.navbar?.control?.color || 'var(--text-secondary)',
-  display: 'flex', alignItems: 'center', justifyContent: 'center',
-  position: 'relative',
-}} title="Notifications">
-  🔔
-            {unreadCount + convUnread > 0 && (
-            <span style={{
-              background: w.desktop?.navbar?.badge?.background || 'var(--accent-red)',
-              color: '#fff',
-              fontSize: w.desktop?.navbar?.badge?.fontSize || '10px',
-              fontWeight: 700,
-              width: w.desktop?.navbar?.badge?.width || '18px',
-              height: w.desktop?.navbar?.badge?.height || '18px',
-              borderRadius: '50%',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              position: 'absolute',
-              top: w.desktop?.navbar?.badge?.top || '-4px',
-              right: w.desktop?.navbar?.badge?.right || '-4px',
-            }}>{unreadCount + convUnread}</span>
-          )}
-</button>
-
+          <NotificationBellV2 />
 
           {/* Logout */}
           <button onClick={handleLogout} style={{
@@ -322,7 +295,7 @@ function WorkerLayoutInner({ children, onLogout, onSOS }) {
               background: 'var(--accent-red)', color: '#fff',
               fontSize: 9, fontWeight: 700, width: 16, height: 16,
               borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>{unreadCount + convUnread}</span>
+            }}>{unreadCount + convUnread }</span>
           )}
         </button>
         {sosEnabled && (
