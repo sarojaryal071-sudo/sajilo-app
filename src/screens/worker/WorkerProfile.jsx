@@ -1,11 +1,9 @@
 ﻿import { useState, useEffect } from 'react'
 import { useWorker } from '../../contexts/WorkerContext.jsx'
-import ElementRenderer from '../../components/ElementRenderer.jsx'
-import { api } from '../../services/api.js'
+import { api, API_URL } from '../../services/api.js'
 import { useSocket } from '../../hooks/useSocket.js'
-import { API_URL } from '../../services/api.js'
 
-// ── Reward points calculation (same as client) ──
+// ── Reward points calculation ──
 const JOB_SIZE_POINTS = {
   small: 2,
   medium: 5,
@@ -19,16 +17,7 @@ function calcRewardPoints(bookings) {
 }
 
 export default function WorkerProfile() {
-  const { profile, bookings, updateProfile } = useWorker()
-  const [editing, setEditing] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [name, setName] = useState('')
-  const [phone, setPhone] = useState('')
-  const [bio, setBio] = useState('')
-  const [skills, setSkills] = useState('')
-  const [hourlyRate, setHourlyRate] = useState('')
-  const [photoUrl, setPhotoUrl] = useState('')
-
+  const { profile, bookings } = useWorker()
   const [showLocationModal, setShowLocationModal] = useState(false)
   const [selectedLocation, setSelectedLocation] = useState('')
   const [locationReason, setLocationReason] = useState('')
@@ -39,12 +28,8 @@ export default function WorkerProfile() {
   // ── Reviews state ──
   const [workerRating, setWorkerRating] = useState({ average_rating: 0, review_count: 0, reviews: [] })
   const [paymentChannels, setPaymentChannels] = useState([])
-  const [showAddChannel, setShowAddChannel] = useState(false)
-  const [editingChannelId, setEditingChannelId] = useState(null)
-  const [channelForm, setChannelForm] = useState({ provider: '', account_holder: '', account_number: '', qr_image_url: '' })
   const [reviewsLoading, setReviewsLoading] = useState(true)
 
-  // Reward points
   const rewardPoints = calcRewardPoints(bookings)
 
   useEffect(() => {
@@ -57,14 +42,14 @@ export default function WorkerProfile() {
     })()
   }, [])
 
-  // Fetch payment channels on mount
+  // Fetch payment channels (read‑only)
   useEffect(() => {
     api.getPaymentChannels()
       .then(res => { if (res?.success) setPaymentChannels(res.data) })
       .catch(() => {})
   }, [])
 
-  // Fetch worker reviews on mount and when profile.id is available
+  // Fetch worker reviews
   useEffect(() => {
     if (!profile?.id) return
     setReviewsLoading(true)
@@ -78,12 +63,10 @@ export default function WorkerProfile() {
       .finally(() => setReviewsLoading(false))
   }, [profile?.id])
 
-    // Listen for live review.created events and refresh reviews
   const { socket } = useSocket()
 
   useEffect(() => {
     if (!socket || !profile?.id) return
-
     const handleReviewCreated = () => {
       api.getWorkerReviews(profile.id)
         .then(res => {
@@ -93,7 +76,6 @@ export default function WorkerProfile() {
         })
         .catch(console.error)
     }
-
     socket.on('review.created', handleReviewCreated)
     return () => socket.off('review.created', handleReviewCreated)
   }, [socket, profile?.id])
@@ -101,34 +83,6 @@ export default function WorkerProfile() {
   if (!profile) {
     return <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-secondary)' }}>Loading...</div>
   }
-
-  const startEdit = () => {
-    setName(profile?.name || '')
-    setPhone(profile?.phone || '')
-    setBio(profile?.bio || '')
-    setSkills((profile?.skills || []).join(', '))
-    setHourlyRate(profile?.hourly_rate || '')
-    setPhotoUrl(profile?.photo_url || '')
-    setEditing(true)
-  }
-
-  const handleSave = async () => {
-    setSaving(true)
-    await updateProfile({
-      name,
-      phone,
-      bio,
-      skills: skills.split(',').map(s => s.trim()).filter(Boolean),
-      hourly_rate: parseInt(hourlyRate) || 500,
-      photo_url: photoUrl,
-    })
-    setSaving(false)
-    setEditing(false)
-  }
-
-  const displayProfile = editing
-    ? { ...profile, name, phone, bio, skills: skills.split(',').map(s => s.trim()).filter(Boolean), hourly_rate: parseInt(hourlyRate) || 500, photo_url: photoUrl }
-    : profile
 
   const primaryProfession = profile?.primary_skill || 'Not set'
   const secondaryProfessions = profile?.secondary_roles || []
@@ -186,7 +140,7 @@ export default function WorkerProfile() {
         </div>
       </div>
 
-      {/* Reward Points Card (unchanged) */}
+      {/* Reward Points Card */}
       <div style={{
         background: 'var(--bg-surface)', border: '1px solid var(--border)',
         borderRadius: 'var(--radius-lg)', padding: 22, marginBottom: 16,
@@ -256,34 +210,52 @@ export default function WorkerProfile() {
         </div>
       )}
 
-      {/* Editable profile section (rendered by ElementRenderer) */}
+      {/* Read‑only profile details (editing moved to Settings) */}
       <div style={{
         background: 'var(--bg-surface)', border: '1px solid var(--border)',
         borderRadius: 'var(--radius-lg)', padding: 20, marginBottom: 16,
       }}>
-        <ElementRenderer
-          elementId="profileAvatar"
-          overrideData={{ profile: displayProfile }}
-        />
-        <ElementRenderer
-          elementId="profileFieldGroup"
-          overrideData={{
-            profile: displayProfile,
-            isEditing: editing,
-          }}
-        />
-        <div style={{ marginTop: 8 }}>
-          <button onClick={editing ? handleSave : startEdit} disabled={saving} style={{
-            padding: '10px 20px', borderRadius: 8, border: 'none',
-            background: editing ? (saving ? '#94a3b8' : 'var(--accent-green)') : 'var(--accent-blue)',
-            color: '#fff', fontWeight: 600, cursor: 'pointer'
-          }}>
-            {editing ? (saving ? 'Saving...' : 'Save Changes') : 'Edit Profile'}
-          </button>
+        <div style={{ fontSize: 'var(--font-title)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 12 }}>
+          Profile Details
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div>
+            <span style={{ fontSize: 'var(--font-body-sm)', fontWeight: 600, color: 'var(--text-secondary)' }}>Name: </span>
+            <span style={{ fontSize: 'var(--font-body)', color: 'var(--text-primary)' }}>{profile.name || '—'}</span>
+          </div>
+          <div>
+            <span style={{ fontSize: 'var(--font-body-sm)', fontWeight: 600, color: 'var(--text-secondary)' }}>Email: </span>
+            <span style={{ fontSize: 'var(--font-body)', color: 'var(--text-primary)' }}>{profile.email || '—'}</span>
+          </div>
+          <div>
+            <span style={{ fontSize: 'var(--font-body-sm)', fontWeight: 600, color: 'var(--text-secondary)' }}>Phone: </span>
+            <span style={{ fontSize: 'var(--font-body)', color: 'var(--text-primary)' }}>{profile.phone || '—'}</span>
+          </div>
+          <div>
+            <span style={{ fontSize: 'var(--font-body-sm)', fontWeight: 600, color: 'var(--text-secondary)' }}>Bio: </span>
+            <span style={{ fontSize: 'var(--font-body)', color: 'var(--text-primary)' }}>{profile.bio || '—'}</span>
+          </div>
+          <div>
+            <span style={{ fontSize: 'var(--font-body-sm)', fontWeight: 600, color: 'var(--text-secondary)' }}>Skills: </span>
+            <span style={{ fontSize: 'var(--font-body)', color: 'var(--text-primary)' }}>
+              {(profile.skills || []).join(', ') || '—'}
+            </span>
+          </div>
+          <div>
+            <span style={{ fontSize: 'var(--font-body-sm)', fontWeight: 600, color: 'var(--text-secondary)' }}>Hourly Rate: </span>
+            <span style={{ fontSize: 'var(--font-body)', color: 'var(--text-primary)' }}>Rs {profile.hourly_rate || 500}</span>
+          </div>
+          <div>
+            <span style={{ fontSize: 'var(--font-body-sm)', fontWeight: 600, color: 'var(--text-secondary)' }}>Photo URL: </span>
+            <span style={{ fontSize: 'var(--font-body)', color: 'var(--text-primary)' }}>{profile.photo_url || 'No photo set'}</span>
+          </div>
+        </div>
+        <div style={{ marginTop: 16, fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)' }}>
+          ✏️ Edit your profile in <span style={{ color: 'var(--accent-blue)', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => navigate('/worker/settings')}>Settings</span>.
         </div>
       </div>
 
-            {/* ── Reviews Section (compact) ── */}
+      {/* Reviews Section */}
       <div style={{
         background: 'var(--bg-surface)',
         border: '1px solid var(--border)',
@@ -294,7 +266,6 @@ export default function WorkerProfile() {
         <div style={{ fontSize: 'var(--font-title)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6 }}>
           Reviews
         </div>
-
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-primary)' }}>
             ★ {workerRating.average_rating != null ? Number(workerRating.average_rating).toFixed(1) : '0.0'}
@@ -305,7 +276,7 @@ export default function WorkerProfile() {
         </div>
       </div>
 
-      {/* ── Payment Channels ── */}
+      {/* Payment Channels (read‑only) */}
       <div style={{
         background: 'var(--bg-surface)',
         border: '1px solid var(--border)',
@@ -313,102 +284,34 @@ export default function WorkerProfile() {
         padding: 20,
         marginBottom: 16,
       }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <div>
-            <div style={{ fontSize: 'var(--font-title)', fontWeight: 700, color: 'var(--text-primary)' }}>
-              💳 Payment Channels
-            </div>
-            <div style={{ fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)', marginTop: 2 }}>
-              Add how clients can pay you
-            </div>
-          </div>
-          <button onClick={() => { setShowAddChannel(true); setEditingChannelId(null); setChannelForm({ provider: '', account_holder: '', account_number: '', qr_image_url: '' }); }} style={{
-            padding: '6px 14px', borderRadius: 6, border: '1px solid var(--accent-blue)',
-            background: 'transparent', color: 'var(--accent-blue)', fontSize: 12, fontWeight: 600, cursor: 'pointer',
-          }}>+ Add</button>
+        <div style={{ fontSize: 'var(--font-title)', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6 }}>
+          💳 Payment Channels
         </div>
-
-        {paymentChannels.length === 0 && !showAddChannel && (
+        {paymentChannels.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 20, color: 'var(--text-secondary)', fontSize: 13 }}>
             No payment channels added yet.
           </div>
-        )}
-
-        {/* Channel list */}
-        {paymentChannels.map(ch => (
-          <div key={ch.id} style={{
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            padding: '10px 0', borderBottom: '1px solid var(--border)',
-          }}>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
-                {ch.provider?.toUpperCase()} — {ch.account_number || ch.account_holder}
+        ) : (
+          paymentChannels.map(ch => (
+            <div key={ch.id} style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              padding: '10px 0', borderBottom: '1px solid var(--border)',
+            }}>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+                  {ch.provider?.toUpperCase()} — {ch.account_number || ch.account_holder}
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
+                  {ch.account_holder} · {ch.is_active ? '🟢 Active' : '🔴 Inactive'}
+                </div>
               </div>
-              <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
-                {ch.account_holder} · {ch.is_active ? '🟢 Active' : '🔴 Inactive'}
-              </div>
             </div>
-            <div style={{ display: 'flex', gap: 6 }}>
-              <button onClick={() => {
-                setEditingChannelId(ch.id);
-                setChannelForm({ provider: ch.provider, account_holder: ch.account_holder || '', account_number: ch.account_number || '', qr_image_url: ch.qr_image_url || '' });
-                setShowAddChannel(true);
-              }} style={{ padding: '4px 10px', borderRadius: 4, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', fontSize: 11, cursor: 'pointer' }}>Edit</button>
-              <button onClick={async () => {
-                if (confirm('Remove this channel?')) {
-                  await api.deletePaymentChannel(ch.id);
-                  setPaymentChannels(prev => prev.filter(c => c.id !== ch.id));
-                }
-              }} style={{ padding: '4px 10px', borderRadius: 4, border: '1px solid var(--accent-red)', background: 'transparent', color: 'var(--accent-red)', fontSize: 11, cursor: 'pointer' }}>Remove</button>
-            </div>
-          </div>
-        ))}
-
-        {/* Add / Edit form */}
-        {showAddChannel && (
-          <div style={{ marginTop: 12, padding: 14, background: 'var(--bg-surface2)', borderRadius: 8, border: '1px solid var(--border)' }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 10 }}>
-              {editingChannelId ? 'Edit Channel' : 'New Channel'}
-            </div>
-            <select value={channelForm.provider} onChange={e => setChannelForm(f => ({ ...f, provider: e.target.value }))} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg-surface)', color: 'var(--text-primary)', fontSize: 13, marginBottom: 8 }}>
-              <option value="">Select provider...</option>
-              <option value="esewa">eSewa</option>
-              <option value="khalti">Khalti</option>
-              <option value="imepay">IME Pay</option>
-              <option value="bank">Bank Transfer</option>
-            </select>
-            <input placeholder="Account Holder Name" value={channelForm.account_holder} onChange={e => setChannelForm(f => ({ ...f, account_holder: e.target.value }))} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg-surface)', color: 'var(--text-primary)', fontSize: 13, marginBottom: 8 }} />
-            <input placeholder="Account Number / Wallet ID" value={channelForm.account_number} onChange={e => setChannelForm(f => ({ ...f, account_number: e.target.value }))} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg-surface)', color: 'var(--text-primary)', fontSize: 13, marginBottom: 8 }} />
-            <input placeholder="QR Image URL (optional)" value={channelForm.qr_image_url} onChange={e => setChannelForm(f => ({ ...f, qr_image_url: e.target.value }))} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg-surface)', color: 'var(--text-primary)', fontSize: 13, marginBottom: 10 }} />
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={async () => {
-                if (!channelForm.provider || !channelForm.account_number) return alert('Provider and account number are required');
-                if (editingChannelId) {
-                  const res = await api.updatePaymentChannel(editingChannelId, channelForm);
-                  if (res?.success) {
-                    setPaymentChannels(prev => prev.map(c => c.id === editingChannelId ? res.data : c));
-                    setShowAddChannel(false);
-                  }
-                } else {
-                  const res = await api.addPaymentChannel(channelForm);
-                  if (res?.success) {
-                    setPaymentChannels(prev => [...prev, res.data]);
-                    setShowAddChannel(false);
-                  }
-                }
-              }} style={{ flex: 1, padding: 8, borderRadius: 6, border: 'none', background: 'var(--accent-blue)', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-                {editingChannelId ? 'Update' : 'Save'}
-              </button>
-              <button onClick={() => { setShowAddChannel(false); setEditingChannelId(null); }} style={{ padding: 8, borderRadius: 6, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer' }}>Cancel</button>
-            </div>
-          </div>
+          ))
         )}
+        <div style={{ marginTop: 12, fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)' }}>
+          ✏️ Manage payment methods in <span style={{ color: 'var(--accent-blue)', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => navigate('/worker/settings')}>Settings</span>.
+        </div>
       </div>
-      
-      <ElementRenderer
-        elementId="profileStatsRow"
-        overrideData={{ profile }}
-      />
     </div>
   )
 }

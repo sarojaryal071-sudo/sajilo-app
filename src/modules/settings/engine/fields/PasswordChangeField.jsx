@@ -1,0 +1,139 @@
+// sajilo-app/src/modules/settings/engine/fields/PasswordChangeField.jsx
+import { useState } from 'react';
+import { useSettings } from '../../useSettings';
+
+function PasswordInput({ placeholder, value, onChange }) {
+  const [show, setShow] = useState(false);
+
+  return (
+    <div style={{ position: 'relative', marginBottom: 12 }}>
+      <input
+        type={show ? 'text' : 'password'}
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        style={{
+          width: '100%',
+          padding: '10px 40px 10px 12px',
+          borderRadius: 8,
+          border: '1px solid var(--border)',
+          background: 'var(--bg-surface2)',
+          color: 'var(--text-primary)',
+          fontSize: 14,
+          outline: 'none',
+        }}
+      />
+      <button
+        type="button"
+        onClick={() => setShow(!show)}
+        style={{
+          position: 'absolute',
+          right: 10,
+          top: '50%',
+          transform: 'translateY(-50%)',
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          fontSize: 16,
+          color: 'var(--text-secondary)',
+          padding: 0,
+          lineHeight: 1,
+        }}
+        tabIndex={-1}
+      >
+        {show ? '🙈' : '👁️'}
+      </button>
+    </div>
+  );
+}
+
+export default function PasswordChangeField({ field }) {
+  const { updateSettings } = useSettings();
+
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setMessage('');
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setMessage('All fields are required.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setMessage('New passwords do not match.');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await updateSettings({
+        security: {
+          currentPassword,
+          newPassword,
+          confirmPassword,
+        },
+      });
+      setMessage('Password changed successfully.');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err) {
+      setMessage(err?.message || 'Failed to change password.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} style={{ padding: '8px 0' }}>
+      <PasswordInput
+        placeholder="Current password"
+        value={currentPassword}
+        onChange={setCurrentPassword}
+      />
+      <PasswordInput
+        placeholder="New password"
+        value={newPassword}
+        onChange={setNewPassword}
+      />
+      <PasswordInput
+        placeholder="Confirm new password"
+        value={confirmPassword}
+        onChange={setConfirmPassword}
+      />
+
+      {message && (
+        <div style={{
+          fontSize: 13,
+          color: message.includes('success') ? 'var(--accent-green)' : 'var(--accent-red)',
+          marginBottom: 12,
+        }}>
+          {message}
+        </div>
+      )}
+
+      <button
+        type="submit"
+        disabled={saving}
+        style={{
+          width: '100%',
+          padding: '12px 0',
+          borderRadius: 8,
+          border: 'none',
+          background: saving ? '#94a3b8' : 'var(--accent-blue)',
+          color: '#fff',
+          fontSize: 14,
+          fontWeight: 600,
+          cursor: saving ? 'wait' : 'pointer',
+        }}
+      >
+        {saving ? 'Changing…' : 'Change Password'}
+      </button>
+    </form>
+  );
+}

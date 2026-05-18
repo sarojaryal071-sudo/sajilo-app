@@ -14,6 +14,7 @@ import conversationState from '../services/chat/ConversationStateManager.js'
 import workerConfig from '../config/ui/worker.config.js'
 import EmergencyModal from '../components/EmergencyModal.jsx'
 import NotificationBellV2 from '../governance/NotificationBellV2.jsx'
+import { SettingsProvider } from '../modules/settings/SettingsContext';
 
 function WorkerLayoutInner({ children, onLogout, onSOS }) {
   const navigate = useNavigate()
@@ -322,5 +323,15 @@ function WorkerLayoutInner({ children, onLogout, onSOS }) {
 }
 
 export default function WorkerLayout({ children, onLogout, onSOS }) {
-  return <WorkerProvider><BookingProvider><WorkerLayoutInner onLogout={onLogout} onSOS={onSOS}>{children}</WorkerLayoutInner></BookingProvider></WorkerProvider>
+  return (
+    <SettingsProvider>
+      <WorkerProvider>
+        <BookingProvider>
+          <WorkerLayoutInner onLogout={onLogout} onSOS={onSOS}>
+            {children}
+          </WorkerLayoutInner>
+        </BookingProvider>
+      </WorkerProvider>
+    </SettingsProvider>
+  );
 }

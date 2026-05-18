@@ -42,10 +42,13 @@ import AdminPolicies from '../screens/admin/AdminPolicies.jsx'
 import AdminFeatureFlags from '../screens/admin/AdminFeatureFlags.jsx'
 import AdminSimulate from '../screens/admin/AdminSimulate.jsx'
 import InboxScreen from '../screens/InboxScreen.jsx'
+import SettingsScreen from '../modules/settings/components/SettingsScreen.jsx';
 
 const routes = [
   { path: '/inbox', component: InboxScreen, role: 'customer' },
   { path: '/inbox', component: InboxScreen, role: 'worker' },
+  { path: '/settings', component: SettingsScreen, role: 'customer' },
+{ path: '/worker/settings', component: SettingsScreen, role: 'worker' },
 
   // Add as first route:
 { path: '/welcome', component: WelcomeScreen, public: true },
@@ -55,7 +58,6 @@ const routes = [
   { path: '/worker/apply', component: WorkerApply, role: 'worker' },
   { path: '/worker/pending', component: WorkerPending, role: 'worker' },
   { path: '/worker/review', component: WorkerVerificationReview, role: 'worker' },
-
 
   { path: '/', component: HomeScreen, role: 'customer' },
   { path: '/home', component: HomeScreen, role: 'customer' },
