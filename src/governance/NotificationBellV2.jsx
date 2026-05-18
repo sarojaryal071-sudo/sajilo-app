@@ -2,6 +2,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUnifiedNotifications } from './useUnifiedNotifications.js';
+import { resolveNotificationRoute } from './notificationRouting.js';
+import { getCurrentUser } from '../config/auth.js';
 
 export default function NotificationBellV2({
   userNotificationsEnabled = true,
@@ -12,6 +14,8 @@ export default function NotificationBellV2({
   const containerRef = useRef(null);
   const buttonRef = useRef(null);
   const navigate = useNavigate();
+  const currentUser = getCurrentUser();
+  const userRole = currentUser?.role || 'customer';
 
   const isMobile = () => typeof window !== 'undefined' && window.innerWidth < 768;
 
@@ -198,9 +202,14 @@ export default function NotificationBellV2({
         {visibleNotifications.map(n => (
           <div
             key={n.id}
-            onClick={() => {
+                        onClick={() => {
               if (!n.read && markAsRead) {
                 markAsRead(n.id);
+              }
+              const route = resolveNotificationRoute(n, userRole);
+              if (route) {
+                navigate(route);
+                setOpen(false);
               }
             }}
             style={{

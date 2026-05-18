@@ -6,6 +6,8 @@ import conversationState from '../services/chat/ConversationStateManager.js'
 import { API_URL } from '../services/api.js'
 import { getCurrentUser } from '../config/auth.js'
 import { useUnifiedNotifications } from '../governance/useUnifiedNotifications.js'
+import { resolveNotificationRoute } from '../governance/notificationRouting.js';
+
 
 const FALLBACK_ADMIN_ID = 32
 
@@ -463,8 +465,8 @@ export default function InboxScreen() {
                     if (!isRead) {
                       try { await markAsRead(n.id) } catch (_) {}
                     }
-                    // Optional navigation based on entityType – can be extended later
-                    // const path = getPath(n.type); if (path) navigate(path);
+                    const route = resolveNotificationRoute(n, currentUser?.role);
+                    if (route) navigate(route);
                   }
 
                   return (
