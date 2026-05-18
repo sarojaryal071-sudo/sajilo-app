@@ -1,3 +1,4 @@
+// sajilo-app/src/modules/settings/settings.service.js
 import { API_URL } from '../../services/api.js';
 
 function getToken() {

@@ -3,7 +3,7 @@ export const sharedSections = {
   notification: {
     label: 'Notifications',
     fields: [
-      { key: 'emailNotifications', type: 'toggle', label: 'Email Notifications' },
+      { key: 'emailNotifications', type: 'toggle', label: 'Email Notifications', metadata: { auditSensitive: true } },
       { key: 'pushNotifications', type: 'toggle', label: 'Push Notifications' },
       { key: 'smsNotifications', type: 'toggle', label: 'SMS Notifications' },
     ],

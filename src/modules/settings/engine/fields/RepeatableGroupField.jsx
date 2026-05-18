@@ -8,7 +8,6 @@ function PaymentCard({ entry, index, total, onUpdate, onRemove, onSetPrimary, er
   const isFirst = index === 0;
   const cardLabel = `Payment method ${index + 1} of ${total}`;
 
-  // Focus the first input when this card is newly created (index === total - 1)
   useEffect(() => {
     if (index === total - 1 && firstInputRef.current) {
       firstInputRef.current.focus();
@@ -23,6 +22,10 @@ function PaymentCard({ entry, index, total, onUpdate, onRemove, onSetPrimary, er
     onUpdate(index, patch);
   };
 
+  const handleFocus = (e) => {
+    e.target.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+  };
+
   return (
     <div
       role="group"
@@ -34,9 +37,9 @@ function PaymentCard({ entry, index, total, onUpdate, onRemove, onSetPrimary, er
         padding: 14,
         marginBottom: 12,
         position: 'relative',
+        animation: (index === total - 1 && total > 1) ? 'slideDown 0.2s ease' : 'none',
       }}
     >
-      {/* Primary badge */}
       {entry.isPrimary && (
         <span
           aria-label="Primary payment method"
@@ -50,14 +53,14 @@ function PaymentCard({ entry, index, total, onUpdate, onRemove, onSetPrimary, er
         </span>
       )}
 
-      {/* Type selector */}
       <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>
         Type
       </label>
       <select
-        ref={!isFirst ? null : firstInputRef}   // focus on the first card's type selector
+        ref={!isFirst ? null : firstInputRef}
         value={entry.type}
         onChange={(e) => handleChange('type', e.target.value)}
+        onFocus={handleFocus}
         aria-label="Payment type"
         style={{
           width: '100%', padding: '8px 10px', borderRadius: 6,
@@ -70,7 +73,6 @@ function PaymentCard({ entry, index, total, onUpdate, onRemove, onSetPrimary, er
         ))}
       </select>
 
-      {/* Place / Provider name */}
       <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>
         {entry.type === 'bank' ? 'Bank Name' : entry.type === 'wallet' ? 'Wallet Provider' : 'Cash'}
       </label>
@@ -79,12 +81,12 @@ function PaymentCard({ entry, index, total, onUpdate, onRemove, onSetPrimary, er
         placeholder="Enter name"
         value={entry.place}
         onChange={(e) => handleChange('place', e.target.value)}
+        onFocus={handleFocus}
         aria-label="Provider name"
         style={inputStyle}
       />
       {errors?.place && <div style={errorStyle}>{errors.place}</div>}
 
-      {/* Account Name */}
       <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>
         Account Holder
       </label>
@@ -93,12 +95,12 @@ function PaymentCard({ entry, index, total, onUpdate, onRemove, onSetPrimary, er
         placeholder="Account holder name"
         value={entry.accountName}
         onChange={(e) => handleChange('accountName', e.target.value)}
+        onFocus={handleFocus}
         aria-label="Account holder name"
         style={inputStyle}
       />
       {errors?.accountName && <div style={errorStyle}>{errors.accountName}</div>}
 
-      {/* Account Number */}
       <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>
         Account Number / ID
       </label>
@@ -107,12 +109,12 @@ function PaymentCard({ entry, index, total, onUpdate, onRemove, onSetPrimary, er
         placeholder="Account number or wallet ID"
         value={entry.accountNumber}
         onChange={(e) => handleChange('accountNumber', e.target.value)}
+        onFocus={handleFocus}
         aria-label="Account number"
         style={inputStyle}
       />
       {errors?.accountNumber && <div style={errorStyle}>{errors.accountNumber}</div>}
 
-      {/* Actions */}
       <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
         <button
           onClick={() => onSetPrimary(index)}
@@ -171,7 +173,6 @@ export default function RepeatableGroupField({ field, value = [], onChange }) {
   } = useRepeatableGroup(value, onChange, createDefaultPayment);
 
   const errors = (value || []).map(validatePayment);
-  const addButtonRef = useRef(null);
 
   return (
     <div role="list" aria-label="Payment methods">
@@ -188,7 +189,6 @@ export default function RepeatableGroupField({ field, value = [], onChange }) {
         />
       ))}
       <button
-        ref={addButtonRef}
         onClick={addEntry}
         aria-label="Add payment method"
         style={{
@@ -199,6 +199,7 @@ export default function RepeatableGroupField({ field, value = [], onChange }) {
       >
         + Add Payment Method
       </button>
+      <style>{`@keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }`}</style>
     </div>
   );
 }

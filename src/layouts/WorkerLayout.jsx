@@ -15,6 +15,7 @@ import workerConfig from '../config/ui/worker.config.js'
 import EmergencyModal from '../components/EmergencyModal.jsx'
 import NotificationBellV2 from '../governance/NotificationBellV2.jsx'
 import { SettingsProvider } from '../modules/settings/SettingsContext';
+import { AppConfigProvider } from '../modules/app-config/AppConfigContext';
 
 function WorkerLayoutInner({ children, onLogout, onSOS }) {
   const navigate = useNavigate()
@@ -324,14 +325,16 @@ function WorkerLayoutInner({ children, onLogout, onSOS }) {
 
 export default function WorkerLayout({ children, onLogout, onSOS }) {
   return (
-    <SettingsProvider>
-      <WorkerProvider>
-        <BookingProvider>
-          <WorkerLayoutInner onLogout={onLogout} onSOS={onSOS}>
-            {children}
-          </WorkerLayoutInner>
-        </BookingProvider>
-      </WorkerProvider>
-    </SettingsProvider>
+    <AppConfigProvider>
+      <SettingsProvider>
+        <WorkerProvider>
+          <BookingProvider>
+            <WorkerLayoutInner onLogout={onLogout} onSOS={onSOS}>
+              {children}
+            </WorkerLayoutInner>
+          </BookingProvider>
+        </WorkerProvider>
+      </SettingsProvider>
+    </AppConfigProvider>
   );
 }

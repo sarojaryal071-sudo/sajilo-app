@@ -1,16 +1,14 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useSettings } from '../useSettings';
 import { clientRegistry } from '../registries/clientRegistry';
 import { workerRegistry } from '../registries/workerRegistry';
 import { getCurrentUser } from '../../../config/auth';
+import { useAppConfig } from '../../app-config/useAppConfig';
 import SettingsEngine from '../engine/SettingsEngine';
 import DangerZoneSection from './DangerZoneSection';
 import SaveButton from './SaveButton';
+import SettingsAuditSection from './SettingsAuditSection';
 
-/**
- * Convert a section map (e.g. { account: { label, fields } })
- * into an array of { key, title, fields } for the engine.
- */
 function registryToArray(registry) {
   return Object.entries(registry).map(([key, section]) => ({
     key,
@@ -27,30 +25,28 @@ export default function SettingsScreen() {
     updateSettings,
     updateSetting,
     refreshSettings,
+    sectionSaveStates,
+    retrySection,
   } = useSettings();
 
+  const { appConfig } = useAppConfig();
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
 
-  // Choose the correct registry based on role
   const currentUser = getCurrentUser();
   const userRole = currentUser?.role || 'customer';
   const registryObject = userRole === 'worker' ? workerRegistry : clientRegistry;
   const registryArray = registryToArray(registryObject);
 
-  // ── Handle field changes (live, debounced save) ──
   const handleFieldChange = useCallback((sectionKey, fieldKey, value) => {
     const path = `${sectionKey}.${fieldKey}`;
     updateSetting(path, value);
   }, [updateSetting]);
 
-  // ── Manual save (full save, flushes any pending debounced changes) ──
   const handleSave = async () => {
     setSaving(true);
     setSaveMessage('');
     try {
-      // We call the legacy updateSettings with the current settings to force a sync.
-      // Alternatively, we can flush pending via flushPending, but the old method is safe.
       await updateSettings(settings);
       setSaveMessage('Settings saved successfully!');
       await refreshSettings();
@@ -89,29 +85,36 @@ export default function SettingsScreen() {
         </div>
       )}
 
-      {/* Registry‑driven engine */}
       <SettingsEngine
         registry={registryArray}
         values={settings}
         onChange={handleFieldChange}
+        saveStates={sectionSaveStates}
+        onRetrySection={retrySection}
       />
 
-      {/* Danger Zone (account actions) */}
       <DangerZoneSection />
-            {/* App Info Footer */}
+      <SettingsAuditSection />
+
+      {/* App Info Footer – now from deployment config */}
       <div style={{
-        marginTop: 32,
-        padding: '16px 0',
+        marginTop: 40,
+        padding: '24px 0 16px',
         textAlign: 'center',
         color: 'var(--text-secondary)',
-        fontSize: 12,
         borderTop: '1px solid var(--border)',
       }}>
-        <div>App Version {settings?.appInfo?.version || '—'}</div>
-        <div style={{ marginTop: 4 }}>Build {settings?.appInfo?.build || '—'}</div>
-        <div style={{ marginTop: 4 }}>Developer {settings?.appInfo?.developer || '—'}</div>
+        <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>
+          {appConfig?.app?.name || 'Sajilo'}
+        </div>
+        <div style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.8 }}>
+          <div>Version {appConfig?.app?.version || '—'}</div>
+          <div>Build {appConfig?.app?.build || '—'}</div>
+          <div style={{ fontSize: 11, opacity: 0.7 }}>
+            {appConfig?.app?.developer || '—'}
+          </div>
+        </div>
       </div>
-      
     </div>
   );
 }

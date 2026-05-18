@@ -1,3 +1,4 @@
+// sajilo-app/src/layouts/MobileDrawer.jsx
 import { useRef, useEffect } from 'react'
 import getNavigation from '../config/navigation.js'
 import mobile from '../config/ui/mobile.config.js'
@@ -35,6 +36,22 @@ export default function MobileDrawer({ isOpen, onClose, navigate, t, lang, setLa
           </button>
         ))}
 
+        {/* ⚙️ Settings — direct entry from drawer */}
+        <button
+          onClick={() => { navigate('/settings'); onClose() }}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 12,
+            padding: mobile.drawer.itemPadding,
+            border: 'none', background: 'transparent', cursor: 'pointer',
+            width: '100%', fontSize: mobile.drawer.itemFontSize,
+            fontWeight: mobile.drawer.itemWeight, color: 'var(--text-primary)',
+            borderBottom: mobile.drawer.itemBorder,
+          }}
+        >
+          <span style={{ fontSize: mobile.drawer.iconSize }}>⚙️</span>
+          Settings
+        </button>
+
         {/* Language Toggle — closes drawer so page re-renders */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
           <span style={{ fontSize: 18 }}>🌐</span>
@@ -42,7 +59,7 @@ export default function MobileDrawer({ isOpen, onClose, navigate, t, lang, setLa
             const val = e.target.value
             setLang(val)
             localStorage.setItem('sajilo_lang', val)
-            window.dispatchEvent(new Event('langChange'))  // ← ADD THIS
+            window.dispatchEvent(new Event('langChange'))
             onClose()
           }} style={{
             border: 'none', background: 'transparent', color: 'var(--text-primary)',

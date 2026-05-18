@@ -4,7 +4,7 @@ export const clientSections = {
     label: 'Account',
     fields: [
       { key: 'fullName', type: 'text', label: 'Full Name' },
-      { key: 'email', type: 'email', label: 'Email' },
+        { key: 'email', type: 'email', label: 'Email', metadata: { auditSensitive: true, requiresReverification: true } },
       { key: 'phone', type: 'tel', label: 'Phone' },
     ],
   },

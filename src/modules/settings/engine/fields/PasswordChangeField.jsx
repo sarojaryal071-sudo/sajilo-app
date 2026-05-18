@@ -6,13 +6,14 @@ function PasswordInput({ placeholder, value, onChange, autoComplete }) {
   const [show, setShow] = useState(false);
 
   return (
-    <div style={{ position: 'relative', marginBottom: 12 }}>
+    <div style={{ position: 'relative', marginBottom: 4 }}>
       <input
         type={show ? 'text' : 'password'}
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         autoComplete={autoComplete}
+        onFocus={(e) => e.target.scrollIntoView?.({ behavior: 'smooth', block: 'center' })}
         style={{
           width: '100%',
           padding: '10px 40px 10px 12px',
@@ -44,6 +45,15 @@ function PasswordInput({ placeholder, value, onChange, autoComplete }) {
       >
         {show ? '🙈' : '👁️'}
       </button>
+      <div style={{
+        minHeight: 20,
+        fontSize: 12,
+        color: 'var(--accent-red)',
+        marginTop: 4,
+        transition: 'opacity 0.2s',
+      }}>
+        {/* future inline error */}
+      </div>
     </div>
   );
 }
@@ -57,7 +67,6 @@ export default function PasswordChangeField({ field }) {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
 
-  // Determine if the form can be submitted
   const isFormValid =
     currentPassword.trim().length > 0 &&
     newPassword.trim().length > 0 &&

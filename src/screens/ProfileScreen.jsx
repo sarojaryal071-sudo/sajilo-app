@@ -1,3 +1,4 @@
+// sajilo-app/src/screens/ProfileScreen.jsx
 import { useState, useEffect } from 'react'
 import { api } from '../services/api.js'
 import { useContent } from '../hooks/useContent.js'
@@ -14,41 +15,6 @@ function calcRewardPoints(bookings) {
     .filter(b => b.status === 'completed')
     .reduce((total, b) => total + (JOB_SIZE_POINTS[b.job_size] || 0), 0)
 }
-
-// ── Helper component – one per menu row ──
-function MenuRow({ item, navigate }) {
-  const label = useContent(item.labelKey, item.labelKey)
-  const desc = useContent(item.descKey, item.descKey)
-  return (
-    <div
-      onClick={() => item.action && navigate(`/${item.action}`)}
-      style={{
-        background: 'var(--bg-surface)', border: '1px solid var(--border)',
-        borderRadius: 'var(--radius-md)', padding: '14px 18px',
-        display: 'flex', alignItems: 'center', gap: 14,
-        cursor: item.action ? 'pointer' : 'default',
-      }}
-    >
-      <span style={{ fontSize: 22 }}>{item.icon}</span>
-      <div>
-        <div style={{ fontSize: 'var(--font-body)', fontWeight: 600, color: 'var(--text-primary)' }}>
-          {label}
-        </div>
-        <div style={{ fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)' }}>
-          {desc}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-const menuItems = [
-  { icon: '📋', labelKey: 'profile.myBookings', descKey: 'profile.viewHistory', action: 'bookings' },
-  { icon: '💳', labelKey: 'profile.transactions', descKey: 'profile.cardsWallet', action: null },
-  { icon: '★', labelKey: 'profile.safety', descKey: 'profile.verification', action: null },
-  { icon: '⚙️', labelKey: 'profile.settings', descKey: 'profile.accountPrivacy', action: 'settings' },
-  { icon: '🚀', labelKey: 'profile.becomeWorker', descKey: 'profile.earn', action: 'worker/apply' },
-]
 
 export default function ProfileScreen({ navigate }) {
   const [user, setUser] = useState(null)
@@ -188,13 +154,6 @@ export default function ProfileScreen({ navigate }) {
           <div style={{ fontSize: 'var(--font-body-lg)', fontWeight: 700, color: 'var(--text-primary)' }}>Free</div>
         </div>
         <span style={{ color: 'var(--accent-blue)', fontSize: 'var(--font-body-sm)' }}>Upgrade →</span>
-      </div>
-
-      {/* Menu items */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-        {menuItems.map((item, idx) => (
-          <MenuRow key={idx} item={item} navigate={navigate} />
-        ))}
       </div>
     </div>
   )

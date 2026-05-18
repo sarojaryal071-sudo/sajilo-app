@@ -1,10 +1,10 @@
 // sajilo-app/src/modules/settings/SettingsContext.jsx
 import { createContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { getSettings as fetchSettings, updateSettings as patchSettings } from './settings.service';
+import { validateField } from './utils/validateSetting';
 
 export const SettingsContext = createContext(null);
 
-// Helper: set a deeply nested value by dot‑separated path (e.g. "account.fullName")
 function setNestedValue(obj, path, value) {
   const keys = path.split('.');
   const result = { ...obj };
@@ -18,16 +18,26 @@ function setNestedValue(obj, path, value) {
   return result;
 }
 
+function getNestedValue(obj, path) {
+  return path.split('.').reduce((acc, key) => (acc || {})[key], obj);
+}
+
+function sectionFromPath(path) {
+  return path.split('.')[0];
+}
+
 export function SettingsProvider({ children }) {
   const [settings, setSettings] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [sectionSaveStates, setSectionSaveStates] = useState({});
+  const [dirtySections, setDirtySections] = useState({});
+  const lastPayloadRef = useRef({});
+  const saveTimeoutsRef = useRef({});
 
-  // ── Debounce state ──
   const pendingChanges = useRef({});
   const saveTimeout = useRef(null);
 
-  // ── Initial fetch ──
   useEffect(() => {
     (async () => {
       try {
@@ -42,7 +52,6 @@ export function SettingsProvider({ children }) {
     })();
   }, []);
 
-  // ── Refresh ──
   const refreshSettings = useCallback(async () => {
     try {
       const data = await fetchSettings();
@@ -52,12 +61,28 @@ export function SettingsProvider({ children }) {
     }
   }, []);
 
-  // ── Flush pending changes to the backend ──
+  const clearSaveStatus = useCallback((section) => {
+    if (saveTimeoutsRef.current[section]) clearTimeout(saveTimeoutsRef.current[section]);
+    saveTimeoutsRef.current[section] = setTimeout(() => {
+      setSectionSaveStates(prev => {
+        const next = { ...prev };
+        if (next[section] === 'saved') delete next[section];
+        return next;
+      });
+    }, 2000);
+  }, []);
+
   const flushPending = useCallback(async () => {
     const changes = { ...pendingChanges.current };
     if (Object.keys(changes).length === 0) return;
 
-    // Clear pending before API call to prevent duplicate sends
+    const sections = [...new Set(Object.keys(changes).map(sectionFromPath))];
+    setSectionSaveStates(prev => {
+      const next = { ...prev };
+      sections.forEach(sec => { next[sec] = 'saving'; });
+      return next;
+    });
+
     pendingChanges.current = {};
     if (saveTimeout.current) {
       clearTimeout(saveTimeout.current);
@@ -67,43 +92,67 @@ export function SettingsProvider({ children }) {
     try {
       const updated = await patchSettings(changes);
       setSettings(updated);
+      lastPayloadRef.current = { ...lastPayloadRef.current, ...changes };
+      setSectionSaveStates(prev => {
+        const next = { ...prev };
+        sections.forEach(sec => { next[sec] = 'saved'; });
+        return next;
+      });
+      setDirtySections(prev => {
+        const next = { ...prev };
+        sections.forEach(sec => { delete next[sec]; });
+        return next;
+      });
+      sections.forEach(sec => clearSaveStatus(sec));
     } catch (err) {
       console.error('Failed to save settings:', err);
-      // Restore pending changes on failure so they aren’t lost
       pendingChanges.current = { ...changes, ...pendingChanges.current };
+      setSectionSaveStates(prev => {
+        const next = { ...prev };
+        sections.forEach(sec => { next[sec] = 'error'; });
+        return next;
+      });
     }
-  }, []);
+  }, [clearSaveStatus]);
 
-  // ── Debounced schedule ──
   const scheduleSave = useCallback(() => {
     if (saveTimeout.current) clearTimeout(saveTimeout.current);
-    saveTimeout.current = setTimeout(() => {
-      flushPending();
-    }, 800); // 800 ms debounce
+    saveTimeout.current = setTimeout(() => flushPending(), 800);
   }, [flushPending]);
 
-  // ── Single‑field update (used by FieldRenderer) ──
   const updateSetting = useCallback((path, value) => {
-    // Optimistic state update
-    setSettings(prev => {
-      const next = setNestedValue(prev, path, value);
-      return next;
-    });
+    // Validate against schema
+    const section = sectionFromPath(path);
+    const fieldKey = path.split('.').slice(1).join('.');
+    const errorMsg = validateField(section, fieldKey, value);
+    if (errorMsg) {
+      // Don't update, and set error state (could be passed to field)
+      console.warn(`Validation failed for ${path}: ${errorMsg}`);
+      return;
+    }
 
-    // Merge the change into pending and schedule save
+    const currentValue = getNestedValue(settings, path);
+    if (JSON.stringify(currentValue) === JSON.stringify(value)) return;
+
+    setSettings(prev => setNestedValue(prev, path, value));
     pendingChanges.current = setNestedValue(pendingChanges.current, path, value);
+    setDirtySections(prev => ({ ...prev, [section]: true }));
+    scheduleSave();
+  }, [settings, scheduleSave]);
+
+  const retrySection = useCallback((section) => {
+    const sectionPayload = {};
+    Object.keys(lastPayloadRef.current).forEach(key => {
+      if (sectionFromPath(key) === section) sectionPayload[key] = lastPayloadRef.current[key];
+    });
+    if (Object.keys(sectionPayload).length === 0) return;
+    pendingChanges.current = { ...pendingChanges.current, ...sectionPayload };
     scheduleSave();
   }, [scheduleSave]);
 
-  // ── Batch update (explicit, non‑debounced) ──
   const updateSettingsBatch = useCallback(async (updates) => {
-    // Clear any pending changes to avoid conflicts
-    if (saveTimeout.current) {
-      clearTimeout(saveTimeout.current);
-      saveTimeout.current = null;
-    }
+    if (saveTimeout.current) { clearTimeout(saveTimeout.current); saveTimeout.current = null; }
     pendingChanges.current = {};
-
     try {
       const updated = await patchSettings(updates);
       setSettings(updated);
@@ -114,7 +163,6 @@ export function SettingsProvider({ children }) {
     }
   }, []);
 
-  // ── Legacy updateSettings (still works as before) ──
   const updateSettings = useCallback(async (updates) => {
     try {
       const updated = await patchSettings(updates);
@@ -130,17 +178,19 @@ export function SettingsProvider({ children }) {
     settings,
     loading,
     error,
-    // legacy (backward‑compatible)
     updateSettings,
     refreshSettings,
-    // new
     updateSetting,
     updateSettingsBatch,
     flushPending,
+    sectionSaveStates,
+    dirtySections,
+    retrySection,
   }), [
     settings, loading, error,
     updateSettings, refreshSettings,
     updateSetting, updateSettingsBatch, flushPending,
+    sectionSaveStates, dirtySections, retrySection,
   ]);
 
   return (
