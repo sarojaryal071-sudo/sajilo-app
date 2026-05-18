@@ -1,5 +1,5 @@
 // sajilo-app/src/modules/settings/engine/fields/TextField.jsx
-export default function TextField({ field, value, onChange }) {
+export default function TextField({ field, value, onChange, onFocus, onBlur }) {
   const handleChange = (e) => {
     onChange(e.target.value);
   };
@@ -14,6 +14,8 @@ export default function TextField({ field, value, onChange }) {
       type={inputType}
       value={value || ''}
       onChange={handleChange}
+      onFocus={onFocus}
+      onBlur={onBlur}
       placeholder={field.placeholder || field.label}
       style={{
         width: '100%',

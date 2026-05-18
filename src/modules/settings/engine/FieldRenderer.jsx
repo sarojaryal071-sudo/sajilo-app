@@ -6,7 +6,7 @@ import fieldTypes from './fieldTypes';
  * @param {any} value – current value
  * @param {function} onChange – (newValue) => void
  */
-export default function FieldRenderer({ field, value, onChange }) {
+export default function FieldRenderer({ field, value, onChange, onFocus, onBlur }) {
   const Component = fieldTypes[field.type];
   if (!Component) {
     // Unknown type – fallback read‑only display
@@ -22,6 +22,8 @@ export default function FieldRenderer({ field, value, onChange }) {
       field={field}
       value={value}
       onChange={onChange}
+      onFocus={onFocus}
+      onBlur={onBlur}
     />
   );
 }

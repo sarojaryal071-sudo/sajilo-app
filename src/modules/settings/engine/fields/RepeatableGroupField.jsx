@@ -1,8 +1,20 @@
 // sajilo-app/src/modules/settings/engine/fields/RepeatableGroupField.jsx
+import { useRef, useEffect } from 'react';
 import useRepeatableGroup from '../hooks/useRepeatableGroup';
 import { createDefaultPayment, paymentTypes, validatePayment } from '../schemas/paymentSchema';
 
-function PaymentCard({ entry, index, onUpdate, onRemove, onSetPrimary, errors }) {
+function PaymentCard({ entry, index, total, onUpdate, onRemove, onSetPrimary, errors }) {
+  const firstInputRef = useRef(null);
+  const isFirst = index === 0;
+  const cardLabel = `Payment method ${index + 1} of ${total}`;
+
+  // Focus the first input when this card is newly created (index === total - 1)
+  useEffect(() => {
+    if (index === total - 1 && firstInputRef.current) {
+      firstInputRef.current.focus();
+    }
+  }, [index, total]);
+
   const handleChange = (field, value) => {
     const patch = { [field]: value };
     if (field === 'type') {
@@ -12,29 +24,41 @@ function PaymentCard({ entry, index, onUpdate, onRemove, onSetPrimary, errors })
   };
 
   return (
-    <div style={{
-      background: 'var(--bg-surface2)',
-      borderRadius: 8,
-      border: '1px solid var(--border)',
-      padding: 14,
-      marginBottom: 12,
-      position: 'relative',
-    }}>
+    <div
+      role="group"
+      aria-label={cardLabel}
+      style={{
+        background: 'var(--bg-surface2)',
+        borderRadius: 8,
+        border: entry.isPrimary ? '2px solid var(--accent-blue)' : '1px solid var(--border)',
+        padding: 14,
+        marginBottom: 12,
+        position: 'relative',
+      }}
+    >
       {/* Primary badge */}
       {entry.isPrimary && (
-        <span style={{
-          position: 'absolute', top: 6, right: 6,
-          background: 'var(--accent-green)', color: '#fff',
-          fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10,
-        }}>
+        <span
+          aria-label="Primary payment method"
+          style={{
+            position: 'absolute', top: 6, right: 6,
+            background: 'var(--accent-green)', color: '#fff',
+            fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10,
+          }}
+        >
           PRIMARY
         </span>
       )}
 
       {/* Type selector */}
+      <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>
+        Type
+      </label>
       <select
+        ref={!isFirst ? null : firstInputRef}   // focus on the first card's type selector
         value={entry.type}
         onChange={(e) => handleChange('type', e.target.value)}
+        aria-label="Payment type"
         style={{
           width: '100%', padding: '8px 10px', borderRadius: 6,
           border: '1px solid var(--border)', background: 'var(--bg-surface)',
@@ -47,31 +71,43 @@ function PaymentCard({ entry, index, onUpdate, onRemove, onSetPrimary, errors })
       </select>
 
       {/* Place / Provider name */}
+      <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>
+        {entry.type === 'bank' ? 'Bank Name' : entry.type === 'wallet' ? 'Wallet Provider' : 'Cash'}
+      </label>
       <input
         type="text"
-        placeholder={entry.type === 'bank' ? 'Bank Name' : entry.type === 'wallet' ? 'Wallet Provider' : 'Cash'}
+        placeholder="Enter name"
         value={entry.place}
         onChange={(e) => handleChange('place', e.target.value)}
+        aria-label="Provider name"
         style={inputStyle}
       />
       {errors?.place && <div style={errorStyle}>{errors.place}</div>}
 
       {/* Account Name */}
+      <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>
+        Account Holder
+      </label>
       <input
         type="text"
-        placeholder="Account Holder Name"
+        placeholder="Account holder name"
         value={entry.accountName}
         onChange={(e) => handleChange('accountName', e.target.value)}
+        aria-label="Account holder name"
         style={inputStyle}
       />
       {errors?.accountName && <div style={errorStyle}>{errors.accountName}</div>}
 
       {/* Account Number */}
+      <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 4 }}>
+        Account Number / ID
+      </label>
       <input
         type="text"
-        placeholder="Account Number / Wallet ID"
+        placeholder="Account number or wallet ID"
         value={entry.accountNumber}
         onChange={(e) => handleChange('accountNumber', e.target.value)}
+        aria-label="Account number"
         style={inputStyle}
       />
       {errors?.accountNumber && <div style={errorStyle}>{errors.accountNumber}</div>}
@@ -81,6 +117,7 @@ function PaymentCard({ entry, index, onUpdate, onRemove, onSetPrimary, errors })
         <button
           onClick={() => onSetPrimary(index)}
           disabled={entry.isPrimary}
+          aria-label={entry.isPrimary ? 'Primary payment method' : `Set as primary payment method`}
           style={{
             flex: 1, padding: '6px 0', borderRadius: 6,
             border: '1px solid var(--accent-blue)', background: entry.isPrimary ? 'var(--accent-blue)' : 'transparent',
@@ -92,6 +129,7 @@ function PaymentCard({ entry, index, onUpdate, onRemove, onSetPrimary, errors })
         </button>
         <button
           onClick={() => onRemove(index)}
+          aria-label={`Remove payment method ${index + 1}`}
           style={{
             padding: '6px 12px', borderRadius: 6,
             border: '1px solid var(--accent-red)', background: 'transparent',
@@ -132,16 +170,17 @@ export default function RepeatableGroupField({ field, value = [], onChange }) {
     setPrimary,
   } = useRepeatableGroup(value, onChange, createDefaultPayment);
 
-  // Validate all entries for display
   const errors = (value || []).map(validatePayment);
+  const addButtonRef = useRef(null);
 
   return (
-    <div>
+    <div role="list" aria-label="Payment methods">
       {(value || []).map((entry, index) => (
         <PaymentCard
           key={entry.id || index}
           entry={entry}
           index={index}
+          total={value.length}
           onUpdate={updateEntry}
           onRemove={removeEntry}
           onSetPrimary={setPrimary}
@@ -149,7 +188,9 @@ export default function RepeatableGroupField({ field, value = [], onChange }) {
         />
       ))}
       <button
+        ref={addButtonRef}
         onClick={addEntry}
+        aria-label="Add payment method"
         style={{
           width: '100%', padding: '10px 0', borderRadius: 8,
           border: '1px dashed var(--border)', background: 'transparent',

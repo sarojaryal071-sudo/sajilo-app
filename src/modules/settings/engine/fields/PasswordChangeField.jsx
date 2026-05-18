@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useSettings } from '../../useSettings';
 
-function PasswordInput({ placeholder, value, onChange }) {
+function PasswordInput({ placeholder, value, onChange, autoComplete }) {
   const [show, setShow] = useState(false);
 
   return (
@@ -12,6 +12,7 @@ function PasswordInput({ placeholder, value, onChange }) {
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        autoComplete={autoComplete}
         style={{
           width: '100%',
           padding: '10px 40px 10px 12px',
@@ -56,6 +57,13 @@ export default function PasswordChangeField({ field }) {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
 
+  // Determine if the form can be submitted
+  const isFormValid =
+    currentPassword.trim().length > 0 &&
+    newPassword.trim().length > 0 &&
+    confirmPassword.trim().length > 0 &&
+    newPassword === confirmPassword;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage('');
@@ -95,17 +103,26 @@ export default function PasswordChangeField({ field }) {
         placeholder="Current password"
         value={currentPassword}
         onChange={setCurrentPassword}
+        autoComplete="current-password"
       />
       <PasswordInput
         placeholder="New password"
         value={newPassword}
         onChange={setNewPassword}
+        autoComplete="new-password"
       />
       <PasswordInput
         placeholder="Confirm new password"
         value={confirmPassword}
         onChange={setConfirmPassword}
+        autoComplete="new-password"
       />
+
+      {newPassword && confirmPassword && newPassword !== confirmPassword && (
+        <div style={{ fontSize: 13, color: 'var(--accent-red)', marginBottom: 12 }}>
+          Passwords do not match
+        </div>
+      )}
 
       {message && (
         <div style={{
@@ -119,17 +136,17 @@ export default function PasswordChangeField({ field }) {
 
       <button
         type="submit"
-        disabled={saving}
+        disabled={!isFormValid || saving}
         style={{
           width: '100%',
           padding: '12px 0',
           borderRadius: 8,
           border: 'none',
-          background: saving ? '#94a3b8' : 'var(--accent-blue)',
+          background: (!isFormValid || saving) ? '#cbd5e1' : 'var(--accent-blue)',
           color: '#fff',
           fontSize: 14,
           fontWeight: 600,
-          cursor: saving ? 'wait' : 'pointer',
+          cursor: (!isFormValid || saving) ? 'not-allowed' : 'pointer',
         }}
       >
         {saving ? 'Changing…' : 'Change Password'}

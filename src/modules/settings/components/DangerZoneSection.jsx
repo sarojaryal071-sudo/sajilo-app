@@ -1,4 +1,5 @@
-import { useState } from 'react';
+// sajilo-app/src/modules/settings/components/DangerZoneSection.jsx
+import { useState, useRef, useEffect } from 'react';
 import { useSettings } from '../useSettings';
 
 export default function DangerZoneSection() {
@@ -6,6 +7,14 @@ export default function DangerZoneSection() {
   const [showConfirm, setShowConfirm] = useState(null); // 'deactivate' | 'delete'
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
+  const confirmRef = useRef(null);
+
+  // Focus the confirmation container when it appears (keyboard navigation)
+  useEffect(() => {
+    if (showConfirm && confirmRef.current) {
+      confirmRef.current.focus();
+    }
+  }, [showConfirm]);
 
   const handleDeactivate = async () => {
     setSaving(true);
@@ -63,7 +72,12 @@ export default function DangerZoneSection() {
             Temporarily deactivate your account. You can reactivate later.
           </div>
           {showConfirm === 'deactivate' ? (
-            <div>
+            <div
+              ref={confirmRef}
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Escape') setShowConfirm(null); }}
+              style={{ outline: 'none' }}
+            >
               <p style={{ fontSize: 12, color: 'var(--accent-red)' }}>Are you sure?</p>
               <button
                 onClick={handleDeactivate}
@@ -123,7 +137,12 @@ export default function DangerZoneSection() {
             Permanently delete your account and all data. This action cannot be undone.
           </div>
           {showConfirm === 'delete' ? (
-            <div>
+            <div
+              ref={confirmRef}
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Escape') setShowConfirm(null); }}
+              style={{ outline: 'none' }}
+            >
               <p style={{ fontSize: 12, color: 'var(--accent-red)' }}>Are you sure you want to permanently delete your account?</p>
               <button
                 onClick={handleDelete}
