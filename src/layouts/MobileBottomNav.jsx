@@ -5,14 +5,13 @@ import { useFeatureFlag } from '../hooks/useFeatureFlag.js'
 import { useNotification } from '../contexts/NotificationContext.jsx'
 import conversationState from '../services/chat/ConversationStateManager.js'
 import { API_URL } from '../services/api.js'
-import { useUnifiedNotifications } from '../governance/useUnifiedNotifications.js';
+import NotificationBellV2 from '../governance/NotificationBellV2.jsx';
 
 export default function MobileBottomNav({ navigate, t, onMore, onSOS }) {
   const location = useLocation()
   const sosEnabled = useFeatureFlag('sosEmergency')
   const notifEnabled = useFeatureFlag('notifications')
   const { notifications, unreadCount } = useNotification()
-    const { unreadCount: g2UnreadCount } = useUnifiedNotifications();
 
 
   const [convUnread, setConvUnread] = useState(conversationState.getUnreadCount())
@@ -68,23 +67,13 @@ export default function MobileBottomNav({ navigate, t, onMore, onSOS }) {
 
       {/* Notifications */}
       {notifEnabled && (
-        <button onClick={() => navigate('/inbox')} style={{
+        <div style={{
           flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
-          justifyContent: 'center', gap: mobile.bottomNav.gap, border: 'none', background: 'transparent',
-          cursor: 'pointer', padding: mobile.bottomNav.padding, color: mobile.bottomNav.inactiveColor,
-          position: 'relative',
+          justifyContent: 'center', gap: mobile.bottomNav.gap, position: 'relative',
         }}>
-          <span style={{ fontSize: mobile.bottomNav.iconSize }}>🔔</span>
-          <span style={{ fontSize: mobile.bottomNav.labelSize, fontWeight: mobile.bottomNav.labelWeight }}>Alerts</span>
-          {g2UnreadCount > 0 && (
-            <span style={{
-              position: 'absolute', top: 2, right: 'calc(50% - 20px)',
-              background: 'var(--accent-red)', color: '#fff',
-              fontSize: 9, fontWeight: 700, width: 16, height: 16,
-              borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>{g2UnreadCount}</span>
-          )}
-        </button>
+          <NotificationBellV2 mobileNavigateTo="/inbox" />
+          <span style={{ fontSize: mobile.bottomNav.labelSize, fontWeight: mobile.bottomNav.labelWeight, color: mobile.bottomNav.inactiveColor }}>Alerts</span>
+        </div>
       )}
 
       {/* SOS */}

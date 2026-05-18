@@ -13,8 +13,7 @@ import { useUnifiedNotifications } from '../governance/useUnifiedNotifications.j
 import conversationState from '../services/chat/ConversationStateManager.js'
 import workerConfig from '../config/ui/worker.config.js'
 import EmergencyModal from '../components/EmergencyModal.jsx'
-import NotificationBellV2 from '../governance/NotificationBellV2.jsx';
-
+import NotificationBellV2 from '../governance/NotificationBellV2.jsx'
 
 function WorkerLayoutInner({ children, onLogout, onSOS }) {
   const navigate = useNavigate()
@@ -40,15 +39,21 @@ function WorkerLayoutInner({ children, onLogout, onSOS }) {
   const sosEnabled = useFeatureFlag('sosEmergency')
   const showTopbar = useFeatureFlag('workerTopbar')
   const showTopbarName = useFeatureFlag('workerTopbarName')
-  const { unreadCount } = useNotification()
-  const { unreadCount: unifiedUnread } = useUnifiedNotifications()
+  const { unreadCount, refresh: refreshNotifications } = useNotification()
   const [convUnread, setConvUnread] = useState(conversationState.getUnreadCount())
   const [showNotif, setShowNotif] = useState(false)
-  
+
   useEffect(() => {
     const unsub = conversationState.onChange(count => setConvUnread(count))
     return unsub
   }, [])
+
+  // Refresh notifications when returning from inbox
+  useEffect(() => {
+    if (location.pathname !== '/inbox') {
+      refreshNotifications?.()
+    }
+  }, [location.pathname, refreshNotifications])
 
   // Seed unread conversation count from the backend on mount
   useEffect(() => {
@@ -58,7 +63,6 @@ function WorkerLayoutInner({ children, onLogout, onSOS }) {
       headers: { Authorization: `Bearer ${token}` }
     }).then(r => r.json()).then(d => {
       const list = d.data || []
-      // feed the state manager with unread conversation IDs
       list.forEach(c => {
         if (c.unread === '1') conversationState.setUnread(c.id)
       })
@@ -70,7 +74,7 @@ function WorkerLayoutInner({ children, onLogout, onSOS }) {
   const primaryItems = workerNavigation.filter(n => n.priority === 'primary')
   const secondaryItems = workerNavigation.filter(n => n.priority === 'secondary')
 
-    const { socket } = useSocket()
+  const { socket } = useSocket()
 
   useEffect(() => {
     if (!socket) return
@@ -85,11 +89,11 @@ function WorkerLayoutInner({ children, onLogout, onSOS }) {
   }
 
   console.log('[WORKER LAYOUT] Rendering - about to return JSX')
-  
+
   return (
     <div data-theme={dark ? 'dark' : 'light'} style={{ display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)', fontFamily: 'var(--font-family)' }}>
-      
-            {/* ── MOBILE ONLINE TOGGLE (hidden on desktop) ── */}
+
+      {/* ── MOBILE ONLINE TOGGLE (hidden on desktop) ── */}
       <div className="worker-mobile-online" style={{
         display: 'flex',
         justifyContent: 'flex-end',
@@ -99,13 +103,11 @@ function WorkerLayoutInner({ children, onLogout, onSOS }) {
       }}>
       </div>
 
-
       {/* ── DESKTOP NAVBAR (hidden on mobile) ── */}
       <div className="worker-desktop-navbar" style={{
         height: w.desktop?.navbar?.height || '56px',
         background: w.desktop?.navbar?.background || 'var(--bg-surface)',
         borderBottom: w.desktop?.navbar?.borderBottom || '1px solid var(--border)',
-        /* display: 'none', */
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: w.desktop?.navbar?.padding || '0 24px',
@@ -113,12 +115,12 @@ function WorkerLayoutInner({ children, onLogout, onSOS }) {
       }}>
         {/* Left: Online toggle + name */}
         <div style={{ display: 'flex', alignItems: 'center' }}>
-  {showTopbarName && (
-    <span style={{ fontSize: 'var(--font-body)', fontWeight: 600, color: 'var(--text-primary)' }}>
-      {profile?.name || 'Worker'}
-    </span>
-  )}
-</div>
+          {showTopbarName && (
+            <span style={{ fontSize: 'var(--font-body)', fontWeight: 600, color: 'var(--text-primary)' }}>
+              {profile?.name || 'Worker'}
+            </span>
+          )}
+        </div>
 
         {/* Right: Controls */}
         <div style={{ display: 'flex', alignItems: 'center', gap: w.desktop?.navbar?.gap || '12px' }}>
@@ -156,7 +158,7 @@ function WorkerLayoutInner({ children, onLogout, onSOS }) {
             <option value="ne">ने</option>
           </select>
 
-          <NotificationBellV2 />
+          <NotificationBellV2 mobileNavigateTo="/inbox" />
 
           {/* Logout */}
           <button onClick={handleLogout} style={{
@@ -280,26 +282,13 @@ function WorkerLayoutInner({ children, onLogout, onSOS }) {
           </button>
         ))}
         {/* Real notification bell — same as client panel */}
-        <button
-          onClick={() => navigate('/inbox')}
-          style={{
-            flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
-            justifyContent: 'center', gap: 2, border: 'none', background: 'transparent',
-            cursor: 'pointer', padding: '8px 4px', color: 'var(--text-secondary)',
-            position: 'relative',
-          }}
-        >
-          <span style={{ fontSize: 18 }}>🔔</span>
-          <span style={{ fontSize: 10, fontWeight: 500 }}>Alerts</span>
-          {unifiedUnread > 0 && (
-            <span style={{
-              position: 'absolute', top: 2, right: 'calc(50% - 20px)',
-              background: 'var(--accent-red)', color: '#fff',
-              fontSize: 9, fontWeight: 700, width: 16, height: 16,
-              borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>{unifiedUnread}</span>
-          )}
-        </button>
+        <div style={{
+          flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
+          justifyContent: 'center', gap: 2, position: 'relative',
+        }}>
+          <NotificationBellV2 mobileNavigateTo="/inbox" />
+          <span style={{ fontSize: 10, fontWeight: 500, color: 'var(--text-secondary)' }}>Alerts</span>
+        </div>
         {sosEnabled && (
           <button onClick={() => setShowSOS(true)} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, border: 'none', background: 'transparent', cursor: 'pointer', padding: '8px 4px', color: '#D92B2B' }}>
             <span style={{ fontSize: 18 }}>🆘</span>
@@ -314,23 +303,20 @@ function WorkerLayoutInner({ children, onLogout, onSOS }) {
 
       <WorkerMobileDrawer isOpen={showDrawer} onClose={() => setShowDrawer(false)} navigate={navigate} lang={lang} setLang={setLang} dark={dark} setDark={setDark} onLogout={handleLogout} />
 
-        <style>{`
-        /* Hide desktop navbar by default */
+      <style>{`
         .worker-desktop-navbar { display: none; }
-        /* Desktop: show navbar + sidebar, hide mobile bottom nav */
         @media (min-width: 1024px) {
           .worker-desktop-navbar { display: flex !important; }
           .worker-bottom-nav { display: none !important; }
           .worker-mobile-online { display: none !important; }
         }
-        /* Mobile: hide desktop navbar, sidebar; show bottom nav */
         @media (max-width: 1023px) {
           .worker-sidebar { display: none !important; }
           .worker-bottom-nav { display: flex !important; }
         }
         .worker-card { border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
       `}</style>
-            {showSOS && <EmergencyModal onClose={() => setShowSOS(false)} />}
+      {showSOS && <EmergencyModal onClose={() => setShowSOS(false)} />}
     </div>
   )
 }

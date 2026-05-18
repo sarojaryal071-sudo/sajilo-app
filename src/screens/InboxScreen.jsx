@@ -5,7 +5,7 @@ import { useSocket } from '../hooks/useSocket.js'
 import conversationState from '../services/chat/ConversationStateManager.js'
 import { API_URL } from '../services/api.js'
 import { getCurrentUser } from '../config/auth.js'
-import { useNotification } from '../contexts/NotificationContext.jsx'
+import { useUnifiedNotifications } from '../governance/useUnifiedNotifications.js'
 
 const FALLBACK_ADMIN_ID = 32
 
@@ -25,7 +25,17 @@ export default function InboxScreen() {
 
   const { socket } = useSocket()
   const navigate = useNavigate()
-  const { notifications, unreadCount: notifUnread, markAllRead, markRead } = useNotification()
+
+  // ── Unified notification layer ──
+  const {
+    unifiedNotifications,        // normalized array: { id, title, message, time, icon, read, … }
+    notificationUnreadCount,     // pure notification unread count
+    systemNotices,
+    markAsRead,
+    markAllAsRead,
+    clearAllNotifications,
+    clearSystemNotices,
+  } = useUnifiedNotifications()
 
   const currentUser = getCurrentUser()
   const currentUserId = currentUser?.id
@@ -69,7 +79,6 @@ export default function InboxScreen() {
     }).then(r => r.json()).then(d => {
       const list = d.data || []
       setConversations(list)
-      // Also seed the state manager with any unread conversations the API says are unread
       list.forEach(c => {
         if (c.unread === '1') conversationState.setUnread(c.id)
       })
@@ -114,7 +123,6 @@ export default function InboxScreen() {
       })
     })
 
-    // Remove chats when the booking completes or is cancelled
     const refreshConversations = () => {
       const token = localStorage.getItem('sajilo_token')
       if (!token) return
@@ -123,7 +131,7 @@ export default function InboxScreen() {
       }).then(r => r.json()).then(d => {
         const list = d.data || []
         setConversations(list)
-        conversationState.syncFromList(list)   // ← remove stale unread markers
+        conversationState.syncFromList(list)
         setUnreadConvIds(new Set(list.filter(c => c.unread === '1').map(c => c.id)))
       })
     }
@@ -139,7 +147,6 @@ export default function InboxScreen() {
     }
   }, [socket, activeConv])
 
-  // Lock body scroll when overlay is visible
   useEffect(() => {
     if (activeConv) {
       document.body.classList.add('inbox-conversation-open')
@@ -161,7 +168,6 @@ export default function InboxScreen() {
       text,
       bookingId: activeConv.booking_id || null,
     })
-    // Show the message immediately with a timestamp
     setMessages(prev => [...prev, {
       id: Date.now(),
       from: 'user',
@@ -176,7 +182,6 @@ export default function InboxScreen() {
   const openConversation = async (conv) => {
     setActiveConv(conv)
     conversationState.setRead(conv.id)
-     // immediately remove from local unread list so UI updates
     setUnreadConvIds(prev => { const next = new Set(prev); next.delete(conv.id); return next })
     const token = localStorage.getItem('sajilo_token')
     try {
@@ -199,14 +204,7 @@ export default function InboxScreen() {
     return false
   }
 
-  // ── Mark all notifications as read when the Notifications tab is opened ──
-  useEffect(() => {
-    if (activeTab === 'notifications' && notifUnread > 0) {
-      markAllRead()
-    }
-  }, [activeTab])
-
-  // ── Conversation overlay (fixed full‑screen, only when activeConv is set) ──
+  // ── Conversation overlay (unchanged) ──
   const renderConversationOverlay = () => {
     if (!activeConv) return null
     return (
@@ -221,7 +219,6 @@ export default function InboxScreen() {
         display: 'flex',
         flexDirection: 'column',
       }}>
-        {/* Messenger‑style header */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: 12,
           padding: '12px 16px', borderBottom: '1px solid var(--border)',
@@ -245,7 +242,6 @@ export default function InboxScreen() {
           </div>
         </div>
 
-        {/* Scrollable messages */}
         <div style={{ flex: 1, overflowY: 'auto', padding: 12, minHeight: 0 }}>
           {messages.map(msg => {
             const isOwn = isOwnMessage(msg)
@@ -276,7 +272,6 @@ export default function InboxScreen() {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Fixed input at bottom */}
         <div style={{
           display: 'flex', gap: 8,
           padding: '12px',
@@ -305,7 +300,7 @@ export default function InboxScreen() {
     )
   }
 
-  // ── Normal Inbox UI (tabs + list) ──
+  // ── Inbox UI (tabs + lists) ──
   return (
     <>
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column', maxWidth: 800, margin: '0 auto', width: '100%' }}>
@@ -338,13 +333,13 @@ export default function InboxScreen() {
             position: 'relative'
           }}>
             🔔 {tabNotifications}
-            {notifUnread > 0 && (
+            {notificationUnreadCount > 0 && (
               <span style={{
                 background: 'var(--accent-red)', color: '#fff',
                 fontSize: 10, fontWeight: 700, minWidth: 18, height: 18,
                 borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 padding: '0 4px'
-              }}>{notifUnread}</span>
+              }}>{notificationUnreadCount}</span>
             )}
           </button>
         </div>
@@ -352,7 +347,7 @@ export default function InboxScreen() {
         {/* Content area */}
         <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0, marginTop: 12 }}>
           {activeTab === 'messages' ? (
-            /* Conversation list (NO conversation view – it's in the overlay) */
+            /* Conversation list (unchanged) */
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
               <div style={{ flexShrink: 0 }}>
                 <button onClick={openNewSupportChat} style={{
@@ -368,7 +363,6 @@ export default function InboxScreen() {
                   <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-secondary)', fontSize: 13 }}>{noConversations}</div>
                 ) : (
                   conversations.map(chat => {
-                    // a conversation is unread if either the state manager says so, or the API returned unread="1"
                     const unread = unreadConvIds.has(chat.id) || chat.unread === '1'
                     const lastMsgTime = chat.last_message_at
                       ? new Date(chat.last_message_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -401,56 +395,98 @@ export default function InboxScreen() {
               </div>
             </div>
           ) : (
-            /* Notifications tab */
+            /* ── Modernised Notifications tab ── */
             <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
-              {notifications.length === 0 ? (
-                <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-secondary)' }}>{noNotifications}</div>
-              ) : (
-                notifications.map(n => {
-                  const timeStr = n.created_at
-                    ? new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                    : ''
+              {/* Bulk action buttons */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, padding: '8px 16px', borderBottom: '1px solid var(--border)' }}>
+                {notificationUnreadCount > 0 && (
+                  <button
+                    onClick={markAllAsRead}
+                    style={{
+                      background: 'none', border: 'none', color: 'var(--accent-blue)',
+                      fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                    }}
+                  >
+                    Mark all read
+                  </button>
+                )}
+                {unifiedNotifications.length > 0 && (
+                  <button
+                    onClick={clearAllNotifications}
+                    style={{
+                      background: 'none', border: 'none', color: 'var(--accent-blue)',
+                      fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                    }}
+                  >
+                    Clear all
+                  </button>
+                )}
+                {systemNotices.length > 0 && (
+                  <button
+                    onClick={clearSystemNotices}
+                    style={{
+                      background: 'none', border: 'none', color: 'var(--accent-red)',
+                      fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                    }}
+                  >
+                    Clear system
+                  </button>
+                )}
+              </div>
 
-                  const getPath = (type) => {
-                    const role = currentUser?.role
-                    if (role === 'customer') {
-                      if (type === 'booking_accepted' || type === 'booking_rejected' || type === 'booking_cancelled' || type === 'booking_completed') return '/bookings'
-                      if (type === 'invoice_ready' || type === 'payment_paid') return '/bookings'
-                      if (type === 'review_received') return '/bookings'
-                    }
-                    if (role === 'worker') {
-                      if (type === 'booking_created') return '/worker/dashboard'
-                      if (type === 'booking_completed') return '/worker/earnings'
-                      if (type === 'booking_cancelled' || type === 'payment_paid' || type === 'review_received' || type === 'invoice_ready') return '/worker/earnings'
-                      return '/worker/earnings'
-                    }
-                    return null
-                  }
+              {/* System notices */}
+              {systemNotices.length > 0 && (
+                <div style={{ borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>
+                  {systemNotices.map(notice => (
+                    <div key={notice.id} style={{
+                      padding: '10px 16px', borderBottom: '1px solid var(--border)',
+                      background: notice.severity === 'critical' ? '#fee2e2' : notice.severity === 'warning' ? '#fef3c7' : '#dbeafe',
+                    }}>
+                      <div style={{ fontSize: 13, fontWeight: 600 }}>{notice.title}</div>
+                      <div style={{ fontSize: 12 }}>{notice.message}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Notifications list */}
+              {unifiedNotifications.length === 0 && systemNotices.length === 0 ? (
+                <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-secondary)', fontSize: 13 }}>
+                  {noNotifications}
+                </div>
+              ) : (
+                unifiedNotifications.map(n => {
+                  const isRead = n.read
+                  const timeStr = n.time ? new Date(n.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''
 
                   const handleTap = async () => {
-                    if (!n.is_read) {
-                      try { await markRead(n.id) } catch (_) {}
+                    if (!isRead) {
+                      try { await markAsRead(n.id) } catch (_) {}
                     }
-                    const path = getPath(n.type)
-                    if (path) navigate(path)
+                    // Optional navigation based on entityType – can be extended later
+                    // const path = getPath(n.type); if (path) navigate(path);
                   }
 
                   return (
                     <div key={n.id} onClick={handleTap} style={{
+                      display: 'flex', alignItems: 'flex-start', gap: 10,
                       padding: '12px 16px',
                       borderBottom: '1px solid var(--border)',
-                      opacity: n.is_read ? 0.6 : 1,
-                      cursor: 'pointer'
+                      opacity: isRead ? 0.6 : 1,
+                      cursor: 'pointer',
+                      background: isRead ? 'transparent' : 'var(--accent-blue-light)',
                     }}>
-                      <div style={{
-                        fontSize: 13,
-                        fontWeight: n.is_read ? 400 : 700,
-                        color: 'var(--text-primary)'
-                      }}>
-                        {n.title || n.message}
-                      </div>
-                      <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 4 }}>
-                        {timeStr}
+                      <span style={{ fontSize: 18, flexShrink: 0 }}>{n.icon || '🔔'}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: isRead ? 400 : 700, color: 'var(--text-primary)' }}>
+                          {n.title}
+                        </div>
+                        <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
+                          {n.message}
+                        </div>
+                        <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 4 }}>
+                          {timeStr}
+                        </div>
                       </div>
                     </div>
                   )
@@ -461,7 +497,6 @@ export default function InboxScreen() {
         </div>
       </div>
 
-      {/* Full‑screen conversation overlay */}
       {renderConversationOverlay()}
     </>
   )

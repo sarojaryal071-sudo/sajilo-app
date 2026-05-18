@@ -25,7 +25,7 @@ export default function AdminNotifications() {
 
   const loadHistory = async () => {
     try {
-      const res = await api.getNotifications()
+      const res = await api.getDispatchHistory()
       setHistory(res.data || [])
     } catch (err) { console.error(err) }
   }
