@@ -7,6 +7,7 @@ import { SOCKET_EVENTS } from '../config/socketEvents.js'
 import { useBooking } from '../contexts/BookingContext.jsx'
 import WorkerTrustIndicators from '../components/WorkerTrustIndicators.jsx'
 import { dispatchBookingCommand } from '../utils/bookingCommandDispatcher.js'
+import { getMediaUrl } from '../modules/media-ui/mediaUrl';
 
 const jobSizes = [
   { id: 'small', labelKey: 'detail.small', descKey: 'detail.smallDesc', price: 'Rs 500-1500' },
@@ -230,8 +231,12 @@ const effectiveRanges = (() => {
       >{txt.back}</button>
 
       <div style={{ height: 160, background: worker.bg || '#EBF3FF', borderRadius: 'var(--radius-lg)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
-        <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, fontWeight: 700, color: 'var(--text-primary)' }}>
-          {worker.name.split(' ').map(n => n[0]).join('')}
+        <div style={{ width: 80, height: 80, borderRadius: '50%', overflow: 'hidden', background: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, fontWeight: 700, color: 'var(--text-primary)' }}>
+          {worker.profile_image_url || worker.photo_url ? (
+            <img src={getMediaUrl(worker.profile_image_url || worker.photo_url)} alt={worker.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          ) : (
+            worker.name.split(' ').map(n => n[0]).join('')
+          )}
         </div>
       </div>
 

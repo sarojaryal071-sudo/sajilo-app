@@ -11,6 +11,7 @@ import { getSocket } from '../services/realtime/socketClient'
 import DynamicBlockRenderer from '../components/dynamic/DynamicBlockRenderer.jsx'
 import useLayoutConfig from '../hooks/useLayoutConfig.js'
 import { resolveClientHomeLayout } from '../core/layout/resolveClientHomeLayout.js';
+import { getMediaUrl } from '../modules/media-ui/mediaUrl';
 
 function CategoryButton({ service, isActive, onClick }) {
   const icon = useContent(`category.icon.${service.role}`, '🔧')
@@ -237,11 +238,14 @@ export default function HomeScreen({ navigate, t }) {
                   style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)',
                     padding: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14 }}>
                   <div style={{ width: 48, height: 48, borderRadius: '50%', overflow: 'hidden',
-                    background: worker.photo_url ? 'transparent' : 'var(--accent-blue-light)',
+                    background: (worker.profile_image_url || worker.photo_url) ? 'transparent' : 'var(--accent-blue-light)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontWeight: 700,
                     color: 'var(--accent-blue)', flexShrink: 0 }}>
-                    {worker.photo_url ? <img src={worker.photo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    : worker.name?.charAt(0)?.toUpperCase() || 'W'}
+                    {worker.profile_image_url || worker.photo_url ? (
+                      <img src={getMediaUrl(worker.profile_image_url || worker.photo_url)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      worker.name?.charAt(0)?.toUpperCase() || 'W'
+                    )}
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 'var(--font-body)' }}>

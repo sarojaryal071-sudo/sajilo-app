@@ -1,5 +1,7 @@
 import cards from '../config/ui/cards.config.js'
 import { useStyle } from '../hooks/useStyle.js'
+import { getMediaUrl } from '../modules/media-ui/mediaUrl';
+
 
 export default function WorkerCard({ worker }) {
   const cardStyle = useStyle('homeWorkerCard')
@@ -38,7 +40,7 @@ export default function WorkerCard({ worker }) {
       }}>
         {worker.profile_image_url || worker.photo ? (
           <img
-            src={`http://localhost:5000${worker.profile_image_url || worker.photo}`}
+            src={getMediaUrl(worker.profile_image_url || worker.photo)}
             alt={worker.name}
             style={{
               width: photoStyle.width || cards.workerCard.iconArea.photoSize,

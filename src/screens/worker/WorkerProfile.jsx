@@ -5,6 +5,8 @@ import { useWorker } from '../../contexts/WorkerContext.jsx'
 import { api, API_URL } from '../../services/api.js'
 import { useSocket } from '../../hooks/useSocket.js'
 import ProfileImageUploader from '../../modules/media-ui/ProfileImageUploader';
+import { getMediaUrl } from '../../modules/media-ui/mediaUrl';
+
 
 // ── Reward points calculation ──
 const JOB_SIZE_POINTS = {
@@ -98,9 +100,7 @@ export default function WorkerProfile() {
   }
 
   // Compute the image URL for the uploader (prefer new profile_image_url, fallback to old photo_url)
-  const currentImageUrl = profile?.profile_image_url
-    ? `http://localhost:5000${profile.profile_image_url}`
-    : profile?.photo_url || null;
+  const currentImageUrl = getMediaUrl(profile?.profile_image_url) || profile?.photo_url || null;
 
   return (
     <div>

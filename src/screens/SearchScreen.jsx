@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { api, API_URL } from '../services/api.js'
 import { useContent } from '../hooks/useContent.js'
 import { getSocket } from '../services/realtime/socketClient'
+import { getMediaUrl } from '../modules/media-ui/mediaUrl';
 
 export default function SearchScreen({ navigate }) {
   const [workers, setWorkers] = useState([])
@@ -165,7 +166,7 @@ export default function SearchScreen({ navigate }) {
                 fontSize: 20, fontWeight: 700, color: 'var(--accent-blue)', flexShrink: 0,
               }}>
                               {worker.profile_image_url || worker.photo_url ? (
-                <img src={`http://localhost:5000${worker.profile_image_url || worker.photo_url}`} alt="Worker" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img src={getMediaUrl(worker.profile_image_url || worker.photo_url)} alt="Worker" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               ) : (
                 worker.name?.charAt(0)?.toUpperCase() || 'W'
               )}

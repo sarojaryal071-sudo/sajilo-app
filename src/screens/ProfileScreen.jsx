@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react'
 import { api } from '../services/api.js'
 import { useContent } from '../hooks/useContent.js'
 import ProfileImageUploader from '../modules/media-ui/ProfileImageUploader';
+import { getMediaUrl } from '../modules/media-ui/mediaUrl';
+
 
 // ── Helper: calculate points based on job size ──
 const JOB_SIZE_POINTS = {
@@ -65,7 +67,7 @@ export default function ProfileScreen({ navigate }) {
         display: 'flex', alignItems: 'center', gap: 20,
       }}>
         <ProfileImageUploader
-          currentImageUrl={user.profile_image_url ? `http://localhost:5000${user.profile_image_url}` : null}
+          currentImageUrl={getMediaUrl(user.profile_image_url)}
           onImageChange={(url) => {
             // Update local state so the header name shows the new image
             setUser(prev => ({ ...prev, profile_image_url: url }));

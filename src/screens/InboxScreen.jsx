@@ -7,6 +7,7 @@ import { API_URL } from '../services/api.js'
 import { getCurrentUser } from '../config/auth.js'
 import { useUnifiedNotifications } from '../governance/useUnifiedNotifications.js'
 import { resolveNotificationRoute } from '../governance/notificationRouting.js';
+import { getMediaUrl } from '../modules/media-ui/mediaUrl';
 
 
 const FALLBACK_ADMIN_ID = 32
@@ -238,7 +239,7 @@ export default function InboxScreen() {
             flexShrink: 0
           }}>
             {activeConv.other_profile_image_url ? (
-              <img src={`http://localhost:5000${activeConv.other_profile_image_url}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <img src={getMediaUrl(activeConv.other_profile_image_url)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
               (activeConv.other_name || activeConv.name || '?').charAt(0).toUpperCase()
             )}
@@ -386,7 +387,7 @@ export default function InboxScreen() {
                           fontSize: 18, flexShrink: 0
                         }}>
                           {chat.other_profile_image_url ? (
-                            <img src={`http://localhost:5000${chat.other_profile_image_url}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            <img src={getMediaUrl(chat.other_profile_image_url)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                           ) : (
                             '💬'
                           )}

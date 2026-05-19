@@ -1,6 +1,7 @@
 // sajilo-app/src/modules/media-ui/ProfileImageUploader.jsx
 import { useRef, useState } from 'react';
 import { useMediaUpload } from './useMediaUpload';
+import { getMediaUrl } from './mediaUrl';
 
 export default function ProfileImageUploader({ currentImageUrl, onImageChange }) {
   const fileInputRef = useRef(null);
@@ -19,7 +20,7 @@ export default function ProfileImageUploader({ currentImageUrl, onImageChange })
     try {
       const url = await replaceProfileImage(file);
       if (url) {
-        setPreview('http://localhost:5000' + url);
+        setPreview(getMediaUrl(url));
         onImageChange?.(url);
       }
     } catch {}
