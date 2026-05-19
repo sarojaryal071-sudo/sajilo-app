@@ -1,4 +1,3 @@
-// Worker‑only settings sections
 export const workerSections = {
   account: {
     label: 'Account',
@@ -6,9 +5,10 @@ export const workerSections = {
       { key: 'fullName', type: 'text', label: 'Full Name' },
       { key: 'email', type: 'email', label: 'Email' },
       { key: 'phone', type: 'tel', label: 'Phone' },
+      { key: 'bio', type: 'text', label: 'Bio' },
     ],
   },
-    payment: {
+  payment: {
     label: 'Banking & Payments',
     fields: [
       {

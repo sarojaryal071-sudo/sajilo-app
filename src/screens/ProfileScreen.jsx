@@ -128,10 +128,6 @@ export default function ProfileScreen({ navigate }) {
             <div style={{ fontSize: 'var(--font-body-sm)', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 4 }}>Phone</div>
             <div style={{ fontSize: 'var(--font-body)', color: 'var(--text-primary)' }}>{user.phone || '—'}</div>
           </div>
-          <div>
-            <div style={{ fontSize: 'var(--font-body-sm)', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 4 }}>Photo URL</div>
-            <div style={{ fontSize: 'var(--font-body)', color: 'var(--text-primary)' }}>{user.photo_url || 'No photo set'}</div>
-          </div>
         </div>
         <div style={{ marginTop: 16, fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)' }}>
           ✏️ Edit your profile in <span style={{ color: 'var(--accent-blue)', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => navigate('/settings')}>Settings</span>.

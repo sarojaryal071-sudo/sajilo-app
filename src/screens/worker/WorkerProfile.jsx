@@ -248,10 +248,6 @@ export default function WorkerProfile() {
             <span style={{ fontSize: 'var(--font-body-sm)', fontWeight: 600, color: 'var(--text-secondary)' }}>Hourly Rate: </span>
             <span style={{ fontSize: 'var(--font-body)', color: 'var(--text-primary)' }}>Rs {profile.hourly_rate || 500}</span>
           </div>
-          <div>
-            <span style={{ fontSize: 'var(--font-body-sm)', fontWeight: 600, color: 'var(--text-secondary)' }}>Photo URL: </span>
-            <span style={{ fontSize: 'var(--font-body)', color: 'var(--text-primary)' }}>{profile.photo_url || 'No photo set'}</span>
-          </div>
         </div>
         <div style={{ marginTop: 16, fontSize: 'var(--font-body-sm)', color: 'var(--text-secondary)' }}>
           ✏️ Edit your profile in <span style={{ color: 'var(--accent-blue)', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => navigate('/worker/settings')}>Settings</span>.
