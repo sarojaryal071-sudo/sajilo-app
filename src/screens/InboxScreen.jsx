@@ -231,13 +231,17 @@ export default function InboxScreen() {
             cursor: 'pointer', color: 'var(--accent-blue)', padding: 0, lineHeight: 1
           }}>←</button>
           <div style={{
-            width: 36, height: 36, borderRadius: '50%',
-            background: 'var(--accent-blue-light)', display: 'flex',
-            alignItems: 'center', justifyContent: 'center',
+            width: 36, height: 36, borderRadius: '50%', overflow: 'hidden',
+            background: activeConv.other_profile_image_url ? 'transparent' : 'var(--accent-blue-light)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 16, fontWeight: 700, color: 'var(--accent-blue)',
             flexShrink: 0
           }}>
-            {(activeConv.other_name || activeConv.name || '?').charAt(0).toUpperCase()}
+            {activeConv.other_profile_image_url ? (
+              <img src={`http://localhost:5000${activeConv.other_profile_image_url}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              (activeConv.other_name || activeConv.name || '?').charAt(0).toUpperCase()
+            )}
           </div>
           <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>
             {activeConv.other_name || activeConv.name || 'Chat'}
@@ -375,7 +379,18 @@ export default function InboxScreen() {
                         padding: '14px 16px', borderBottom: '1px solid var(--border)',
                         cursor: 'pointer', background: unread ? 'var(--accent-blue-light)' : 'transparent',
                       }}>
-                        <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--bg-surface2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>💬</div>
+                        <div style={{
+                          width: 40, height: 40, borderRadius: '50%', overflow: 'hidden',
+                          background: chat.other_profile_image_url ? 'transparent' : 'var(--bg-surface2)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: 18, flexShrink: 0
+                        }}>
+                          {chat.other_profile_image_url ? (
+                            <img src={`http://localhost:5000${chat.other_profile_image_url}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          ) : (
+                            '💬'
+                          )}
+                        </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div style={{ fontSize: 13, fontWeight: unread ? 700 : 500, color: 'var(--text-primary)' }}>

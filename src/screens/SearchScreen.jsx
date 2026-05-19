@@ -164,11 +164,11 @@ export default function SearchScreen({ navigate }) {
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 20, fontWeight: 700, color: 'var(--accent-blue)', flexShrink: 0,
               }}>
-                {worker.photo_url ? (
-                  <img src={worker.photo_url} alt="Worker" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                ) : (
-                  worker.name?.charAt(0)?.toUpperCase() || 'W'
-                )}
+                              {worker.profile_image_url || worker.photo_url ? (
+                <img src={`http://localhost:5000${worker.profile_image_url || worker.photo_url}`} alt="Worker" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                worker.name?.charAt(0)?.toUpperCase() || 'W'
+              )}
               </div>
 
               {/* Name, professions, worker ID */}

@@ -1,7 +1,10 @@
-﻿import { useState, useEffect } from 'react'
+﻿// sajilo-app/src/screens/worker/WorkerProfile.jsx
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useWorker } from '../../contexts/WorkerContext.jsx'
 import { api, API_URL } from '../../services/api.js'
 import { useSocket } from '../../hooks/useSocket.js'
+import ProfileImageUploader from '../../modules/media-ui/ProfileImageUploader';
 
 // ── Reward points calculation ──
 const JOB_SIZE_POINTS = {
@@ -17,6 +20,7 @@ function calcRewardPoints(bookings) {
 }
 
 export default function WorkerProfile() {
+  const navigate = useNavigate()
   const { profile, bookings } = useWorker()
   const [showLocationModal, setShowLocationModal] = useState(false)
   const [selectedLocation, setSelectedLocation] = useState('')
@@ -93,6 +97,11 @@ export default function WorkerProfile() {
     setShowLocationModal(false)
   }
 
+  // Compute the image URL for the uploader (prefer new profile_image_url, fallback to old photo_url)
+  const currentImageUrl = profile?.profile_image_url
+    ? `http://localhost:5000${profile.profile_image_url}`
+    : profile?.photo_url || null;
+
   return (
     <div>
       {/* Worker identity card */}
@@ -106,19 +115,13 @@ export default function WorkerProfile() {
         alignItems: 'center',
         gap: 16,
       }}>
-        <div style={{
-          width: 64, height: 64, borderRadius: '50%',
-          background: profile.photo_url ? 'transparent' : 'var(--accent-blue-light)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 28, fontWeight: 700, color: 'var(--accent-blue)',
-          overflow: 'hidden', flexShrink: 0,
-        }}>
-          {profile.photo_url ? (
-            <img src={profile.photo_url} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          ) : (
-            profile.name?.charAt(0)?.toUpperCase() || 'W'
-          )}
-        </div>
+        <ProfileImageUploader
+          currentImageUrl={currentImageUrl}
+          onImageChange={(url) => {
+            // Update local state so the profile immediately reflects the new image
+            profile.profile_image_url = url;
+          }}
+        />
         <div>
           <div style={{ fontSize: 'var(--font-body-lg)', fontWeight: 700, color: 'var(--text-primary)' }}>
             {profile.name || 'Worker'}

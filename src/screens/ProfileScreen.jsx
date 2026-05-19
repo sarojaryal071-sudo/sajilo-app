@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { api } from '../services/api.js'
 import { useContent } from '../hooks/useContent.js'
+import ProfileImageUploader from '../modules/media-ui/ProfileImageUploader';
 
 // ── Helper: calculate points based on job size ──
 const JOB_SIZE_POINTS = {
@@ -63,20 +64,13 @@ export default function ProfileScreen({ navigate }) {
         borderRadius: 'var(--radius-lg)', padding: 28, marginBottom: 20,
         display: 'flex', alignItems: 'center', gap: 20,
       }}>
-        <div style={{
-          width: 76, height: 76, borderRadius: '50%',
-          background: user.photo_url ? 'transparent' : 'rgba(255,255,255,0.2)',
-          border: '3px solid rgba(255,255,255,0.5)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 36, flexShrink: 0,
-          overflow: 'hidden'
-        }}>
-          {user.photo_url ? (
-            <img src={user.photo_url} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          ) : (
-            user.name?.charAt(0)?.toUpperCase() || '👤'
-          )}
-        </div>
+        <ProfileImageUploader
+          currentImageUrl={user.profile_image_url ? `http://localhost:5000${user.profile_image_url}` : null}
+          onImageChange={(url) => {
+            // Update local state so the header name shows the new image
+            setUser(prev => ({ ...prev, profile_image_url: url }));
+          }}
+        />
         <div>
           <div style={{ fontSize: 'var(--font-large)', fontWeight: 800, color: '#fff', marginBottom: 4 }}>
             {user.name || 'User'}
